@@ -55,6 +55,7 @@ fr:
         sign_up: Créer un compte
       signed_up: Inscription réussie.
     failure:
+      already_authenticated: Vous êtes déjà connecté(e).
       invalid: Email ou mot de passe invalide.
       unauthenticated: Vous devez vous connecter pour accéder à cette page.
   helpers:

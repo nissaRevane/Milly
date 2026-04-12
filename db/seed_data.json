@@ -1,0 +1,961 @@
+{
+  "user": {
+    "email": "seed@example.com",
+    "firstname": "Quentin",
+    "lastname": "GIRARD",
+    "password": "password123"
+  },
+  "assets": [
+    {
+      "name": "Liquidités",
+      "risk_level": "low"
+    },
+    {
+      "name": "Risques 1-2",
+      "risk_level": "low"
+    },
+    {
+      "name": "Risques 3-4-5",
+      "risk_level": "medium"
+    },
+    {
+      "name": "Immobilier",
+      "risk_level": "low"
+    },
+    {
+      "name": "Risques 6",
+      "risk_level": "medium"
+    },
+    {
+      "name": "Risques 7",
+      "risk_level": "high"
+    }
+  ],
+  "liabilities": [
+    {
+      "name": "Dettes LT",
+      "risk_level": "low"
+    },
+    {
+      "name": "Dettes CT",
+      "risk_level": "medium"
+    }
+  ],
+  "balance_sheets": [
+    {
+      "closing_date": "2021-03-18",
+      "assets": {
+        "Liquidités": 3140.23,
+        "Risques 1-2": 7819.2,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 794.49,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 77320.05,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2021-04-18",
+      "assets": {
+        "Liquidités": 2397.11,
+        "Risques 1-2": 10135.38,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 1636.44,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 77032.14,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2021-05-18",
+      "assets": {
+        "Liquidités": 1992.76,
+        "Risques 1-2": 11801.22,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 2390.02,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 76743.94,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2021-06-17",
+      "assets": {
+        "Liquidités": 1675.33,
+        "Risques 1-2": 12600.43,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 3298.56,
+        "Risques 7": 100.99
+      },
+      "liabilities": {
+        "Dettes LT": 76455.45,
+        "Dettes CT": 1134.76
+      }
+    },
+    {
+      "closing_date": "2021-07-18",
+      "assets": {
+        "Liquidités": 1755.35,
+        "Risques 1-2": 12600.43,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 4137.4,
+        "Risques 7": 132.25
+      },
+      "liabilities": {
+        "Dettes LT": 76166.68,
+        "Dettes CT": 1115.86
+      }
+    },
+    {
+      "closing_date": "2021-08-18",
+      "assets": {
+        "Liquidités": 819.81,
+        "Risques 1-2": 12600.43,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 4973.88,
+        "Risques 7": 188.56
+      },
+      "liabilities": {
+        "Dettes LT": 75877.62,
+        "Dettes CT": 71.94
+      }
+    },
+    {
+      "closing_date": "2021-09-17",
+      "assets": {
+        "Liquidités": 1832.73,
+        "Risques 1-2": 12369.47,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 6783.47,
+        "Risques 7": 295.22
+      },
+      "liabilities": {
+        "Dettes LT": 75588.27,
+        "Dettes CT": 1261.55
+      }
+    },
+    {
+      "closing_date": "2021-10-18",
+      "assets": {
+        "Liquidités": 2182.7,
+        "Risques 1-2": 12369.47,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 7710.66,
+        "Risques 7": 452.64
+      },
+      "liabilities": {
+        "Dettes LT": 75298.63,
+        "Dettes CT": 1149.3
+      }
+    },
+    {
+      "closing_date": "2021-11-18",
+      "assets": {
+        "Liquidités": 2833.49,
+        "Risques 1-2": 12369.47,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 8884.44,
+        "Risques 7": 602.82
+      },
+      "liabilities": {
+        "Dettes LT": 75008.7,
+        "Dettes CT": 1261.05
+      }
+    },
+    {
+      "closing_date": "2021-12-18",
+      "assets": {
+        "Liquidités": 2696.94,
+        "Risques 1-2": 12369.47,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 9467.67,
+        "Risques 7": 800.5
+      },
+      "liabilities": {
+        "Dettes LT": 74718.48,
+        "Dettes CT": 1134.13
+      }
+    },
+    {
+      "closing_date": "2022-01-18",
+      "assets": {
+        "Liquidités": 1694.64,
+        "Risques 1-2": 11758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 11940.79,
+        "Risques 7": 1024.42
+      },
+      "liabilities": {
+        "Dettes LT": 74427.97,
+        "Dettes CT": 1232.21
+      }
+    },
+    {
+      "closing_date": "2022-02-18",
+      "assets": {
+        "Liquidités": 2003.11,
+        "Risques 1-2": 11758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 12291.34,
+        "Risques 7": 1009.21
+      },
+      "liabilities": {
+        "Dettes LT": 74137.17,
+        "Dettes CT": 1247.41
+      }
+    },
+    {
+      "closing_date": "2022-03-18",
+      "assets": {
+        "Liquidités": 2597.1,
+        "Risques 1-2": 11758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 13092.25,
+        "Risques 7": 1048.59
+      },
+      "liabilities": {
+        "Dettes LT": 73846.08,
+        "Dettes CT": 1221.74
+      }
+    },
+    {
+      "closing_date": "2022-04-18",
+      "assets": {
+        "Liquidités": 1088.58,
+        "Risques 1-2": 11758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 15255.59,
+        "Risques 7": 1461.69
+      },
+      "liabilities": {
+        "Dettes LT": 73554.7,
+        "Dettes CT": 1153.91
+      }
+    },
+    {
+      "closing_date": "2022-05-18",
+      "assets": {
+        "Liquidités": 2626.07,
+        "Risques 1-2": 9758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 16284.24,
+        "Risques 7": 1190.91
+      },
+      "liabilities": {
+        "Dettes LT": 73263.02,
+        "Dettes CT": 1262.95
+      }
+    },
+    {
+      "closing_date": "2022-06-18",
+      "assets": {
+        "Liquidités": 1511.23,
+        "Risques 1-2": 9758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 16110.59,
+        "Risques 7": 787.11
+      },
+      "liabilities": {
+        "Dettes LT": 72971.05,
+        "Dettes CT": 1317.61
+      }
+    },
+    {
+      "closing_date": "2022-07-18",
+      "assets": {
+        "Liquidités": 4722.35,
+        "Risques 1-2": 5758.09,
+        "Risques 3-4-5": 0,
+        "Immobilier": 77000,
+        "Risques 6": 18429.71,
+        "Risques 7": 1263.6
+      },
+      "liabilities": {
+        "Dettes LT": 72678.79,
+        "Dettes CT": 975.58
+      }
+    },
+    {
+      "closing_date": "2022-08-18",
+      "assets": {
+        "Liquidités": 3340.54,
+        "Risques 1-2": 7790.53,
+        "Risques 3-4-5": 50,
+        "Immobilier": 77000,
+        "Risques 6": 21296.26,
+        "Risques 7": 1650.2
+      },
+      "liabilities": {
+        "Dettes LT": 72386.24,
+        "Dettes CT": 1012.36
+      }
+    },
+    {
+      "closing_date": "2022-09-18",
+      "assets": {
+        "Liquidités": 2518.27,
+        "Risques 1-2": 9101.07,
+        "Risques 3-4-5": 150,
+        "Immobilier": 77000,
+        "Risques 6": 20718.27,
+        "Risques 7": 1599.96
+      },
+      "liabilities": {
+        "Dettes LT": 72093.4,
+        "Dettes CT": 1003
+      }
+    },
+    {
+      "closing_date": "2022-10-18",
+      "assets": {
+        "Liquidités": 1711.54,
+        "Risques 1-2": 9101.07,
+        "Risques 3-4-5": 300,
+        "Immobilier": 77000,
+        "Risques 6": 21548.25,
+        "Risques 7": 1697
+      },
+      "liabilities": {
+        "Dettes LT": 71800.26,
+        "Dettes CT": 1009.96
+      }
+    },
+    {
+      "closing_date": "2022-11-18",
+      "assets": {
+        "Liquidités": 2511.21,
+        "Risques 1-2": 7619.87,
+        "Risques 3-4-5": 500,
+        "Immobilier": 77000,
+        "Risques 6": 23097.9,
+        "Risques 7": 1586.48
+      },
+      "liabilities": {
+        "Dettes LT": 71506.83,
+        "Dettes CT": 967.76
+      }
+    },
+    {
+      "closing_date": "2022-12-18",
+      "assets": {
+        "Liquidités": 4278.26,
+        "Risques 1-2": 7620.47,
+        "Risques 3-4-5": 500,
+        "Immobilier": 77000,
+        "Risques 6": 22455.54,
+        "Risques 7": 1452.55
+      },
+      "liabilities": {
+        "Dettes LT": 71213.11,
+        "Dettes CT": 922.28
+      }
+    },
+    {
+      "closing_date": "2023-01-18",
+      "assets": {
+        "Liquidités": 2882.14,
+        "Risques 1-2": 7999.9,
+        "Risques 3-4-5": 1000,
+        "Immobilier": 77000,
+        "Risques 6": 25152.73,
+        "Risques 7": 1822.55
+      },
+      "liabilities": {
+        "Dettes LT": 70919.09,
+        "Dettes CT": 711.76
+      }
+    },
+    {
+      "closing_date": "2023-02-18",
+      "assets": {
+        "Liquidités": 2236.8,
+        "Risques 1-2": 7000.9,
+        "Risques 3-4-5": 2025,
+        "Immobilier": 77000,
+        "Risques 6": 26755.17,
+        "Risques 7": 1991.21
+      },
+      "liabilities": {
+        "Dettes LT": 70624.78,
+        "Dettes CT": 1007.07
+      }
+    },
+    {
+      "closing_date": "2023-03-18",
+      "assets": {
+        "Liquidités": 2245.63,
+        "Risques 1-2": 14000,
+        "Risques 3-4-5": 4400,
+        "Immobilier": 77000,
+        "Risques 6": 27222,
+        "Risques 7": 2415.81
+      },
+      "liabilities": {
+        "Dettes LT": 70330.17,
+        "Dettes CT": 11116.86
+      }
+    },
+    {
+      "closing_date": "2023-04-18",
+      "assets": {
+        "Liquidités": 2155.96,
+        "Risques 1-2": 10000,
+        "Risques 3-4-5": 9500,
+        "Immobilier": 77000,
+        "Risques 6": 28999.49,
+        "Risques 7": 2605.7
+      },
+      "liabilities": {
+        "Dettes LT": 70035.27,
+        "Dettes CT": 10301.11
+      }
+    },
+    {
+      "closing_date": "2023-05-18",
+      "assets": {
+        "Liquidités": 1379.57,
+        "Risques 1-2": 9000,
+        "Risques 3-4-5": 10600,
+        "Immobilier": 77000,
+        "Risques 6": 30152.21,
+        "Risques 7": 2594.13
+      },
+      "liabilities": {
+        "Dettes LT": 69740.08,
+        "Dettes CT": 9643.06
+      }
+    },
+    {
+      "closing_date": "2023-06-19",
+      "assets": {
+        "Liquidités": 1843.48,
+        "Risques 1-2": 6000,
+        "Risques 3-4-5": 12800,
+        "Immobilier": 77000,
+        "Risques 6": 33010.71,
+        "Risques 7": 2527.67
+      },
+      "liabilities": {
+        "Dettes LT": 69444.59,
+        "Dettes CT": 8818.74
+      }
+    },
+    {
+      "closing_date": "2023-07-18",
+      "assets": {
+        "Liquidités": 1988.96,
+        "Risques 1-2": 6000,
+        "Risques 3-4-5": 13101.19,
+        "Immobilier": 77000,
+        "Risques 6": 32613.42,
+        "Risques 7": 2714.61
+      },
+      "liabilities": {
+        "Dettes LT": 69148.8,
+        "Dettes CT": 8000.91
+      }
+    },
+    {
+      "closing_date": "2023-08-18",
+      "assets": {
+        "Liquidités": 3066.32,
+        "Risques 1-2": 5500,
+        "Risques 3-4-5": 13700,
+        "Immobilier": 77000,
+        "Risques 6": 33075,
+        "Risques 7": 2449.38
+      },
+      "liabilities": {
+        "Dettes LT": 68852.72,
+        "Dettes CT": 6875.11
+      }
+    },
+    {
+      "closing_date": "2023-09-18",
+      "assets": {
+        "Liquidités": 2382.97,
+        "Risques 1-2": 5500,
+        "Risques 3-4-5": 14300,
+        "Immobilier": 77000,
+        "Risques 6": 34073.26,
+        "Risques 7": 2472.02
+      },
+      "liabilities": {
+        "Dettes LT": 68556.34,
+        "Dettes CT": 6246.14
+      }
+    },
+    {
+      "closing_date": "2023-10-18",
+      "assets": {
+        "Liquidités": 3913.76,
+        "Risques 1-2": 4000,
+        "Risques 3-4-5": 14850.35,
+        "Immobilier": 77000,
+        "Risques 6": 33491.02,
+        "Risques 7": 2543.6
+      },
+      "liabilities": {
+        "Dettes LT": 68259.67,
+        "Dettes CT": 5387.72
+      }
+    },
+    {
+      "closing_date": "2023-11-18",
+      "assets": {
+        "Liquidités": 4095.71,
+        "Risques 1-2": 4000,
+        "Risques 3-4-5": 15174.48,
+        "Immobilier": 77000,
+        "Risques 6": 33473.3,
+        "Risques 7": 3125.36
+      },
+      "liabilities": {
+        "Dettes LT": 67962.62,
+        "Dettes CT": 4516.33
+      }
+    },
+    {
+      "closing_date": "2023-12-18",
+      "assets": {
+        "Liquidités": 2319.64,
+        "Risques 1-2": 4000,
+        "Risques 3-4-5": 15548.39,
+        "Immobilier": 77000,
+        "Risques 6": 34282.77,
+        "Risques 7": 3542.93
+      },
+      "liabilities": {
+        "Dettes LT": 67665.43,
+        "Dettes CT": 3657.78
+      }
+    },
+    {
+      "closing_date": "2024-01-18",
+      "assets": {
+        "Liquidités": 2377.62,
+        "Risques 1-2": 4211.56,
+        "Risques 3-4-5": 16379.15,
+        "Immobilier": 77000,
+        "Risques 6": 33663.8,
+        "Risques 7": 2290.62
+      },
+      "liabilities": {
+        "Dettes LT": 67367.87,
+        "Dettes CT": 2789.18
+      }
+    },
+    {
+      "closing_date": "2024-02-18",
+      "assets": {
+        "Liquidités": 2387.45,
+        "Risques 1-2": 5001,
+        "Risques 3-4-5": 16162.59,
+        "Immobilier": 77000,
+        "Risques 6": 35823.49,
+        "Risques 7": 1557.77
+      },
+      "liabilities": {
+        "Dettes LT": 67070.01,
+        "Dettes CT": 1960.56
+      }
+    },
+    {
+      "closing_date": "2024-03-18",
+      "assets": {
+        "Liquidités": 1701.31,
+        "Risques 1-2": 9000,
+        "Risques 3-4-5": 15328.32,
+        "Immobilier": 77000,
+        "Risques 6": 36397.39,
+        "Risques 7": 503.39
+      },
+      "liabilities": {
+        "Dettes LT": 66771.85,
+        "Dettes CT": 957
+      }
+    },
+    {
+      "closing_date": "2024-04-18",
+      "assets": {
+        "Liquidités": 1378.85,
+        "Risques 1-2": 12010,
+        "Risques 3-4-5": 14830.63,
+        "Immobilier": 77000,
+        "Risques 6": 36288.12,
+        "Risques 7": 350.7
+      },
+      "liabilities": {
+        "Dettes LT": 66473.39,
+        "Dettes CT": 756.87
+      }
+    },
+    {
+      "closing_date": "2024-05-18",
+      "assets": {
+        "Liquidités": 2174.77,
+        "Risques 1-2": 14010,
+        "Risques 3-4-5": 14854.33,
+        "Immobilier": 77000,
+        "Risques 6": 38796.68,
+        "Risques 7": 374.43
+      },
+      "liabilities": {
+        "Dettes LT": 66174.63,
+        "Dettes CT": 849.66
+      }
+    },
+    {
+      "closing_date": "2024-06-18",
+      "assets": {
+        "Liquidités": 1245.7,
+        "Risques 1-2": 19510,
+        "Risques 3-4-5": 13803.44,
+        "Immobilier": 77000,
+        "Risques 6": 39005.92,
+        "Risques 7": 318.83
+      },
+      "liabilities": {
+        "Dettes LT": 65875.57,
+        "Dettes CT": 1115.32
+      }
+    },
+    {
+      "closing_date": "2024-07-18",
+      "assets": {
+        "Liquidités": 1577.43,
+        "Risques 1-2": 23950,
+        "Risques 3-4-5": 13805.58,
+        "Immobilier": 77000,
+        "Risques 6": 37436.06,
+        "Risques 7": 354.5
+      },
+      "liabilities": {
+        "Dettes LT": 65576.22,
+        "Dettes CT": 1620
+      }
+    },
+    {
+      "closing_date": "2024-08-18",
+      "assets": {
+        "Liquidités": 1371.63,
+        "Risques 1-2": 25450,
+        "Risques 3-4-5": 14932.8,
+        "Immobilier": 77000,
+        "Risques 6": 37143.88,
+        "Risques 7": 289.2
+      },
+      "liabilities": {
+        "Dettes LT": 65276.57,
+        "Dettes CT": 1806.44
+      }
+    },
+    {
+      "closing_date": "2024-09-18",
+      "assets": {
+        "Liquidités": 2458.81,
+        "Risques 1-2": 26950,
+        "Risques 3-4-5": 14956.76,
+        "Immobilier": 77000,
+        "Risques 6": 37325.44,
+        "Risques 7": 285.2
+      },
+      "liabilities": {
+        "Dettes LT": 64976.62,
+        "Dettes CT": 1959.44
+      }
+    },
+    {
+      "closing_date": "2024-10-18",
+      "assets": {
+        "Liquidités": 515.63,
+        "Risques 1-2": 29950,
+        "Risques 3-4-5": 15036.5,
+        "Immobilier": 77000,
+        "Risques 6": 39925.64,
+        "Risques 7": 292.98
+      },
+      "liabilities": {
+        "Dettes LT": 64676.37,
+        "Dettes CT": 2668.46
+      }
+    },
+    {
+      "closing_date": "2024-11-18",
+      "assets": {
+        "Liquidités": 1880,
+        "Risques 1-2": 31450,
+        "Risques 3-4-5": 15101.97,
+        "Immobilier": 77000,
+        "Risques 6": 39756.09,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 64375.82,
+        "Dettes CT": 3313.11
+      }
+    },
+    {
+      "closing_date": "2024-12-18",
+      "assets": {
+        "Liquidités": 3099.82,
+        "Risques 1-2": 12950,
+        "Risques 3-4-5": 15180.2,
+        "Immobilier": 139500,
+        "Risques 6": 40782.3,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 119810.97,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2025-01-18",
+      "assets": {
+        "Liquidités": 527.48,
+        "Risques 1-2": 20000,
+        "Risques 3-4-5": 14630.28,
+        "Immobilier": 139500,
+        "Risques 6": 40946.25,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 119509.81,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2025-02-18",
+      "assets": {
+        "Liquidités": 779.02,
+        "Risques 1-2": 22000,
+        "Risques 3-4-5": 14630.28,
+        "Immobilier": 139500,
+        "Risques 6": 39561.23,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 119085.88,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2025-03-18",
+      "assets": {
+        "Liquidités": 724.41,
+        "Risques 1-2": 20500,
+        "Risques 3-4-5": 14609.37,
+        "Immobilier": 139500,
+        "Risques 6": 37711.56,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 118661.33,
+        "Dettes CT": 1145.76
+      }
+    },
+    {
+      "closing_date": "2025-04-18",
+      "assets": {
+        "Liquidités": 462.32,
+        "Risques 1-2": 22500,
+        "Risques 3-4-5": 14242.88,
+        "Immobilier": 139500,
+        "Risques 6": 35129.28,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 118112.77,
+        "Dettes CT": 1120
+      }
+    },
+    {
+      "closing_date": "2025-05-18",
+      "assets": {
+        "Liquidités": 2279.7,
+        "Risques 1-2": 25000,
+        "Risques 3-4-5": 13156.16,
+        "Immobilier": 139500,
+        "Risques 6": 38248.57,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 117686.7,
+        "Dettes CT": 1295.17
+      }
+    },
+    {
+      "closing_date": "2025-06-18",
+      "assets": {
+        "Liquidités": 4256.48,
+        "Risques 1-2": 25000,
+        "Risques 3-4-5": 12269.29,
+        "Immobilier": 139500,
+        "Risques 6": 37857.5,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 117260.01,
+        "Dettes CT": 4780.11
+      }
+    },
+    {
+      "closing_date": "2025-07-18",
+      "assets": {
+        "Liquidités": 2090.31,
+        "Risques 1-2": 16000,
+        "Risques 3-4-5": 11391.09,
+        "Immobilier": 219500,
+        "Risques 6": 39022.02,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 195451.7,
+        "Dettes CT": 4957.85
+      }
+    },
+    {
+      "closing_date": "2025-08-18",
+      "assets": {
+        "Liquidités": 2704.17,
+        "Risques 1-2": 3510,
+        "Risques 3-4-5": 11424.01,
+        "Immobilier": 266000,
+        "Risques 6": 39409.81,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 242641.96,
+        "Dettes CT": 3296.87
+      }
+    },
+    {
+      "closing_date": "2025-09-18",
+      "assets": {
+        "Liquidités": 4074.12,
+        "Risques 1-2": 4510,
+        "Risques 3-4-5": 10750.65,
+        "Immobilier": 266000,
+        "Risques 6": 40592.33,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 241920.23,
+        "Dettes CT": 4261.14
+      }
+    },
+    {
+      "closing_date": "2025-10-18",
+      "assets": {
+        "Liquidités": 3484.64,
+        "Risques 1-2": 8878.55,
+        "Risques 3-4-5": 10539.31,
+        "Immobilier": 266000,
+        "Risques 6": 41005.74,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 241197.13,
+        "Dettes CT": 5355.99
+      }
+    },
+    {
+      "closing_date": "2025-11-18",
+      "assets": {
+        "Liquidités": 2734.52,
+        "Risques 1-2": 9836.56,
+        "Risques 3-4-5": 10451.1,
+        "Immobilier": 266000,
+        "Risques 6": 41572.87,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 240472.65,
+        "Dettes CT": 5082.88
+      }
+    },
+    {
+      "closing_date": "2025-12-18",
+      "assets": {
+        "Liquidités": 3289.34,
+        "Risques 1-2": 12000,
+        "Risques 3-4-5": 10345.29,
+        "Immobilier": 266000,
+        "Risques 6": 40982.78,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 239746.8,
+        "Dettes CT": 4452.68
+      }
+    },
+    {
+      "closing_date": "2026-01-18",
+      "assets": {
+        "Liquidités": 3289.17,
+        "Risques 1-2": 14218.5,
+        "Risques 3-4-5": 10367.21,
+        "Immobilier": 266000,
+        "Risques 6": 43479.62,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 239019.54,
+        "Dettes CT": 3578.77
+      }
+    },
+    {
+      "closing_date": "2026-02-18",
+      "assets": {
+        "Liquidités": 3231.6,
+        "Risques 1-2": 15218.5,
+        "Risques 3-4-5": 10293.45,
+        "Immobilier": 266000,
+        "Risques 6": 43795.79,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 238290.9,
+        "Dettes CT": 3390
+      }
+    },
+    {
+      "closing_date": "2026-03-18",
+      "assets": {
+        "Liquidités": 2293.49,
+        "Risques 1-2": 16718.5,
+        "Risques 3-4-5": 10351.97,
+        "Immobilier": 266000,
+        "Risques 6": 45410.56,
+        "Risques 7": 0
+      },
+      "liabilities": {
+        "Dettes LT": 237560.85,
+        "Dettes CT": 3585.91
+      }
+    }
+  ]
+}
