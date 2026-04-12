@@ -1,0 +1,27 @@
+<table class="table">
+  <thead>
+    <tr>
+      <th><%= t("views.balance_sheets.index.closing_date", default: "Date") %></th>
+      <th><%= t("views.balance_sheets.index.total_assets") %></th>
+      <th><%= t("views.balance_sheets.index.total_liabilities") %></th>
+      <th><%= t("views.balance_sheets.index.equity") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% balance_sheets.each do |bs| %>
+      <tr>
+        <td><%= l(bs.closing_date, format: :long) %></td>
+        <td class="text-success"><%= number_to_currency(bs.total_assets) %></td>
+        <td class="text-danger"><%= number_to_currency(bs.total_liabilities) %></td>
+        <td class="<%= bs.equity >= 0 ? 'text-success' : 'text-danger' %>"><%= number_to_currency(bs.equity) %></td>
+        <td class="table-actions">
+          <%= link_to t("views.balance_sheets.index.view"), balance_sheet_path(bs), class: "btn btn-outline btn-sm" %>
+          <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(bs), class: "btn btn-primary btn-sm" %>
+          <%= button_to "🗑️", balance_sheet_path(bs), method: :delete, class: "btn btn-sm btn-danger",
+              form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

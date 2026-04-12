@@ -275,10 +275,14 @@ body {
 .table-actions {
   text-align: right;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
 }
 
 .table-actions .btn {
-  margin-left: 0.25rem;
+  margin-left: 0;
 }
 
 .table-total td {

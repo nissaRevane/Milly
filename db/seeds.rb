@@ -10,7 +10,6 @@ end
 
 puts "User created: #{user.email}"
 
-# Create assets
 assets_data = [
   { name: "Résidence principale", risk_level: :low },
   { name: "Livret A", risk_level: :low },
@@ -29,7 +28,6 @@ end
 
 puts "#{assets.count} assets created"
 
-# Create liabilities
 liabilities_data = [
   { name: "Prêt immobilier résidence principale", risk_level: :low },
   { name: "Prêt auto", risk_level: :low },
@@ -45,11 +43,9 @@ end
 
 puts "#{liabilities.count} liabilities created"
 
-# Create a balance sheet
 bs = BalanceSheet.find_or_create_by!(user: user, closing_date: Date.new(2025, 12, 31))
 puts "Balance sheet created: #{bs.closing_date}"
 
-# Add asset lines
 asset_values = {
   "Résidence principale" => 350_000,
   "Livret A" => 22_950,
@@ -69,7 +65,6 @@ end
 
 puts "Balance sheet assets added"
 
-# Add liability lines
 liability_values = {
   "Prêt immobilier résidence principale" => 220_000,
   "Prêt auto" => 8_500,

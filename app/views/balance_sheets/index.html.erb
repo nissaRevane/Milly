@@ -4,37 +4,7 @@
 </div>
 
 <% if @balance_sheets.any? %>
-  <div class="cards-grid">
-    <% @balance_sheets.each do |bs| %>
-      <div class="card">
-        <div class="card-header">
-          <h3><%= l(bs.closing_date, format: :long) %></h3>
-        </div>
-        <div class="card-body">
-          <div class="card-stat">
-            <span class="card-stat-label"><%= t("views.balance_sheets.index.total_assets") %></span>
-            <span class="card-stat-value text-success"><%= number_to_currency(bs.total_assets) %></span>
-          </div>
-          <div class="card-stat">
-            <span class="card-stat-label"><%= t("views.balance_sheets.index.total_liabilities") %></span>
-            <span class="card-stat-value text-danger"><%= number_to_currency(bs.total_liabilities) %></span>
-          </div>
-          <div class="card-stat card-stat-highlight">
-            <span class="card-stat-label"><%= t("views.balance_sheets.index.equity") %></span>
-            <span class="card-stat-value <%= bs.equity >= 0 ? 'text-success' : 'text-danger' %>">
-              <%= number_to_currency(bs.equity) %>
-            </span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <%= link_to t("views.balance_sheets.index.view"), balance_sheet_path(bs), class: "btn btn-outline btn-sm" %>
-          <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(bs), class: "btn btn-primary btn-sm" %>
-          <%= button_to "🗑️", balance_sheet_path(bs), method: :delete, class: "btn btn-sm btn-danger",
-              form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
-        </div>
-      </div>
-    <% end %>
-  </div>
+  <%= render "balance_sheets/table", balance_sheets: @balance_sheets %>
 <% else %>
   <p class="empty-state"><%= t("views.balance_sheets.index.empty") %></p>
 <% end %>
