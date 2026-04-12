@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: milly
+      POSTGRES_PASSWORD: milly_password
+      POSTGRES_DB: milly_development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U milly -d milly_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && rails server -b 0.0.0.0"
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://milly:milly_password@db:5432/milly_development
+      RAILS_ENV: development
+      SECRET_KEY_BASE: dev_secret_key_base_change_in_production
+
+volumes:
+  postgres_data:
+  bundle_cache:

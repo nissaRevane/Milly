@@ -1,0 +1,26 @@
+<nav class="navbar">
+  <div class="navbar-brand">
+    <% if user_signed_in? %>
+      <%= link_to "Milly", authenticated_root_path, class: "navbar-logo" %>
+    <% else %>
+      <%= link_to "Milly", root_path, class: "navbar-logo" %>
+    <% end %>
+  </div>
+
+  <% if user_signed_in? %>
+    <div class="navbar-links">
+      <%= link_to t("views.nav.assets"), assets_path, class: "nav-link" %>
+      <%= link_to t("views.nav.liabilities"), liabilities_path, class: "nav-link" %>
+      <%= link_to t("views.nav.balance_sheets"), balance_sheets_path, class: "nav-link" %>
+    </div>
+    <div class="navbar-user">
+      <span class="nav-user-name"><%= current_user.full_name %></span>
+      <%= button_to t("views.nav.sign_out"), destroy_user_session_path, method: :delete, class: "btn btn-outline btn-sm" %>
+    </div>
+  <% else %>
+    <div class="navbar-links">
+      <%= link_to t("views.nav.sign_in"), new_user_session_path, class: "btn btn-outline btn-sm" %>
+      <%= link_to t("views.nav.sign_up"), new_user_registration_path, class: "btn btn-primary btn-sm" %>
+    </div>
+  <% end %>
+</nav>

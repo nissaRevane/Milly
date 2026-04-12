@@ -1,0 +1,115 @@
+<div class="page-header">
+  <h1><%= t("views.balance_sheets.show.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+  <div class="page-header-actions">
+    <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(@balance_sheet), class: "btn btn-primary" %>
+    <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
+  </div>
+</div>
+
+<div class="balance-sheet-detail">
+  <!-- Assets Section -->
+  <div class="section">
+    <div class="section-header">
+      <h2><%= t("views.balance_sheets.show.assets") %></h2>
+      <%= link_to t("views.balance_sheets.show.add_asset"), new_balance_sheet_balance_sheet_asset_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
+    </div>
+
+    <% if @balance_sheet_assets.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th><%= Asset.human_attribute_name(:name) %></th>
+            <th><%= Asset.human_attribute_name(:risk_level) %></th>
+            <th class="text-right"><%= t("views.balance_sheets.show.value") %></th>
+            <th class="table-actions"><%= t("views.balance_sheets.show.actions") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @balance_sheet_assets.each do |bsa| %>
+            <tr>
+              <td><%= bsa.asset.name %></td>
+              <td>
+                <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>">
+                  <%= risk_level_label(bsa.asset.risk_level) %>
+                </span>
+              </td>
+              <td class="text-right"><%= number_to_currency(bsa.value) %></td>
+              <td class="table-actions">
+                <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), class: "btn btn-sm btn-outline" %>
+                <%= button_to t("views.balance_sheets.show.delete"), balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",
+                    form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="table-total">
+            <td colspan="2"><strong><%= t("views.balance_sheets.show.total_assets") %></strong></td>
+            <td class="text-right"><strong><%= number_to_currency(@balance_sheet.total_assets) %></strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% else %>
+      <p class="empty-state">Aucun actif dans ce bilan.</p>
+    <% end %>
+  </div>
+
+  <!-- Liabilities Section -->
+  <div class="section">
+    <div class="section-header">
+      <h2><%= t("views.balance_sheets.show.liabilities") %></h2>
+      <%= link_to t("views.balance_sheets.show.add_liability"), new_balance_sheet_balance_sheet_liability_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
+    </div>
+
+    <% if @balance_sheet_liabilities.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th><%= Liability.human_attribute_name(:name) %></th>
+            <th><%= Liability.human_attribute_name(:risk_level) %></th>
+            <th class="text-right"><%= t("views.balance_sheets.show.remaining_capital") %></th>
+            <th class="table-actions"><%= t("views.balance_sheets.show.actions") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @balance_sheet_liabilities.each do |bsl| %>
+            <tr>
+              <td><%= bsl.liability.name %></td>
+              <td>
+                <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>">
+                  <%= risk_level_label(bsl.liability.risk_level) %>
+                </span>
+              </td>
+              <td class="text-right"><%= number_to_currency(bsl.remaining_capital) %></td>
+              <td class="table-actions">
+                <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), class: "btn btn-sm btn-outline" %>
+                <%= button_to t("views.balance_sheets.show.delete"), balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), method: :delete, class: "btn btn-sm btn-danger",
+                    form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr class="table-total">
+            <td colspan="2"><strong><%= t("views.balance_sheets.show.total_liabilities") %></strong></td>
+            <td class="text-right"><strong><%= number_to_currency(@balance_sheet.total_liabilities) %></strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% else %>
+      <p class="empty-state">Aucun passif dans ce bilan.</p>
+    <% end %>
+  </div>
+
+  <!-- Equity -->
+  <div class="equity-box <%= @balance_sheet.equity >= 0 ? 'equity-positive' : 'equity-negative' %>">
+    <span class="equity-label"><%= t("views.balance_sheets.show.equity") %></span>
+    <span class="equity-value"><%= number_to_currency(@balance_sheet.equity) %></span>
+  </div>
+</div>
+
+<div class="form-actions">
+  <%= link_to t("views.balance_sheets.show.back"), balance_sheets_path, class: "btn btn-outline" %>
+</div>

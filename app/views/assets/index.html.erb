@@ -1,0 +1,35 @@
+<div class="page-header">
+  <h1><%= t("views.assets.index.title") %></h1>
+  <%= link_to t("views.assets.index.new"), new_asset_path, class: "btn btn-primary" %>
+</div>
+
+<% if @assets.any? %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th><%= t("views.assets.form.name") %></th>
+        <th><%= t("views.assets.form.risk_level") %></th>
+        <th class="table-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @assets.each do |asset| %>
+        <tr>
+          <td><%= asset.name %></td>
+          <td>
+            <span class="badge <%= risk_level_badge_class(asset.risk_level) %>">
+              <%= risk_level_label(asset.risk_level) %>
+            </span>
+          </td>
+          <td class="table-actions">
+            <%= link_to "✏️", edit_asset_path(asset), class: "btn btn-sm btn-outline" %>
+            <%= button_to "🗑️", asset_path(asset), method: :delete, class: "btn btn-sm btn-danger",
+                form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="empty-state"><%= t("views.assets.index.empty") %></p>
+<% end %>

@@ -1,16 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
   <head>
-    <title>Milly</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milly - Bilan Patrimonial</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-
   <body>
-    <%= yield %>
+    <%= render "shared/navbar" %>
+
+    <main class="container">
+      <% if notice.present? %>
+        <div class="alert alert-success" data-controller="alert" data-alert-target="container">
+          <%= notice %>
+          <button class="alert-close" data-action="click->alert#dismiss">&times;</button>
+        </div>
+      <% end %>
+
+      <% if alert.present? %>
+        <div class="alert alert-danger" data-controller="alert" data-alert-target="container">
+          <%= alert %>
+          <button class="alert-close" data-action="click->alert#dismiss">&times;</button>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
   </body>
 </html>

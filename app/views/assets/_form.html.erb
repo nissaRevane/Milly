@@ -1,0 +1,26 @@
+<%= form_with(model: asset, class: "form") do |f| %>
+  <% if asset.errors.any? %>
+    <div class="alert alert-danger">
+      <ul>
+        <% asset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name, t("views.assets.form.name") %>
+    <%= f.text_field :name, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :risk_level, t("views.assets.form.risk_level") %>
+    <%= f.select :risk_level, risk_level_options, {}, class: "form-control" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Annuler", assets_path, class: "btn btn-outline" %>
+  </div>
+<% end %>

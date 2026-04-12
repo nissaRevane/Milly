@@ -1,0 +1,7 @@
+<div class="hero">
+  <h1><%= t("views.pages.home.title") %></h1>
+  <p class="hero-subtitle"><%= t("views.pages.home.subtitle") %></p>
+  <% unless user_signed_in? %>
+    <%= link_to t("views.pages.home.cta"), new_user_registration_path, class: "btn btn-primary btn-lg" %>
+  <% end %>
+</div>

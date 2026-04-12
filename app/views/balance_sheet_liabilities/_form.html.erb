@@ -1,0 +1,26 @@
+<%= form_with(model: [@balance_sheet, balance_sheet_liability], class: "form") do |f| %>
+  <% if balance_sheet_liability.errors.any? %>
+    <div class="alert alert-danger">
+      <ul>
+        <% balance_sheet_liability.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :liability_id, t("views.balance_sheet_liabilities.form.liability") %>
+    <%= f.collection_select :liability_id, current_user.liabilities.order(:name), :id, :name, { prompt: "-- Sélectionner un passif --" }, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :remaining_capital, t("views.balance_sheet_liabilities.form.remaining_capital") %>
+    <%= f.number_field :remaining_capital, step: 0.01, min: 0, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Annuler", balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
+  </div>
+<% end %>

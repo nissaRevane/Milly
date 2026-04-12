@@ -1,0 +1,193 @@
+fr:
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      long: "%d %B %Y"
+      short: "%d %b"
+    day_names: [dimanche, lundi, mardi, mercredi, jeudi, vendredi, samedi]
+    abbr_day_names: [dim, lun, mar, mer, jeu, ven, sam]
+    month_names: [~, janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
+    abbr_month_names: [~, jan., fév., mar., avr., mai, juin, juil., août, sept., oct., nov., déc.]
+  activerecord:
+    models:
+      user: Utilisateur
+      asset: Actif
+      liability: Passif
+      balance_sheet: Bilan
+      balance_sheet_asset: Ligne d'actif
+      balance_sheet_liability: Ligne de passif
+    attributes:
+      user:
+        firstname: Prénom
+        lastname: Nom
+        email: Email
+        password: Mot de passe
+        password_confirmation: Confirmation du mot de passe
+        remember_me: Se souvenir de moi
+      asset:
+        name: Nom
+        risk_level: Niveau de risque
+      liability:
+        name: Nom
+        risk_level: Niveau de risque
+      balance_sheet:
+        closing_date: Date de clôture
+      balance_sheet_asset:
+        value: Valeur
+        asset: Actif
+      balance_sheet_liability:
+        remaining_capital: Capital restant dû
+        liability: Passif
+    errors:
+      models:
+        user:
+          attributes:
+            email:
+              taken: est déjà utilisé
+  devise:
+    sessions:
+      new:
+        sign_in: Se connecter
+      signed_in: Connexion réussie.
+      signed_out: Déconnexion réussie.
+    registrations:
+      new:
+        sign_up: Créer un compte
+      signed_up: Inscription réussie.
+    failure:
+      invalid: Email ou mot de passe invalide.
+      unauthenticated: Vous devez vous connecter pour accéder à cette page.
+  helpers:
+    submit:
+      create: Créer
+      update: Mettre à jour
+      submit: Enregistrer
+  views:
+    nav:
+      assets: Actifs
+      liabilities: Passifs
+      balance_sheets: Bilans
+      sign_out: Déconnexion
+      sign_in: Connexion
+      sign_up: Inscription
+    assets:
+      index:
+        title: Mes Actifs
+        new: Nouvel actif
+        empty: Aucun actif enregistré.
+      form:
+        name: Nom de l'actif
+        risk_level: Niveau de risque
+      edit:
+        title: Modifier l'actif
+      new:
+        title: Nouvel actif
+    liabilities:
+      index:
+        title: Mes Passifs
+        new: Nouveau passif
+        empty: Aucun passif enregistré.
+      form:
+        name: Nom du passif
+        risk_level: Niveau de risque
+      edit:
+        title: Modifier le passif
+      new:
+        title: Nouveau passif
+    balance_sheets:
+      index:
+        title: Mes Bilans
+        new: Nouveau bilan
+        empty: Aucun bilan enregistré.
+        closing_date: "Date de clôture :"
+        total_assets: "Total actifs :"
+        total_liabilities: "Total passifs :"
+        equity: "Fonds propres :"
+        view: Voir
+        summary: Synthèse
+      form:
+        closing_date: Date de clôture
+      new:
+        title: Nouveau bilan
+      edit:
+        title: Modifier le bilan
+      show:
+        title: "Bilan au %{date}"
+        assets: Actifs
+        liabilities: Passifs
+        add_asset: Ajouter un actif
+        add_liability: Ajouter un passif
+        total_assets: Total des actifs
+        total_liabilities: Total des passifs
+        equity: Fonds propres
+        value: Valeur
+        remaining_capital: Capital restant dû
+        actions: Actions
+        edit: Modifier
+        delete: Supprimer
+        confirm_delete: Êtes-vous sûr ?
+        back: Retour aux bilans
+      summary:
+        title: "Synthèse du bilan au %{date}"
+        assets_column: Actifs
+        liabilities_column: Passifs
+        risk_level: "Risque %{level}"
+        total_assets: Total Actifs
+        total_liabilities: Total Passifs
+        equity: Fonds Propres
+        back: Retour au bilan
+    balance_sheet_assets:
+      form:
+        asset: Actif
+        value: Valeur
+      new:
+        title: Ajouter un actif au bilan
+      edit:
+        title: Modifier la ligne d'actif
+    balance_sheet_liabilities:
+      form:
+        liability: Passif
+        remaining_capital: Capital restant dû
+      new:
+        title: Ajouter un passif au bilan
+      edit:
+        title: Modifier la ligne de passif
+    pages:
+      home:
+        title: Bienvenue sur Milly
+        subtitle: Votre bilan patrimonial personnel
+        cta: Commencer
+    shared:
+      risk_levels:
+        low: Faible
+        medium: Moyen
+        high: Élevé
+  flash:
+    assets:
+      created: Actif créé avec succès.
+      updated: Actif mis à jour avec succès.
+      destroyed: Actif supprimé avec succès.
+    liabilities:
+      created: Passif créé avec succès.
+      updated: Passif mis à jour avec succès.
+      destroyed: Passif supprimé avec succès.
+    balance_sheets:
+      created: Bilan créé avec succès.
+      updated: Bilan mis à jour avec succès.
+      destroyed: Bilan supprimé avec succès.
+    balance_sheet_assets:
+      created: Ligne d'actif ajoutée avec succès.
+      updated: Ligne d'actif mise à jour avec succès.
+      destroyed: Ligne d'actif supprimée avec succès.
+    balance_sheet_liabilities:
+      created: Ligne de passif ajoutée avec succès.
+      updated: Ligne de passif mise à jour avec succès.
+      destroyed: Ligne de passif supprimée avec succès.
+  number:
+    currency:
+      format:
+        unit: "€"
+        delimiter: " "
+        separator: ","
+        precision: 2
+        format: "%n %u"

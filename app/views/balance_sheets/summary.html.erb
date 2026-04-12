@@ -1,0 +1,89 @@
+<div class="page-header">
+  <h1><%= t("views.balance_sheets.summary.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+</div>
+
+<div class="summary-grid">
+  <!-- Assets Column -->
+  <div class="summary-column summary-column-assets">
+    <h2 class="summary-column-title"><%= t("views.balance_sheets.summary.assets_column") %></h2>
+
+    <% %w[low medium high].each do |level| %>
+      <% items = @assets_by_risk.fetch(level, []) %>
+      <% next if items.empty? %>
+
+      <div class="summary-risk-group">
+        <h3 class="summary-risk-title">
+          <span class="badge <%= risk_level_badge_class(level) %>"><%= t("views.balance_sheets.summary.risk_level", level: risk_level_label(level)) %></span>
+        </h3>
+        <table class="table table-compact">
+          <tbody>
+            <% items.each do |bsa| %>
+              <tr>
+                <td><%= bsa.asset.name %></td>
+                <td class="text-right"><%= number_to_currency(bsa.value) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr class="table-subtotal">
+              <td><strong>Sous-total</strong></td>
+              <td class="text-right"><strong><%= number_to_currency(items.sum(&:value)) %></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% end %>
+
+    <div class="summary-total summary-total-assets">
+      <span><%= t("views.balance_sheets.summary.total_assets") %></span>
+      <span><%= number_to_currency(@balance_sheet.total_assets) %></span>
+    </div>
+  </div>
+
+  <!-- Liabilities Column -->
+  <div class="summary-column summary-column-liabilities">
+    <h2 class="summary-column-title"><%= t("views.balance_sheets.summary.liabilities_column") %></h2>
+
+    <% %w[low medium high].each do |level| %>
+      <% items = @liabilities_by_risk.fetch(level, []) %>
+      <% next if items.empty? %>
+
+      <div class="summary-risk-group">
+        <h3 class="summary-risk-title">
+          <span class="badge <%= risk_level_badge_class(level) %>"><%= t("views.balance_sheets.summary.risk_level", level: risk_level_label(level)) %></span>
+        </h3>
+        <table class="table table-compact">
+          <tbody>
+            <% items.each do |bsl| %>
+              <tr>
+                <td><%= bsl.liability.name %></td>
+                <td class="text-right"><%= number_to_currency(bsl.remaining_capital) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr class="table-subtotal">
+              <td><strong>Sous-total</strong></td>
+              <td class="text-right"><strong><%= number_to_currency(items.sum(&:remaining_capital)) %></strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    <% end %>
+
+    <div class="summary-total summary-total-liabilities">
+      <span><%= t("views.balance_sheets.summary.total_liabilities") %></span>
+      <span><%= number_to_currency(@balance_sheet.total_liabilities) %></span>
+    </div>
+  </div>
+</div>
+
+<!-- Equity Summary -->
+<div class="equity-box <%= @balance_sheet.equity >= 0 ? 'equity-positive' : 'equity-negative' %>">
+  <span class="equity-label"><%= t("views.balance_sheets.summary.equity") %></span>
+  <span class="equity-value"><%= number_to_currency(@balance_sheet.equity) %></span>
+</div>
+
+<div class="form-actions">
+  <%= link_to t("views.balance_sheets.summary.back"), balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
+</div>

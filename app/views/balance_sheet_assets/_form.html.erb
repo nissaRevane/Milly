@@ -1,0 +1,26 @@
+<%= form_with(model: [@balance_sheet, balance_sheet_asset], class: "form") do |f| %>
+  <% if balance_sheet_asset.errors.any? %>
+    <div class="alert alert-danger">
+      <ul>
+        <% balance_sheet_asset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :asset_id, t("views.balance_sheet_assets.form.asset") %>
+    <%= f.collection_select :asset_id, current_user.assets.order(:name), :id, :name, { prompt: "-- Sélectionner un actif --" }, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :value, t("views.balance_sheet_assets.form.value") %>
+    <%= f.number_field :value, step: 0.01, min: 0, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Annuler", balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
+  </div>
+<% end %>
