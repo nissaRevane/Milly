@@ -9,3 +9,4 @@ config/credentials/*.key
 public/assets
 node_modules/
 .env
+.memorai
