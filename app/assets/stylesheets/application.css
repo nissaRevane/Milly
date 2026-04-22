@@ -566,6 +566,47 @@ body {
   border: 2px dashed var(--color-border);
 }
 
+/* Balance Sheets Accordion */
+.balance-sheets-accordion {
+  display: grid;
+  gap: 1rem;
+}
+
+.accordion-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-year {
+  font-size: 1.125rem;
+}
+
+.accordion-content {
+  padding: 0 1rem 1rem;
+}
+
+.accordion-content .table {
+  margin-bottom: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .summary-grid {
@@ -585,5 +626,18 @@ body {
 
   .cards-grid {
     grid-template-columns: 1fr;
+  }
+
+  .accordion-summary {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .accordion-year {
+    font-size: 1rem;
+  }
+
+  .accordion-content {
+    padding: 0 0.5rem 0.5rem;
+    overflow-x: auto;
   }
 }

@@ -4,7 +4,23 @@
 </div>
 
 <% if @balance_sheets.any? %>
-  <%= render "balance_sheets/table", balance_sheets: @balance_sheets %>
+  <% grouped_balance_sheets = @balance_sheets.group_by { |balance_sheet| balance_sheet.closing_date.year } %>
+  <% expanded_year = grouped_balance_sheets.keys.first %>
+
+  <div class="balance-sheets-accordion">
+    <% grouped_balance_sheets.each do |year, yearly_balance_sheets| %>
+      <details class="accordion-item" <%= "open" if year == expanded_year %>>
+        <summary class="accordion-summary">
+          <span class="accordion-year"><%= year %></span>
+          <span class="badge badge-secondary"><%= yearly_balance_sheets.size %></span>
+        </summary>
+
+        <div class="accordion-content">
+          <%= render "balance_sheets/table", balance_sheets: yearly_balance_sheets %>
+        </div>
+      </details>
+    <% end %>
+  </div>
 <% else %>
   <p class="empty-state"><%= t("views.balance_sheets.index.empty") %></p>
 <% end %>
