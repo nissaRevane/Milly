@@ -10,4 +10,9 @@ Rails.application.configure do
   config.active_support.disallowed_deprecations = :raise
   config.active_record.migration_error = :page_load
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+
+  # Request specs post without a CSRF token, and specs assert on raised
+  # exceptions rather than on the rendered error pages.
+  config.action_controller.allow_forgery_protection = false
+  config.action_dispatch.show_exceptions = :none
 end

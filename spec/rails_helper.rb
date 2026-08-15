@@ -4,6 +4,14 @@ require_relative "../config/environment"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 
+# Warden skips applying `sign_in` on requests it considers asset requests, and it
+# defaults to treating anything under "/assets/" as one -- which would silently
+# leave specs for AssetsController's member routes unauthenticated. Point it at
+# the real asset pipeline prefix instead (see config/initializers/assets.rb).
+require "warden/test/helpers"
+Warden.test_mode! # idempotent; also mixes in the `asset_paths=` writer
+Warden.asset_paths = %r{^/sprockets/}
+
 begin
   ActiveRecord::Migration.maintain_test_schema!
 rescue ActiveRecord::PendingMigrationError => e

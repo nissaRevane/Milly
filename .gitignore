@@ -6,7 +6,7 @@ db/*.sqlite3-journal
 storage/
 config/master.key
 config/credentials/*.key
-public/assets
+public/sprockets
 node_modules/
 .env
 .memorai
