@@ -40,11 +40,18 @@ fr:
         remaining_capital: Capital restant dû
         liability: Passif
     errors:
+      messages:
+        record_invalid: "La validation a échoué : %{errors}"
       models:
         user:
           attributes:
             email:
               taken: est déjà utilisé
+  errors:
+    messages:
+      blank: doit être rempli(e)
+      inclusion: n'est pas inclus(e) dans la liste
+      required: doit exister
   devise:
     sessions:
       new:
@@ -136,6 +143,7 @@ fr:
         assets_column: Actifs
         liabilities_column: Passifs
         risk_level: "Risque %{level}"
+        risk_breakdown: Répartition par risque
         total_assets: Total Actifs
         total_liabilities: Total Passifs
         equity: Fonds Propres
@@ -167,11 +175,12 @@ fr:
         medium: Moyen
         high: Élevé
       asset_types:
+        cash: Cash
         checking_account: Compte courant
-        joint_account: Compte commun
         savings_account: Compte épargne
         financial_investment: Placement financier
         real_estate: Immobilier
+        receivable: Créance
   flash:
     assets:
       created: Actif créé avec succès.

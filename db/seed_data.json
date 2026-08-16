@@ -9,7 +9,7 @@
     {
       "name": "Liquidités",
       "risk_level": "low",
-      "asset_type": "checking_account"
+      "asset_type": "cash"
     },
     {
       "name": "Risques 1-2",

@@ -1,25 +1,27 @@
 class Asset < ApplicationRecord
+  include RiskCategorizable
+
   belongs_to :user
   has_many :balance_sheet_assets, dependent: :destroy
 
-  enum :risk_level, { low: 0, medium: 1, high: 2 }
-  enum :asset_type, { checking_account: 0, joint_account: 1, savings_account: 2, financial_investment: 3, real_estate: 4 }
+  enum :asset_type, {
+    cash: 0,
+    checking_account: 1,
+    savings_account: 2,
+    financial_investment: 3,
+    real_estate: 4,
+    receivable: 5
+  }, validate: true
 
   validates :name, presence: true
-  validates :risk_level, presence: true
-  validates :asset_type, presence: true
 
-  RISK_LEVEL_LABELS = {
-    "low" => "Faible",
-    "medium" => "Moyen",
-    "high" => "Élevé"
-  }.freeze
+  def self.asset_type_label_for(type)
+    return "" if type.blank?
 
-  def risk_level_label
-    RISK_LEVEL_LABELS[risk_level] || risk_level
+    I18n.t("views.shared.asset_types.#{type}", default: type.to_s)
   end
 
   def asset_type_label
-    I18n.t("views.shared.asset_types.#{asset_type}")
+    self.class.asset_type_label_for(asset_type)
   end
 end

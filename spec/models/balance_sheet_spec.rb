@@ -46,6 +46,26 @@ RSpec.describe BalanceSheet, type: :model do
     end
   end
 
+  describe "#assets_by_type" do
+    it "groups assets under their type key, ordered by type" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      cash = create(:asset, user: user, name: "Espèces", asset_type: :cash)
+      livret = create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: immo, value: 100_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 500)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: livret, value: 2_000)
+
+      grouped = bs.assets_by_type
+
+      expect(grouped.keys).to eq(["cash", "savings_account", "real_estate"])
+      expect(grouped["cash"].map { |bsa| bsa.asset.name }).to eq(["Espèces"])
+      expect(grouped["savings_account"].map { |bsa| bsa.asset.name }).to eq(["Livret A"])
+      expect(grouped["real_estate"].map { |bsa| bsa.asset.name }).to eq(["Maison"])
+    end
+  end
+
   describe "#equity" do
     it "returns total_assets minus total_liabilities" do
       bs = create(:balance_sheet)

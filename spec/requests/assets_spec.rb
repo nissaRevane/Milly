@@ -41,6 +41,14 @@ RSpec.describe "Assets", type: :request do
       expect(response).to redirect_to(assets_path)
     end
 
+    it "does not create with an unknown asset type" do
+      expect {
+        post assets_path, params: { asset: { name: "X", risk_level: "low", asset_type: "bogus" } }
+      }.not_to change(Asset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it "does not create with invalid params" do
       expect {
         post assets_path, params: { asset: { name: "", risk_level: "low" } }

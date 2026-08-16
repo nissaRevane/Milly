@@ -41,6 +41,7 @@ class BalanceSheetsController < ApplicationController
 
   def summary
     @assets_by_risk = @balance_sheet.assets_by_risk_level
+    @assets_by_type = @balance_sheet.assets_by_type
     @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
   end
 

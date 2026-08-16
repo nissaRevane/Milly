@@ -7,19 +7,19 @@
   <div class="summary-column summary-column-assets">
     <h2 class="summary-column-title"><%= t("views.balance_sheets.summary.assets_column") %></h2>
 
-    <% %w[low medium high].each do |level| %>
-      <% items = @assets_by_risk.fetch(level, []) %>
+    <% Asset.asset_types.keys.each do |type| %>
+      <% items = @assets_by_type.fetch(type, []) %>
       <% next if items.empty? %>
 
       <div class="summary-risk-group">
         <h3 class="summary-risk-title">
-          <span class="badge <%= risk_level_badge_class(level) %>"><%= t("views.balance_sheets.summary.risk_level", level: risk_level_label(level)) %></span>
+          <span class="badge badge-secondary"><%= asset_type_label(type) %></span>
         </h3>
         <table class="table table-compact">
           <tbody>
             <% items.each do |bsa| %>
               <tr>
-                <td><%= bsa.asset.name %></td>
+                <td><%= bsa.asset.name %> <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>"><%= risk_level_label(bsa.asset.risk_level) %></span></td>
                 <td class="text-right"><%= number_to_currency(bsa.value) %></td>
               </tr>
             <% end %>
@@ -33,6 +33,22 @@
         </table>
       </div>
     <% end %>
+
+    <div class="summary-risk-group">
+      <h3 class="summary-risk-title"><%= t("views.balance_sheets.summary.risk_breakdown") %></h3>
+      <table class="table table-compact">
+        <tbody>
+          <% %w[low medium high].each do |level| %>
+            <% items = @assets_by_risk.fetch(level, []) %>
+            <% next if items.empty? %>
+            <tr>
+              <td><span class="badge <%= risk_level_badge_class(level) %>"><%= risk_level_label(level) %></span></td>
+              <td class="text-right"><%= number_to_currency(items.sum(&:value)) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
     <div class="summary-total summary-total-assets">
       <span><%= t("views.balance_sheets.summary.total_assets") %></span>

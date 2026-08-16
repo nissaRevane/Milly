@@ -28,6 +28,14 @@ class BalanceSheet < ApplicationRecord
       .group_by { |bsa| bsa.asset.risk_level }
   end
 
+  def assets_by_type
+    balance_sheet_assets
+      .includes(:asset)
+      .joins(:asset)
+      .order("assets.asset_type ASC, assets.name ASC")
+      .group_by { |bsa| bsa.asset.asset_type }
+  end
+
   def liabilities_by_risk_level
     balance_sheet_liabilities
       .includes(:liability)
