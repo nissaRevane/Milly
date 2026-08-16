@@ -50,6 +50,16 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).not_to include("Caution")
     end
 
+    it "wires the filter to auto-submit without an inline handler" do
+      create(:liability, user: user)
+
+      get liabilities_path
+
+      expect(response.body).to include('data-controller="auto-submit"')
+      expect(response.body).to include('data-action="change-&gt;auto-submit#submit"')
+      expect(response.body).not_to include("onchange=")
+    end
+
     it "ignores an unknown type filter" do
       create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
       create(:liability, user: user, name: "Caution", liability_type: :security_deposit)

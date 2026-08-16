@@ -4,11 +4,12 @@
 </div>
 
 <% if @assets.any? || @asset_type_filter %>
-  <%= form_with url: assets_path, method: :get, class: "filters" do |f| %>
+  <%= form_with url: assets_path, method: :get, class: "filters",
+      data: { controller: "auto-submit", action: "change->auto-submit#submit" } do |f| %>
     <div class="form-group">
       <%= f.label :asset_type, t("views.assets.index.filter_type") %>
       <%= f.select :asset_type, asset_type_options, { include_blank: t("views.assets.index.filter_all"), selected: @asset_type_filter },
-          class: "form-control", onchange: "this.form.requestSubmit()" %>
+          class: "form-control" %>
     </div>
     <noscript><%= f.submit t("views.assets.index.filter_submit"), class: "btn btn-outline" %></noscript>
   <% end %>

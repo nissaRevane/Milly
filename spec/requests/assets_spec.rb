@@ -50,6 +50,16 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).not_to include("Livret A")
     end
 
+    it "wires the filter to auto-submit without an inline handler" do
+      create(:asset, user: user)
+
+      get assets_path
+
+      expect(response.body).to include('data-controller="auto-submit"')
+      expect(response.body).to include('data-action="change-&gt;auto-submit#submit"')
+      expect(response.body).not_to include("onchange=")
+    end
+
     it "ignores an unknown type filter" do
       create(:asset, user: user, name: "Maison", asset_type: :real_estate)
       create(:asset, user: user, name: "Livret A", asset_type: :savings_account)

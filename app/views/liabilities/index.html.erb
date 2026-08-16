@@ -4,11 +4,12 @@
 </div>
 
 <% if @liabilities.any? || @liability_type_filter %>
-  <%= form_with url: liabilities_path, method: :get, class: "filters" do |f| %>
+  <%= form_with url: liabilities_path, method: :get, class: "filters",
+      data: { controller: "auto-submit", action: "change->auto-submit#submit" } do |f| %>
     <div class="form-group">
       <%= f.label :liability_type, t("views.liabilities.index.filter_type") %>
       <%= f.select :liability_type, liability_type_options, { include_blank: t("views.liabilities.index.filter_all"), selected: @liability_type_filter },
-          class: "form-control", onchange: "this.form.requestSubmit()" %>
+          class: "form-control" %>
     </div>
     <noscript><%= f.submit t("views.liabilities.index.filter_submit"), class: "btn btn-outline" %></noscript>
   <% end %>
