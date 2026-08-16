@@ -1,6 +1,7 @@
 class BalanceSheetAssetsController < ApplicationController
   before_action :set_balance_sheet
   before_action :set_balance_sheet_asset, only: [:edit, :update, :destroy]
+  before_action :set_available_assets, only: [:new, :create, :edit, :update]
 
   def new
     @balance_sheet_asset = @balance_sheet.balance_sheet_assets.build
@@ -39,6 +40,15 @@ class BalanceSheetAssetsController < ApplicationController
 
   def set_balance_sheet_asset
     @balance_sheet_asset = @balance_sheet.balance_sheet_assets.find(params[:id])
+  end
+
+  # Les actifs déjà présents dans le bilan ne doivent pas être proposés,
+  # à l'exception de celui de la ligne en cours d'édition.
+  def set_available_assets
+    used_asset_ids = @balance_sheet.balance_sheet_assets.pluck(:asset_id)
+    used_asset_ids -= [@balance_sheet_asset.asset_id] if @balance_sheet_asset&.asset_id
+
+    @available_assets = current_user.assets.where.not(id: used_asset_ids).order(:name)
   end
 
   def balance_sheet_asset_params

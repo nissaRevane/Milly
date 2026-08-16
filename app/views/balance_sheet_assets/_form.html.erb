@@ -11,7 +11,7 @@
 
   <div class="form-group">
     <%= f.label :asset_id, t("views.balance_sheet_assets.form.asset") %>
-    <%= f.collection_select :asset_id, current_user.assets.order(:name), :id, :name, { prompt: "-- Sélectionner un actif --" }, class: "form-control" %>
+    <%= f.collection_select :asset_id, @available_assets, :id, :name, { prompt: "-- Sélectionner un actif --" }, class: "form-control" %>
   </div>
 
   <div class="form-group">
