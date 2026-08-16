@@ -31,6 +31,14 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).to include('<span class="badge badge-success" title="Faible">')
       expect(response.body).to include("Crédit immobilier")
     end
+
+    it "renders the ownership share" do
+      create(:liability, user: user, name: "Prêt", ownership_share: 60)
+
+      get liabilities_path
+
+      expect(response.body).to include("60 %")
+    end
   end
 
   describe "GET /liabilities/new" do
@@ -64,6 +72,37 @@ RSpec.describe "Liabilities", type: :request do
       }.not_to change(Liability, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "creates a liability with the submitted ownership share" do
+      expect {
+        post liabilities_path, params: {
+          liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", ownership_share: "60" }
+        }
+      }.to change(Liability, :count).by(1)
+
+      expect(Liability.last.ownership_share).to eq(60.0)
+      expect(response).to redirect_to(liabilities_path)
+    end
+
+    it "does not create with an ownership share above 100" do
+      expect {
+        post liabilities_path, params: {
+          liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", ownership_share: "150" }
+        }
+      }.not_to change(Liability, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe "PATCH /liabilities/:id" do
+    let(:liability) { create(:liability, user: user, name: "Old Name") }
+
+    it "updates the ownership share" do
+      patch liability_path(liability), params: { liability: { ownership_share: "33.33" } }
+      expect(liability.reload.ownership_share).to eq(BigDecimal("33.33"))
+      expect(response).to redirect_to(liabilities_path)
     end
   end
 

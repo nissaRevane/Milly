@@ -5,6 +5,10 @@ RSpec.describe "BalanceSheets", type: :request do
 
   before { sign_in user }
 
+  def currency(amount)
+    ActionController::Base.helpers.number_to_currency(amount)
+  end
+
   describe "GET /balance_sheets" do
     it "returns success" do
       get balance_sheets_path
@@ -33,6 +37,29 @@ RSpec.describe "BalanceSheets", type: :request do
       bs = create(:balance_sheet, user: user)
       get balance_sheet_path(bs)
       expect(response).to have_http_status(:success)
+    end
+
+    it "renders both the full and the owned amount for a partially owned line" do
+      bs = create(:balance_sheet, user: user)
+      half = create(:asset, user: user, name: "Maison", asset_type: :real_estate, ownership_share: 50)
+      quarter = create(:asset, user: user, name: "Terrain", asset_type: :real_estate, ownership_share: 25)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: half, value: 200_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: quarter, value: 80_000)
+
+      get balance_sheet_path(bs)
+
+      expect(response).to have_http_status(:success)
+      # Full values
+      expect(response.body).to include(currency(200_000))
+      expect(response.body).to include(currency(80_000))
+      # Per-line owned values, none of which equals the 120 000 total
+      expect(response.body).to include(currency(100_000))
+      expect(response.body).to include(currency(20_000))
+      expect(bs.total_assets).to eq(120_000)
+      expect(response.body).to include(currency(120_000))
+      # Share column
+      expect(response.body).to include("50 %")
+      expect(response.body).to include("25 %")
     end
   end
 
@@ -77,6 +104,18 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response.body).to include("Prêt")
       expect(response.body).to include("Crédit immobilier")
       expect(response.body).to include("Répartition par risque")
+    end
+
+    it "renders the owned amount for a partially owned asset" do
+      bs = create(:balance_sheet, user: user)
+      asset = create(:asset, user: user, name: "Maison", asset_type: :real_estate, ownership_share: 50)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 200_000)
+
+      get summary_balance_sheet_path(bs)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include(currency(100_000))
+      expect(response.body).not_to include(currency(200_000))
     end
   end
 

@@ -31,6 +31,14 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).to include('<span class="badge badge-danger" title="Élevé">')
       expect(response.body).to include("Immobilier")
     end
+
+    it "renders the ownership share" do
+      create(:asset, user: user, name: "Maison", ownership_share: 60)
+
+      get assets_path
+
+      expect(response.body).to include("60 %")
+    end
   end
 
   describe "GET /assets/new" do
@@ -65,6 +73,27 @@ RSpec.describe "Assets", type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
     end
+
+    it "creates an asset with the submitted ownership share" do
+      expect {
+        post assets_path, params: {
+          asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", ownership_share: "60" }
+        }
+      }.to change(Asset, :count).by(1)
+
+      expect(Asset.last.ownership_share).to eq(60.0)
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "does not create with an ownership share above 100" do
+      expect {
+        post assets_path, params: {
+          asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", ownership_share: "150" }
+        }
+      }.not_to change(Asset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
   end
 
   describe "PATCH /assets/:id" do
@@ -79,6 +108,12 @@ RSpec.describe "Assets", type: :request do
     it "updates the asset type" do
       patch asset_path(asset), params: { asset: { asset_type: "real_estate" } }
       expect(asset.reload.asset_type).to eq("real_estate")
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "updates the ownership share" do
+      patch asset_path(asset), params: { asset: { ownership_share: "33.33" } }
+      expect(asset.reload.ownership_share).to eq(BigDecimal("33.33"))
       expect(response).to redirect_to(assets_path)
     end
   end

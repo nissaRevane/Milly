@@ -18,4 +18,29 @@ RSpec.describe BalanceSheetAsset, type: :model do
       expect(duplicate).not_to be_valid
     end
   end
+
+  describe "#owned_value" do
+    let(:bs) { create(:balance_sheet) }
+
+    it "returns the full value when the asset is fully owned" do
+      asset = create(:asset, user: bs.user, ownership_share: 100)
+      bsa = create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 10_000)
+
+      expect(bsa.owned_value).to eq(10_000)
+    end
+
+    it "returns half the value when the asset is owned at 50%" do
+      asset = create(:asset, user: bs.user, ownership_share: 50)
+      bsa = create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 10_000)
+
+      expect(bsa.owned_value).to eq(5_000)
+    end
+
+    it "rounds the owned value to two decimals" do
+      asset = create(:asset, user: bs.user, ownership_share: 33.33)
+      bsa = create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 1_001.55)
+
+      expect(bsa.owned_value).to eq(BigDecimal("333.82"))
+    end
+  end
 end

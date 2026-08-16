@@ -34,6 +34,51 @@ RSpec.describe Liability, type: :model do
       expect(liability).not_to be_valid
       expect(liability.errors[:risk_level]).to be_present
     end
+
+    it "is invalid with an ownership share above 100" do
+      liability = build(:liability, ownership_share: 101).tap(&:valid?)
+      expect(liability).not_to be_valid
+      expect(liability.errors[:ownership_share]).to be_present
+    end
+
+    it "is invalid with a negative ownership share" do
+      liability = build(:liability, ownership_share: -1).tap(&:valid?)
+      expect(liability).not_to be_valid
+      expect(liability.errors[:ownership_share]).to be_present
+    end
+
+    it "is invalid without an ownership share" do
+      liability = build(:liability, ownership_share: nil).tap(&:valid?)
+      expect(liability).not_to be_valid
+      expect(liability.errors[:ownership_share]).to be_present
+    end
+
+    it "accepts ownership shares within the 0..100 range" do
+      [0, 50.5, 100].each do |share|
+        liability = build(:liability, ownership_share: share).tap(&:valid?)
+        expect(liability.errors[:ownership_share]).to be_empty
+      end
+    end
+  end
+
+  describe "ownership share" do
+    it "defaults to 100 for a new record" do
+      expect(Liability.new.ownership_share).to eq(100)
+    end
+
+    describe "#share_ratio" do
+      it "returns the share as a fraction" do
+        expect(build(:liability, ownership_share: 50).share_ratio).to eq(0.5)
+        expect(build(:liability, ownership_share: 100).share_ratio).to eq(1)
+      end
+    end
+
+    describe "#full_ownership?" do
+      it "is true only at 100%" do
+        expect(build(:liability, ownership_share: 100)).to be_full_ownership
+        expect(build(:liability, ownership_share: 50)).not_to be_full_ownership
+      end
+    end
   end
 
   describe "enums" do

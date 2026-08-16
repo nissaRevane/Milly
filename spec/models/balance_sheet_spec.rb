@@ -21,28 +21,104 @@ RSpec.describe BalanceSheet, type: :model do
   end
 
   describe "#total_assets" do
-    it "sums up all balance sheet asset values" do
+    it "sums up all balance sheet asset values when everything is fully owned" do
       bs = create(:balance_sheet)
       user = bs.user
-      a1 = create(:asset, user: user)
-      a2 = create(:asset, user: user)
+      a1 = create(:asset, user: user, ownership_share: 100)
+      a2 = create(:asset, user: user, ownership_share: 100)
       create(:balance_sheet_asset, balance_sheet: bs, asset: a1, value: 10_000)
       create(:balance_sheet_asset, balance_sheet: bs, asset: a2, value: 25_000)
 
       expect(bs.total_assets).to eq(35_000)
     end
+
+    it "only counts the owned share of partially owned assets" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      full = create(:asset, user: user, ownership_share: 100)
+      half = create(:asset, user: user, ownership_share: 50)
+      quarter = create(:asset, user: user, ownership_share: 25)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: full, value: 10_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: half, value: 25_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: quarter, value: 8_000)
+
+      expect(bs.total_assets).to eq(10_000 + 12_500 + 2_000)
+    end
+
+    it "equals the sum of the per-line owned values, even with an uneven share" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      a1 = create(:asset, user: user, ownership_share: 33.33)
+      a2 = create(:asset, user: user, ownership_share: 33.33)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: a1, value: 1_001.55)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: a2, value: 2_002.45)
+
+      expected = bs.balance_sheet_assets.sum(&:owned_value)
+
+      expect(expected).to eq(BigDecimal("333.82") + BigDecimal("667.42"))
+      expect(bs.total_assets).to eq(expected)
+    end
+
+    it "rounds exactly like the per-line owned value near the decimal(15,2) ceiling" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      asset = create(:asset, user: user, ownership_share: 47.69)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: BigDecimal("2914957409237.23"))
+
+      expected = bs.balance_sheet_assets.sum(&:owned_value)
+
+      expect(expected).to eq(BigDecimal("1390143188465.23"))
+      expect(bs.total_assets).to eq(expected)
+    end
   end
 
   describe "#total_liabilities" do
-    it "sums up all balance sheet liability remaining capitals" do
+    it "sums up all balance sheet liability remaining capitals when everything is fully owned" do
       bs = create(:balance_sheet)
       user = bs.user
-      l1 = create(:liability, user: user)
-      l2 = create(:liability, user: user)
+      l1 = create(:liability, user: user, ownership_share: 100)
+      l2 = create(:liability, user: user, ownership_share: 100)
       create(:balance_sheet_liability, balance_sheet: bs, liability: l1, remaining_capital: 5_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: l2, remaining_capital: 15_000)
 
       expect(bs.total_liabilities).to eq(20_000)
+    end
+
+    it "only counts the owned share of partially owned liabilities" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      full = create(:liability, user: user, ownership_share: 100)
+      half = create(:liability, user: user, ownership_share: 50)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: full, remaining_capital: 5_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: half, remaining_capital: 15_000)
+
+      expect(bs.total_liabilities).to eq(5_000 + 7_500)
+    end
+
+    it "equals the sum of the per-line owned remaining capitals, even with an uneven share" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      l1 = create(:liability, user: user, ownership_share: 33.33)
+      l2 = create(:liability, user: user, ownership_share: 33.33)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: l1, remaining_capital: 1_001.55)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: l2, remaining_capital: 2_002.45)
+
+      expected = bs.balance_sheet_liabilities.sum(&:owned_remaining_capital)
+
+      expect(expected).to eq(BigDecimal("333.82") + BigDecimal("667.42"))
+      expect(bs.total_liabilities).to eq(expected)
+    end
+
+    it "rounds exactly like the per-line owned remaining capital near the decimal(15,2) ceiling" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      liability = create(:liability, user: user, ownership_share: 47.69)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: liability, remaining_capital: BigDecimal("2914957409237.23"))
+
+      expected = bs.balance_sheet_liabilities.sum(&:owned_remaining_capital)
+
+      expect(expected).to eq(BigDecimal("1390143188465.23"))
+      expect(bs.total_liabilities).to eq(expected)
     end
   end
 
@@ -87,15 +163,36 @@ RSpec.describe BalanceSheet, type: :model do
   end
 
   describe "#equity" do
-    it "returns total_assets minus total_liabilities" do
+    it "returns total_assets minus total_liabilities when everything is fully owned" do
       bs = create(:balance_sheet)
       user = bs.user
-      asset = create(:asset, user: user)
-      liability = create(:liability, user: user)
+      asset = create(:asset, user: user, ownership_share: 100)
+      liability = create(:liability, user: user, ownership_share: 100)
       create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 100_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: liability, remaining_capital: 60_000)
 
       expect(bs.equity).to eq(40_000)
+    end
+
+    it "reflects the share-adjusted totals" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      asset = create(:asset, user: user, ownership_share: 50)
+      liability = create(:liability, user: user, ownership_share: 50)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 100_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: liability, remaining_capital: 60_000)
+
+      expect(bs.total_assets).to eq(50_000)
+      expect(bs.total_liabilities).to eq(30_000)
+      expect(bs.equity).to eq(20_000)
+    end
+
+    it "is zero on a balance sheet without any line" do
+      bs = create(:balance_sheet)
+
+      expect(bs.total_assets).to eq(0)
+      expect(bs.total_liabilities).to eq(0)
+      expect(bs.equity).to eq(0)
     end
   end
 end
