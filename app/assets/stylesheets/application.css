@@ -460,10 +460,38 @@ body {
 }
 
 .summary-column {
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.5rem;
+}
+
+/*
+ * Both columns share the same four rows (title / categories / risk breakdown /
+ * total) so the risk breakdowns and the totals line up horizontally whatever
+ * the number of categories on each side. The flex rules above are the fallback
+ * for browsers without subgrid: they only align the totals, at the bottom.
+ */
+@media (min-width: 769px) {
+  .summary-categories {
+    flex: 1;
+  }
+
+  @supports (grid-template-rows: subgrid) {
+    .summary-grid {
+      grid-template-rows: auto 1fr auto auto;
+      column-gap: 2rem;
+      row-gap: 0;
+    }
+
+    .summary-column {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 4;
+    }
+  }
 }
 
 .summary-column-title {
@@ -479,6 +507,78 @@ body {
 
 .summary-column-liabilities .summary-column-title {
   border-color: var(--color-danger);
+}
+
+.summary-category {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.summary-category:last-child {
+  margin-bottom: 0;
+}
+
+.summary-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.summary-category-header::-webkit-details-marker {
+  display: none;
+}
+
+.summary-category-header:hover {
+  background: var(--color-bg);
+}
+
+.summary-category-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-category-label::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 5px solid var(--color-text-muted);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform 0.15s ease-in-out;
+}
+
+.summary-category[open] .summary-category-label::before {
+  transform: rotate(90deg);
+}
+
+.summary-category-count {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.summary-category-amount {
+  font-weight: 700;
+}
+
+.summary-category[open] .summary-category-header {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.summary-category .table {
+  margin-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.summary-category .table tr:last-child td {
+  border-bottom: none;
 }
 
 .summary-risk-group {

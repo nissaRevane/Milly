@@ -106,6 +106,22 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response.body).to include("Répartition par risque")
     end
 
+    it "collapses each category behind its total amount" do
+      bs = create(:balance_sheet, user: user)
+      livret = create(:asset, user: user, name: "Livret A", asset_type: :cash)
+      compte = create(:asset, user: user, name: "Compte courant", asset_type: :cash)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: livret, value: 1_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: compte, value: 500)
+
+      get summary_balance_sheet_path(bs)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("summary-category-amount")
+      expect(response.body).to include(currency(1_500))
+      expect(response.body).not_to include("Sous-total")
+      expect(response.body).not_to match(/<details class="summary-category" open/)
+    end
+
     it "renders the owned amount for a partially owned asset" do
       bs = create(:balance_sheet, user: user)
       asset = create(:asset, user: user, name: "Maison", asset_type: :real_estate, ownership_share: 50)
