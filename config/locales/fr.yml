@@ -28,10 +28,12 @@ fr:
         name: Nom
         risk_level: Niveau de risque
         asset_type: Type
+        ownership_share: Quote-part
       liability:
         name: Nom
         risk_level: Niveau de risque
         liability_type: Type
+        ownership_share: Quote-part
       balance_sheet:
         closing_date: Date de clôture
       balance_sheet_asset:
@@ -53,6 +55,9 @@ fr:
       blank: doit être rempli(e)
       inclusion: n'est pas inclus(e) dans la liste
       required: doit exister
+      not_a_number: n'est pas un nombre
+      greater_than_or_equal_to: doit être supérieur ou égal à %{count}
+      less_than_or_equal_to: doit être inférieur ou égal à %{count}
   devise:
     sessions:
       new:
@@ -86,10 +91,12 @@ fr:
         title: Mes Actifs
         new: Nouvel actif
         empty: Aucun actif enregistré.
+        ownership_share: Quote-part
       form:
         name: Nom de l'actif
         risk_level: Niveau de risque
         asset_type: Type d'actif
+        ownership_share: "Quote-part détenue (%)"
       edit:
         title: Modifier l'actif
       new:
@@ -99,10 +106,12 @@ fr:
         title: Mes Passifs
         new: Nouveau passif
         empty: Aucun passif enregistré.
+        ownership_share: Quote-part
       form:
         name: Nom du passif
         risk_level: Niveau de risque
         liability_type: Type de passif
+        ownership_share: "Quote-part détenue (%)"
       edit:
         title: Modifier le passif
       new:
@@ -135,6 +144,9 @@ fr:
         equity: Fonds propres
         value: Valeur
         remaining_capital: Capital restant dû
+        ownership_share: Quote-part
+        owned_value: Valeur détenue
+        owned_remaining_capital: Capital détenu
         actions: Actions
         edit: Modifier
         delete: Supprimer
@@ -153,6 +165,7 @@ fr:
       form:
         asset: Actif
         value: Valeur
+        value_hint: "Saisissez la valeur totale du bien. La quote-part définie sur l'actif sera appliquée automatiquement."
       new:
         title: Ajouter un actif au bilan
       edit:
@@ -161,6 +174,7 @@ fr:
       form:
         liability: Passif
         remaining_capital: Capital restant dû
+        remaining_capital_hint: "Saisissez le capital restant dû total. La quote-part définie sur le passif sera appliquée automatiquement."
       new:
         title: Ajouter un passif au bilan
       edit:
@@ -208,6 +222,11 @@ fr:
       updated: Ligne de passif mise à jour avec succès.
       destroyed: Ligne de passif supprimée avec succès.
   number:
+    percentage:
+      format:
+        delimiter: " "
+        separator: ","
+        format: "%n %"
     currency:
       format:
         unit: "€"

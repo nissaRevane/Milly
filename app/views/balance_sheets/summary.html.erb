@@ -19,15 +19,20 @@
           <tbody>
             <% items.each do |bsa| %>
               <tr>
-                <td><%= bsa.asset.name %></td>
-                <td class="text-right"><%= number_to_currency(bsa.value) %></td>
+                <td>
+                  <%= bsa.asset.name %>
+                  <% unless bsa.asset.full_ownership? %>
+                    <span class="badge badge-secondary"><%= ownership_share_label(bsa.asset.ownership_share) %></span>
+                  <% end %>
+                </td>
+                <td class="text-right"><%= number_to_currency(bsa.owned_value) %></td>
               </tr>
             <% end %>
           </tbody>
           <tfoot>
             <tr class="table-subtotal">
               <td><strong>Sous-total</strong></td>
-              <td class="text-right"><strong><%= number_to_currency(items.sum(&:value)) %></strong></td>
+              <td class="text-right"><strong><%= number_to_currency(items.sum(&:owned_value)) %></strong></td>
             </tr>
           </tfoot>
         </table>
@@ -44,7 +49,7 @@
               <% next if items.empty? %>
               <tr>
                 <td><span class="badge <%= risk_level_badge_class(level) %>"><%= risk_level_label(level) %></span></td>
-                <td class="text-right"><%= number_to_currency(items.sum(&:value)) %></td>
+                <td class="text-right"><%= number_to_currency(items.sum(&:owned_value)) %></td>
               </tr>
             <% end %>
           </tbody>
@@ -74,15 +79,20 @@
           <tbody>
             <% items.each do |bsl| %>
               <tr>
-                <td><%= bsl.liability.name %></td>
-                <td class="text-right"><%= number_to_currency(bsl.remaining_capital) %></td>
+                <td>
+                  <%= bsl.liability.name %>
+                  <% unless bsl.liability.full_ownership? %>
+                    <span class="badge badge-secondary"><%= ownership_share_label(bsl.liability.ownership_share) %></span>
+                  <% end %>
+                </td>
+                <td class="text-right"><%= number_to_currency(bsl.owned_remaining_capital) %></td>
               </tr>
             <% end %>
           </tbody>
           <tfoot>
             <tr class="table-subtotal">
               <td><strong>Sous-total</strong></td>
-              <td class="text-right"><strong><%= number_to_currency(items.sum(&:remaining_capital)) %></strong></td>
+              <td class="text-right"><strong><%= number_to_currency(items.sum(&:owned_remaining_capital)) %></strong></td>
             </tr>
           </tfoot>
         </table>
@@ -99,7 +109,7 @@
               <% next if items.empty? %>
               <tr>
                 <td><span class="badge <%= risk_level_badge_class(level) %>"><%= risk_level_label(level) %></span></td>
-                <td class="text-right"><%= number_to_currency(items.sum(&:remaining_capital)) %></td>
+                <td class="text-right"><%= number_to_currency(items.sum(&:owned_remaining_capital)) %></td>
               </tr>
             <% end %>
           </tbody>

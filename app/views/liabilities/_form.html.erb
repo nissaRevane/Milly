@@ -20,6 +20,11 @@
   </div>
 
   <div class="form-group">
+    <%= f.label :ownership_share, t("views.liabilities.form.ownership_share") %>
+    <%= f.number_field :ownership_share, step: 0.01, min: 0, max: 100, class: "form-control", required: true %>
+  </div>
+
+  <div class="form-group">
     <%= f.label :risk_level, t("views.liabilities.form.risk_level") %>
     <%= f.select :risk_level, risk_level_options, {}, class: "form-control" %>
   </div>

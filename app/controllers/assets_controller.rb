@@ -41,6 +41,6 @@ class AssetsController < ApplicationController
   end
 
   def asset_params
-    params.require(:asset).permit(:name, :risk_level, :asset_type)
+    params.require(:asset).permit(:name, :risk_level, :asset_type, :ownership_share)
   end
 end

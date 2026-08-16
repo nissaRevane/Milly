@@ -41,6 +41,6 @@ class LiabilitiesController < ApplicationController
   end
 
   def liability_params
-    params.require(:liability).permit(:name, :risk_level, :liability_type)
+    params.require(:liability).permit(:name, :risk_level, :liability_type, :ownership_share)
   end
 end

@@ -31,4 +31,9 @@ module ApplicationHelper
   def liability_type_label(type)
     Liability.liability_type_label_for(type)
   end
+
+  def ownership_share_label(share)
+    precision = (share.to_d % 1).zero? ? 0 : 2
+    number_to_percentage(share, precision: precision)
+  end
 end
