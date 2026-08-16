@@ -11,7 +11,7 @@
 
   <div class="form-group">
     <%= f.label :liability_id, t("views.balance_sheet_liabilities.form.liability") %>
-    <%= f.collection_select :liability_id, current_user.liabilities.order(:name), :id, :name, { prompt: "-- Sélectionner un passif --" }, class: "form-control" %>
+    <%= f.collection_select :liability_id, @available_liabilities, :id, :name, { prompt: "-- Sélectionner un passif --" }, class: "form-control" %>
   </div>
 
   <div class="form-group">

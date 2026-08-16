@@ -1,6 +1,7 @@
 class BalanceSheetLiabilitiesController < ApplicationController
   before_action :set_balance_sheet
   before_action :set_balance_sheet_liability, only: [:edit, :update, :destroy]
+  before_action :set_available_liabilities, only: [:new, :create, :edit, :update]
 
   def new
     @balance_sheet_liability = @balance_sheet.balance_sheet_liabilities.build
@@ -39,6 +40,15 @@ class BalanceSheetLiabilitiesController < ApplicationController
 
   def set_balance_sheet_liability
     @balance_sheet_liability = @balance_sheet.balance_sheet_liabilities.find(params[:id])
+  end
+
+  # Les passifs déjà présents dans le bilan ne doivent pas être proposés,
+  # à l'exception de celui de la ligne en cours d'édition.
+  def set_available_liabilities
+    used_liability_ids = @balance_sheet.balance_sheet_liabilities.pluck(:liability_id)
+    used_liability_ids -= [@balance_sheet_liability.liability_id] if @balance_sheet_liability&.liability_id
+
+    @available_liabilities = current_user.liabilities.where.not(id: used_liability_ids).order(:name)
   end
 
   def balance_sheet_liability_params
