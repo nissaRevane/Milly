@@ -205,6 +205,19 @@ body {
   margin-top: 1.5rem;
 }
 
+/* Filters */
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.filters .form-group {
+  margin-bottom: 0;
+  min-width: 220px;
+}
+
 /* Alerts */
 .alert {
   padding: 0.75rem 1rem;

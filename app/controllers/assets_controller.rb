@@ -2,7 +2,9 @@ class AssetsController < ApplicationController
   before_action :set_asset, only: [:edit, :update, :destroy]
 
   def index
+    @asset_type_filter = params[:asset_type].presence_in(Asset.asset_types.keys)
     @assets = current_user.assets.order(:asset_type, :risk_level, :name)
+    @assets = @assets.where(asset_type: @asset_type_filter) if @asset_type_filter
   end
 
   def new

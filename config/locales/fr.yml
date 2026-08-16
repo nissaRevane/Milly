@@ -91,7 +91,11 @@ fr:
         title: Mes Actifs
         new: Nouvel actif
         empty: Aucun actif enregistré.
+        empty_filtered: Aucun actif pour ce type.
         ownership_share: Quote-part
+        filter_type: Filtrer par type
+        filter_all: Tous les types
+        filter_submit: Filtrer
       form:
         name: Nom de l'actif
         risk_level: Niveau de risque
@@ -106,7 +110,11 @@ fr:
         title: Mes Passifs
         new: Nouveau passif
         empty: Aucun passif enregistré.
+        empty_filtered: Aucun passif pour ce type.
         ownership_share: Quote-part
+        filter_type: Filtrer par type
+        filter_all: Tous les types
+        filter_submit: Filtrer
       form:
         name: Nom du passif
         risk_level: Niveau de risque

@@ -2,7 +2,9 @@ class LiabilitiesController < ApplicationController
   before_action :set_liability, only: [:edit, :update, :destroy]
 
   def index
+    @liability_type_filter = params[:liability_type].presence_in(Liability.liability_types.keys)
     @liabilities = current_user.liabilities.order(:liability_type, :risk_level, :name)
+    @liabilities = @liabilities.where(liability_type: @liability_type_filter) if @liability_type_filter
   end
 
   def new

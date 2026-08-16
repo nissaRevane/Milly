@@ -39,6 +39,35 @@ RSpec.describe "Assets", type: :request do
 
       expect(response.body).to include("60 %")
     end
+
+    it "filters the assets by type" do
+      create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+
+      get assets_path, params: { asset_type: "real_estate" }
+
+      expect(response.body).to include("Maison")
+      expect(response.body).not_to include("Livret A")
+    end
+
+    it "ignores an unknown type filter" do
+      create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+
+      get assets_path, params: { asset_type: "not_a_type" }
+
+      expect(response.body).to include("Maison")
+      expect(response.body).to include("Livret A")
+    end
+
+    it "shows a filtered empty state when no asset matches the type" do
+      create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+
+      get assets_path, params: { asset_type: "real_estate" }
+
+      expect(response.body).to include("Aucun actif pour ce type.")
+      expect(response.body).to include("Filtrer par type")
+    end
   end
 
   describe "GET /assets/new" do

@@ -3,6 +3,17 @@
   <%= link_to t("views.assets.index.new"), new_asset_path, class: "btn btn-primary" %>
 </div>
 
+<% if @assets.any? || @asset_type_filter %>
+  <%= form_with url: assets_path, method: :get, class: "filters" do |f| %>
+    <div class="form-group">
+      <%= f.label :asset_type, t("views.assets.index.filter_type") %>
+      <%= f.select :asset_type, asset_type_options, { include_blank: t("views.assets.index.filter_all"), selected: @asset_type_filter },
+          class: "form-control", onchange: "this.form.requestSubmit()" %>
+    </div>
+    <noscript><%= f.submit t("views.assets.index.filter_submit"), class: "btn btn-outline" %></noscript>
+  <% end %>
+<% end %>
+
 <% if @assets.any? %>
   <table class="table">
     <thead>
@@ -33,5 +44,5 @@
     </tbody>
   </table>
 <% else %>
-  <p class="empty-state"><%= t("views.assets.index.empty") %></p>
+  <p class="empty-state"><%= t(@asset_type_filter ? "views.assets.index.empty_filtered" : "views.assets.index.empty") %></p>
 <% end %>

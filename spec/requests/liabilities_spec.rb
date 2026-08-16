@@ -39,6 +39,35 @@ RSpec.describe "Liabilities", type: :request do
 
       expect(response.body).to include("60 %")
     end
+
+    it "filters the liabilities by type" do
+      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
+
+      get liabilities_path, params: { liability_type: "real_estate_loan" }
+
+      expect(response.body).to include("Prêt")
+      expect(response.body).not_to include("Caution")
+    end
+
+    it "ignores an unknown type filter" do
+      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
+
+      get liabilities_path, params: { liability_type: "not_a_type" }
+
+      expect(response.body).to include("Prêt")
+      expect(response.body).to include("Caution")
+    end
+
+    it "shows a filtered empty state when no liability matches the type" do
+      create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
+
+      get liabilities_path, params: { liability_type: "real_estate_loan" }
+
+      expect(response.body).to include("Aucun passif pour ce type.")
+      expect(response.body).to include("Filtrer par type")
+    end
   end
 
   describe "GET /liabilities/new" do
