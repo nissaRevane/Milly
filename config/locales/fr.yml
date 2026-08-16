@@ -31,6 +31,7 @@ fr:
       liability:
         name: Nom
         risk_level: Niveau de risque
+        liability_type: Type
       balance_sheet:
         closing_date: Date de clôture
       balance_sheet_asset:
@@ -101,6 +102,7 @@ fr:
       form:
         name: Nom du passif
         risk_level: Niveau de risque
+        liability_type: Type de passif
       edit:
         title: Modifier le passif
       new:
@@ -142,7 +144,6 @@ fr:
         title: "Synthèse du bilan au %{date}"
         assets_column: Actifs
         liabilities_column: Passifs
-        risk_level: "Risque %{level}"
         risk_breakdown: Répartition par risque
         total_assets: Total Actifs
         total_liabilities: Total Passifs
@@ -181,6 +182,10 @@ fr:
         financial_investment: Placement financier
         real_estate: Immobilier
         receivable: Créance
+      liability_types:
+        real_estate_loan: Crédit immobilier
+        short_term_debt: Dette court terme
+        security_deposit: Dépôt de garantie
   flash:
     assets:
       created: Actif créé avec succès.

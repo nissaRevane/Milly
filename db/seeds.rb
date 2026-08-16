@@ -28,9 +28,11 @@ puts "#{assets.count} assets created"
 
 # Create liabilities
 liabilities = seed_data["liabilities"].map do |data|
-  Liability.find_or_create_by!(user: user, name: data["name"]) do |l|
-    l.risk_level = data["risk_level"]
-  end
+  liability = Liability.find_or_initialize_by(user: user, name: data["name"])
+  liability.risk_level = data["risk_level"]
+  liability.liability_type = data["liability_type"]
+  liability.save!
+  liability
 end
 
 puts "#{liabilities.count} liabilities created"

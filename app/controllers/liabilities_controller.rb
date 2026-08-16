@@ -2,7 +2,7 @@ class LiabilitiesController < ApplicationController
   before_action :set_liability, only: [:edit, :update, :destroy]
 
   def index
-    @liabilities = current_user.liabilities.order(:risk_level, :name)
+    @liabilities = current_user.liabilities.order(:liability_type, :risk_level, :name)
   end
 
   def new
@@ -41,6 +41,6 @@ class LiabilitiesController < ApplicationController
   end
 
   def liability_params
-    params.require(:liability).permit(:name, :risk_level)
+    params.require(:liability).permit(:name, :risk_level, :liability_type)
   end
 end

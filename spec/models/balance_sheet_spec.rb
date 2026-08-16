@@ -66,6 +66,26 @@ RSpec.describe BalanceSheet, type: :model do
     end
   end
 
+  describe "#liabilities_by_type" do
+    it "groups liabilities under their type key, ordered by type" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      deposit = create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
+      loan = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan)
+      short = create(:liability, user: user, name: "Découvert", liability_type: :short_term_debt)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 800)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 150_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: short, remaining_capital: 1_200)
+
+      grouped = bs.liabilities_by_type
+
+      expect(grouped.keys).to eq(["real_estate_loan", "short_term_debt", "security_deposit"])
+      expect(grouped["real_estate_loan"].map { |bsl| bsl.liability.name }).to eq(["Prêt maison"])
+      expect(grouped["short_term_debt"].map { |bsl| bsl.liability.name }).to eq(["Découvert"])
+      expect(grouped["security_deposit"].map { |bsl| bsl.liability.name }).to eq(["Caution"])
+    end
+  end
+
   describe "#equity" do
     it "returns total_assets minus total_liabilities" do
       bs = create(:balance_sheet)

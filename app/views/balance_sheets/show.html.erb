@@ -69,6 +69,7 @@
         <thead>
           <tr>
             <th><%= Liability.human_attribute_name(:name) %></th>
+            <th><%= Liability.human_attribute_name(:liability_type) %></th>
             <th><%= Liability.human_attribute_name(:risk_level) %></th>
             <th class="text-right"><%= t("views.balance_sheets.show.remaining_capital") %></th>
             <th class="table-actions"><%= t("views.balance_sheets.show.actions") %></th>
@@ -78,6 +79,7 @@
           <% @balance_sheet_liabilities.each do |bsl| %>
             <tr>
               <td><%= bsl.liability.name %></td>
+              <td><span class="badge badge-secondary"><%= bsl.liability.liability_type_label %></span></td>
               <td>
                 <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>">
                   <%= risk_level_label(bsl.liability.risk_level) %>
@@ -94,7 +96,7 @@
         </tbody>
         <tfoot>
           <tr class="table-total">
-            <td colspan="2"><strong><%= t("views.balance_sheets.show.total_liabilities") %></strong></td>
+            <td colspan="3"><strong><%= t("views.balance_sheets.show.total_liabilities") %></strong></td>
             <td class="text-right"><strong><%= number_to_currency(@balance_sheet.total_liabilities) %></strong></td>
             <td></td>
           </tr>

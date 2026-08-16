@@ -8,9 +8,7 @@ module RiskCategorizable
   end
 
   def self.label_for(level)
-    return "" if level.blank?
-
-    I18n.t("views.shared.risk_levels.#{level}", default: level.to_s)
+    EnumLabel.for("risk_levels", level)
   end
 
   def risk_level_label

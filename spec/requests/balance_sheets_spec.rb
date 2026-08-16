@@ -51,11 +51,20 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "groups assets by type" do
+    it "omits the risk breakdown headings when the balance sheet is empty" do
+      bs = create(:balance_sheet, user: user)
+
+      get summary_balance_sheet_path(bs)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("Répartition par risque")
+    end
+
+    it "groups assets and liabilities by type" do
       bs = create(:balance_sheet, user: user)
       cash = create(:asset, user: user, name: "Espèces", asset_type: :cash, risk_level: :low)
       immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate, risk_level: :medium)
-      debt = create(:liability, user: user, name: "Prêt", risk_level: :low)
+      debt = create(:liability, user: user, name: "Prêt", risk_level: :low, liability_type: :real_estate_loan)
       create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 1_000)
       create(:balance_sheet_asset, balance_sheet: bs, asset: immo, value: 200_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: debt, remaining_capital: 150_000)
@@ -66,6 +75,7 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response.body).to include("Cash")
       expect(response.body).to include("Immobilier")
       expect(response.body).to include("Prêt")
+      expect(response.body).to include("Crédit immobilier")
       expect(response.body).to include("Répartition par risque")
     end
   end

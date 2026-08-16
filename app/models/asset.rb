@@ -16,9 +16,7 @@ class Asset < ApplicationRecord
   validates :name, presence: true
 
   def self.asset_type_label_for(type)
-    return "" if type.blank?
-
-    I18n.t("views.shared.asset_types.#{type}", default: type.to_s)
+    EnumLabel.for("asset_types", type)
   end
 
   def asset_type_label

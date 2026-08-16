@@ -43,4 +43,12 @@ class BalanceSheet < ApplicationRecord
       .order("liabilities.risk_level ASC, liabilities.name ASC")
       .group_by { |bsl| bsl.liability.risk_level }
   end
+
+  def liabilities_by_type
+    balance_sheet_liabilities
+      .includes(:liability)
+      .joins(:liability)
+      .order("liabilities.liability_type ASC, liabilities.name ASC")
+      .group_by { |bsl| bsl.liability.liability_type }
+  end
 end

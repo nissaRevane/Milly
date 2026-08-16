@@ -40,11 +40,13 @@
   "liabilities": [
     {
       "name": "Dettes LT",
-      "risk_level": "low"
+      "risk_level": "low",
+      "liability_type": "real_estate_loan"
     },
     {
       "name": "Dettes CT",
-      "risk_level": "medium"
+      "risk_level": "medium",
+      "liability_type": "short_term_debt"
     }
   ],
   "balance_sheets": [

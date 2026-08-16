@@ -23,4 +23,12 @@ module ApplicationHelper
   def asset_type_label(type)
     Asset.asset_type_label_for(type)
   end
+
+  def liability_type_options
+    Liability.liability_types.keys.map { |key| [t("views.shared.liability_types.#{key}"), key] }
+  end
+
+  def liability_type_label(type)
+    Liability.liability_type_label_for(type)
+  end
 end

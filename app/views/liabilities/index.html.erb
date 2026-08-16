@@ -8,6 +8,7 @@
     <thead>
       <tr>
         <th><%= t("views.liabilities.form.name") %></th>
+        <th><%= t("views.liabilities.form.liability_type") %></th>
         <th><%= t("views.liabilities.form.risk_level") %></th>
         <th class="table-actions"></th>
       </tr>
@@ -16,6 +17,7 @@
       <% @liabilities.each do |liability| %>
         <tr>
           <td><%= liability.name %></td>
+          <td><span class="badge badge-secondary"><%= liability.liability_type_label %></span></td>
           <td>
             <span class="badge <%= risk_level_badge_class(liability.risk_level) %>">
               <%= risk_level_label(liability.risk_level) %>
