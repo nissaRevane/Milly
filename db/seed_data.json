@@ -8,27 +8,33 @@
   "assets": [
     {
       "name": "Liquidités",
-      "risk_level": "low"
+      "risk_level": "low",
+      "asset_type": "checking_account"
     },
     {
       "name": "Risques 1-2",
-      "risk_level": "low"
+      "risk_level": "low",
+      "asset_type": "savings_account"
     },
     {
       "name": "Risques 3-4-5",
-      "risk_level": "medium"
+      "risk_level": "medium",
+      "asset_type": "financial_investment"
     },
     {
       "name": "Immobilier",
-      "risk_level": "low"
+      "risk_level": "low",
+      "asset_type": "real_estate"
     },
     {
       "name": "Risques 6",
-      "risk_level": "medium"
+      "risk_level": "medium",
+      "asset_type": "financial_investment"
     },
     {
       "name": "Risques 7",
-      "risk_level": "high"
+      "risk_level": "high",
+      "asset_type": "financial_investment"
     }
   ],
   "liabilities": [

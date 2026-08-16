@@ -10,6 +10,18 @@ RSpec.describe "Assets", type: :request do
       get assets_path
       expect(response).to have_http_status(:success)
     end
+
+    it "orders assets by type, then risk level, then name" do
+      create(:asset, user: user, name: "Zeta", asset_type: :checking_account, risk_level: :low)
+      create(:asset, user: user, name: "Aaa", asset_type: :checking_account, risk_level: :low)
+      create(:asset, user: user, name: "Beta", asset_type: :checking_account, risk_level: :high)
+      create(:asset, user: user, name: "Alpha", asset_type: :real_estate, risk_level: :low)
+
+      get assets_path
+
+      positions = ["Aaa", "Zeta", "Beta", "Alpha"].map { |name| response.body.index(name) }
+      expect(positions).to eq(positions.compact.sort)
+    end
   end
 
   describe "GET /assets/new" do
@@ -22,9 +34,10 @@ RSpec.describe "Assets", type: :request do
   describe "POST /assets" do
     it "creates a new asset" do
       expect {
-        post assets_path, params: { asset: { name: "Livret A", risk_level: "low" } }
+        post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account" } }
       }.to change(Asset, :count).by(1)
 
+      expect(Asset.last.asset_type).to eq("savings_account")
       expect(response).to redirect_to(assets_path)
     end
 
@@ -43,6 +56,12 @@ RSpec.describe "Assets", type: :request do
     it "updates the asset" do
       patch asset_path(asset), params: { asset: { name: "New Name" } }
       expect(asset.reload.name).to eq("New Name")
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "updates the asset type" do
+      patch asset_path(asset), params: { asset: { asset_type: "real_estate" } }
+      expect(asset.reload.asset_type).to eq("real_estate")
       expect(response).to redirect_to(assets_path)
     end
   end

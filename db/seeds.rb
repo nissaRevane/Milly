@@ -17,9 +17,11 @@ puts "User created: #{user.email}"
 
 # Create assets
 assets = seed_data["assets"].map do |data|
-  Asset.find_or_create_by!(user: user, name: data["name"]) do |a|
-    a.risk_level = data["risk_level"]
-  end
+  asset = Asset.find_or_initialize_by(user: user, name: data["name"])
+  asset.risk_level = data["risk_level"]
+  asset.asset_type = data["asset_type"]
+  asset.save!
+  asset
 end
 
 puts "#{assets.count} assets created"

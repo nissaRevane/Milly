@@ -15,6 +15,10 @@ module ApplicationHelper
     }[level] || level
   end
 
+  def asset_type_options
+    Asset.asset_types.keys.map { |key| [t("views.shared.asset_types.#{key}"), key] }
+  end
+
   def risk_level_badge_class(level)
     case level
     when "low" then "badge-success"

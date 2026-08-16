@@ -2,7 +2,7 @@ class AssetsController < ApplicationController
   before_action :set_asset, only: [:edit, :update, :destroy]
 
   def index
-    @assets = current_user.assets.order(:risk_level, :name)
+    @assets = current_user.assets.order(:asset_type, :risk_level, :name)
   end
 
   def new
@@ -41,6 +41,6 @@ class AssetsController < ApplicationController
   end
 
   def asset_params
-    params.require(:asset).permit(:name, :risk_level)
+    params.require(:asset).permit(:name, :risk_level, :asset_type)
   end
 end

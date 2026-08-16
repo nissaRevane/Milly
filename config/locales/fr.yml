@@ -27,6 +27,7 @@ fr:
       asset:
         name: Nom
         risk_level: Niveau de risque
+        asset_type: Type
       liability:
         name: Nom
         risk_level: Niveau de risque
@@ -80,6 +81,7 @@ fr:
       form:
         name: Nom de l'actif
         risk_level: Niveau de risque
+        asset_type: Type d'actif
       edit:
         title: Modifier l'actif
       new:
@@ -164,6 +166,12 @@ fr:
         low: Faible
         medium: Moyen
         high: Élevé
+      asset_types:
+        checking_account: Compte courant
+        joint_account: Compte commun
+        savings_account: Compte épargne
+        financial_investment: Placement financier
+        real_estate: Immobilier
   flash:
     assets:
       created: Actif créé avec succès.
