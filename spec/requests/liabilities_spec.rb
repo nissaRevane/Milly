@@ -22,6 +22,15 @@ RSpec.describe "Liabilities", type: :request do
       positions = ["Aaa", "Zeta", "Beta", "Alpha"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
+
+    it "colors the liability type badge with the risk level" do
+      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan, risk_level: :low)
+
+      get liabilities_path
+
+      expect(response.body).to include('<span class="badge badge-success" title="Faible">')
+      expect(response.body).to include("Crédit immobilier")
+    end
   end
 
   describe "GET /liabilities/new" do

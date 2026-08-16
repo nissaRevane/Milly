@@ -19,7 +19,7 @@
           <tbody>
             <% items.each do |bsa| %>
               <tr>
-                <td><%= bsa.asset.name %> <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>"><%= risk_level_label(bsa.asset.risk_level) %></span></td>
+                <td><%= bsa.asset.name %></td>
                 <td class="text-right"><%= number_to_currency(bsa.value) %></td>
               </tr>
             <% end %>
@@ -74,7 +74,7 @@
           <tbody>
             <% items.each do |bsl| %>
               <tr>
-                <td><%= bsl.liability.name %> <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>"><%= risk_level_label(bsl.liability.risk_level) %></span></td>
+                <td><%= bsl.liability.name %></td>
                 <td class="text-right"><%= number_to_currency(bsl.remaining_capital) %></td>
               </tr>
             <% end %>

@@ -22,6 +22,15 @@ RSpec.describe "Assets", type: :request do
       positions = ["Aaa", "Zeta", "Beta", "Alpha"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
+
+    it "colors the asset type badge with the risk level" do
+      create(:asset, user: user, name: "Maison", asset_type: :real_estate, risk_level: :high)
+
+      get assets_path
+
+      expect(response.body).to include('<span class="badge badge-danger" title="Élevé">')
+      expect(response.body).to include("Immobilier")
+    end
   end
 
   describe "GET /assets/new" do
