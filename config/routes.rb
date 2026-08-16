@@ -7,6 +7,8 @@ Milly::Application.routes.draw do
 
   root "pages#home"
 
+  resource :export, only: [:show]
+
   resources :assets, except: [:show]
   resources :liabilities, except: [:show]
 

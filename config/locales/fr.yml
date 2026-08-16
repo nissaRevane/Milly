@@ -83,6 +83,7 @@ fr:
       assets: Actifs
       liabilities: Passifs
       balance_sheets: Bilans
+      export: Exporter
       sign_out: Déconnexion
       sign_in: Connexion
       sign_up: Inscription

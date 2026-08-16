@@ -12,6 +12,8 @@
       <%= link_to t("views.nav.assets"), assets_path, class: "nav-link" %>
       <%= link_to t("views.nav.liabilities"), liabilities_path, class: "nav-link" %>
       <%= link_to t("views.nav.balance_sheets"), balance_sheets_path, class: "nav-link" %>
+      <%# Turbo Drive would swallow the file response, so let the browser handle it %>
+      <%= link_to t("views.nav.export"), export_path, class: "nav-link", data: { turbo: false } %>
     </div>
     <div class="navbar-user">
       <span class="nav-user-name"><%= current_user.full_name %></span>
