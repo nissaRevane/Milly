@@ -20,6 +20,7 @@ assets = seed_data["assets"].map do |data|
   asset = Asset.find_or_initialize_by(user: user, name: data["name"])
   asset.risk_level = data["risk_level"]
   asset.asset_type = data["asset_type"]
+  asset.ownership_share = data.fetch("ownership_share", 100)
   asset.save!
   asset
 end
@@ -31,6 +32,7 @@ liabilities = seed_data["liabilities"].map do |data|
   liability = Liability.find_or_initialize_by(user: user, name: data["name"])
   liability.risk_level = data["risk_level"]
   liability.liability_type = data["liability_type"]
+  liability.ownership_share = data.fetch("ownership_share", 100)
   liability.save!
   liability
 end

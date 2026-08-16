@@ -1,5 +1,6 @@
 class Asset < ApplicationRecord
   include RiskCategorizable
+  include Shareable
 
   belongs_to :user
   has_many :balance_sheet_assets, dependent: :destroy

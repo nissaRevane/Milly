@@ -9,11 +9,15 @@ class BalanceSheet < ApplicationRecord
   validates :closing_date, uniqueness: { scope: :user_id }
 
   def total_assets
-    balance_sheet_assets.sum(:value)
+    balance_sheet_assets
+      .joins(:asset)
+      .sum("ROUND(balance_sheet_assets.value * ROUND(assets.ownership_share / 100, 4), 2)")
   end
 
   def total_liabilities
-    balance_sheet_liabilities.sum(:remaining_capital)
+    balance_sheet_liabilities
+      .joins(:liability)
+      .sum("ROUND(balance_sheet_liabilities.remaining_capital * ROUND(liabilities.ownership_share / 100, 4), 2)")
   end
 
   def equity
