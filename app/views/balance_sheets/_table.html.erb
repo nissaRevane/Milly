@@ -18,6 +18,7 @@
         <td class="table-actions">
           <%= link_to t("views.balance_sheets.index.view"), balance_sheet_path(bs), class: "btn btn-outline btn-sm" %>
           <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(bs), class: "btn btn-primary btn-sm" %>
+          <%= link_to t("views.balance_sheets.index.duplicate"), new_balance_sheet_path(source_id: bs.id), class: "btn btn-outline btn-sm" %>
           <%= button_to "🗑️", balance_sheet_path(bs), method: :delete, class: "btn btn-sm btn-danger",
               form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
         </td>

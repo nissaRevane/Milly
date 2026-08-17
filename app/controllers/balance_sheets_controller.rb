@@ -11,13 +11,16 @@ class BalanceSheetsController < ApplicationController
   end
 
   def new
+    @source = source_balance_sheet
     @balance_sheet = current_user.balance_sheets.build(closing_date: Date.today)
   end
 
   def create
+    @source = source_balance_sheet
     @balance_sheet = current_user.balance_sheets.build(balance_sheet_params)
     if @balance_sheet.save
-      redirect_to @balance_sheet, notice: t("flash.balance_sheets.created")
+      @balance_sheet.copy_lines_from(@source) if @source
+      redirect_to @balance_sheet, notice: t("flash.balance_sheets.#{@source ? 'duplicated' : 'created'}")
     else
       render :new, status: :unprocessable_entity
     end
@@ -50,6 +53,12 @@ class BalanceSheetsController < ApplicationController
 
   def set_balance_sheet
     @balance_sheet = current_user.balance_sheets.find(params[:id])
+  end
+
+  def source_balance_sheet
+    return if params[:source_id].blank?
+
+    current_user.balance_sheets.find(params[:source_id])
   end
 
   def balance_sheet_params

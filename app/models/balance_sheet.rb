@@ -8,6 +8,17 @@ class BalanceSheet < ApplicationRecord
   validates :closing_date, presence: true
   validates :closing_date, uniqueness: { scope: :user_id }
 
+  def copy_lines_from(source)
+    transaction do
+      source.balance_sheet_assets.each do |line|
+        balance_sheet_assets.create!(asset_id: line.asset_id, value: line.value)
+      end
+      source.balance_sheet_liabilities.each do |line|
+        balance_sheet_liabilities.create!(liability_id: line.liability_id, remaining_capital: line.remaining_capital)
+      end
+    end
+  end
+
   def total_assets
     balance_sheet_assets
       .joins(:asset)

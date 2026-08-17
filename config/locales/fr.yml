@@ -136,10 +136,13 @@ fr:
         equity: "Fonds propres :"
         view: Voir
         summary: Synthèse
+        duplicate: Dupliquer
       form:
         closing_date: Date de clôture
       new:
         title: Nouveau bilan
+        duplicate_title: "Dupliquer le bilan au %{date}"
+        duplicate_hint: Les lignes d'actifs et de passifs seront recopiées avec leurs montants.
       edit:
         title: Modifier le bilan
       show:
@@ -220,6 +223,7 @@ fr:
       destroyed: Passif supprimé avec succès.
     balance_sheets:
       created: Bilan créé avec succès.
+      duplicated: Bilan dupliqué avec succès.
       updated: Bilan mis à jour avec succès.
       destroyed: Bilan supprimé avec succès.
     balance_sheet_assets:

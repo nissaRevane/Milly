@@ -1,2 +1,7 @@
-<h1><%= t("views.balance_sheets.new.title") %></h1>
-<%= render "form", balance_sheet: @balance_sheet %>
+<% if @source %>
+  <h1><%= t("views.balance_sheets.new.duplicate_title", date: l(@source.closing_date, format: :long)) %></h1>
+  <p class="form-hint"><%= t("views.balance_sheets.new.duplicate_hint") %></p>
+<% else %>
+  <h1><%= t("views.balance_sheets.new.title") %></h1>
+<% end %>
+<%= render "form", balance_sheet: @balance_sheet, source: @source %>

@@ -71,6 +71,61 @@ RSpec.describe "BalanceSheets", type: :request do
     end
   end
 
+  describe "duplicating a balance sheet" do
+    let(:asset) { create(:asset, user: user, name: "Livret A") }
+    let(:liability) { create(:liability, user: user, name: "Prêt") }
+    let!(:source) do
+      create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31)).tap do |bs|
+        create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 12_000)
+        create(:balance_sheet_liability, balance_sheet: bs, liability: liability, remaining_capital: 90_000)
+      end
+    end
+
+    it "offers a duplicate link for each balance sheet on the index" do
+      get balance_sheets_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("a[href='#{new_balance_sheet_path(source_id: source.id)}']")).not_to be_empty
+    end
+
+    it "prefills the form and carries the source" do
+      get new_balance_sheet_path(source_id: source.id)
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("input[name='source_id']")["value"]).to eq(source.id.to_s)
+    end
+
+    it "copies every asset and liability line onto the new balance sheet" do
+      expect {
+        post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+      }.to change(BalanceSheet, :count).by(1)
+
+      copy = BalanceSheet.order(:created_at).last
+      expect(response).to redirect_to(copy)
+      expect(copy.closing_date).to eq(Date.new(2026, 6, 30))
+      expect(copy.balance_sheet_assets.pluck(:asset_id, :value)).to eq([[asset.id, 12_000]])
+      expect(copy.balance_sheet_liabilities.pluck(:liability_id, :remaining_capital)).to eq([[liability.id, 90_000]])
+      expect(source.reload.balance_sheet_assets.count).to eq(1)
+    end
+
+    it "does not copy anything when the closing date is already taken" do
+      expect {
+        post balance_sheets_path, params: { balance_sheet: { closing_date: "2025-12-31" }, source_id: source.id }
+      }.not_to change(BalanceSheetAsset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "does not let a user duplicate someone else's balance sheet" do
+      other = create(:balance_sheet, user: create(:user))
+
+      expect {
+        get new_balance_sheet_path(source_id: other.id)
+      }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
   describe "GET /balance_sheets/:id/summary" do
     it "returns success" do
       bs = create(:balance_sheet, user: user)

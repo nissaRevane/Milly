@@ -1,4 +1,7 @@
+<% source = local_assigns[:source] %>
 <%= form_with(model: balance_sheet, class: "form") do |f| %>
+  <%= hidden_field_tag :source_id, source.id if source %>
+
   <% if balance_sheet.errors.any? %>
     <div class="alert alert-danger">
       <ul>
