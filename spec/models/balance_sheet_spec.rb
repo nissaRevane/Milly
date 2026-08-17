@@ -195,4 +195,194 @@ RSpec.describe BalanceSheet, type: :model do
       expect(bs.equity).to eq(0)
     end
   end
+
+  describe "#property_positions" do
+    it "groups the lines of a property and derives its net value and LTV" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user, name: "Maison", usage: :primary_residence)
+      asset = create(:asset, user: user, property: property, asset_type: :real_estate)
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 400_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 300_000)
+
+      position = bs.property_positions.sole
+
+      expect(position.property).to eq(property)
+      expect(position).not_to be_unassigned
+      expect(position.gross).to eq(400_000)
+      expect(position.debt).to eq(300_000)
+      expect(position.net).to eq(100_000)
+      expect(position.ltv).to eq(75.0)
+    end
+
+    it "counts only the owned share of each line" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user)
+      asset = create(:asset, user: user, property: property, asset_type: :real_estate, ownership_share: 50)
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan, ownership_share: 50)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 400_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 300_000)
+
+      position = bs.property_positions.sole
+
+      expect(position.gross).to eq(200_000)
+      expect(position.debt).to eq(150_000)
+      expect(position.net).to eq(50_000)
+      expect(position.ltv).to eq(75.0)
+    end
+
+    it "orders the positions by usage then name" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      properties = [
+        create(:property, user: user, name: "Studio", usage: :rental),
+        create(:property, user: user, name: "Chalet", usage: :secondary_residence),
+        create(:property, user: user, name: "Appartement", usage: :rental),
+        create(:property, user: user, name: "Maison", usage: :primary_residence)
+      ]
+      properties.each do |property|
+        asset = create(:asset, user: user, property: property, asset_type: :real_estate)
+        create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 100_000)
+      end
+
+      expect(bs.property_positions.map { |position| position.property.name })
+        .to eq(["Maison", "Appartement", "Studio", "Chalet"])
+    end
+
+    it "leaves out properties without any line on this balance sheet" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      elsewhere = create(:property, user: user, name: "Ailleurs")
+      asset = create(:asset, user: user, property: elsewhere, asset_type: :real_estate)
+      other_bs = create(:balance_sheet, user: user, closing_date: bs.closing_date - 1.year)
+      create(:balance_sheet_asset, balance_sheet: other_bs, asset: asset, value: 100_000)
+
+      expect(bs.property_positions).to be_empty
+    end
+
+    it "collects the unlinked real estate lines in a last unassigned position" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user, name: "Maison")
+      linked = create(:asset, user: user, property: property, asset_type: :real_estate)
+      orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
+      orphan_loan = create(:liability, user: user, name: "Prêt terrain", liability_type: :real_estate_loan)
+      orphan_deposit = create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: linked, value: 400_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: orphan, value: 80_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: orphan_loan, remaining_capital: 20_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: orphan_deposit, remaining_capital: 1_000)
+
+      unassigned = bs.property_positions.last
+
+      expect(bs.property_positions.size).to eq(2)
+      expect(unassigned).to be_unassigned
+      expect(unassigned.property).to be_nil
+      expect(unassigned.asset_lines.map { |line| line.asset.name }).to eq(["Terrain"])
+      expect(unassigned.liability_lines.map { |line| line.liability.name }).to eq(["Caution", "Prêt terrain"])
+      expect(unassigned.gross).to eq(80_000)
+      expect(unassigned.debt).to eq(21_000)
+      expect(unassigned.net).to eq(59_000)
+    end
+
+    it "ignores unlinked lines that are not about real estate" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      cash = create(:asset, user: user, asset_type: :cash)
+      overdraft = create(:liability, user: user, liability_type: :short_term_debt)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 5_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: overdraft, remaining_capital: 1_200)
+
+      expect(bs.property_positions).to be_empty
+    end
+
+    it "keeps a property line even when it is not a real estate asset" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user)
+      charges = create(:asset, user: user, property: property, asset_type: :checking_account)
+      works = create(:liability, user: user, property: property, liability_type: :short_term_debt)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: charges, value: 3_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: works, remaining_capital: 1_000)
+
+      position = bs.property_positions.sole
+
+      expect(position.gross).to eq(3_000)
+      expect(position.debt).to eq(1_000)
+    end
+
+    it "returns no LTV when the position has no gross value" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user)
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 300_000)
+
+      position = bs.property_positions.sole
+
+      expect(position.gross).to eq(0)
+      expect(position.ltv).to be_nil
+      expect(position.net).to eq(-300_000)
+    end
+  end
+
+  describe "#real_estate_totals_by_usage" do
+    def build_property(bs, name:, usage:, value:, debt: 0)
+      user = bs.user
+      property = create(:property, user: user, name: name, usage: usage)
+      asset = create(:asset, user: user, property: property, asset_type: :real_estate)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: value)
+      return property if debt.zero?
+
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: debt)
+      property
+    end
+
+    it "sums the positions of each usage and closes with the overall total" do
+      bs = create(:balance_sheet)
+      build_property(bs, name: "Maison", usage: :primary_residence, value: 400_000, debt: 300_000)
+      build_property(bs, name: "Studio", usage: :rental, value: 100_000, debt: 60_000)
+      build_property(bs, name: "Appartement", usage: :rental, value: 200_000, debt: 20_000)
+
+      totals = bs.real_estate_totals_by_usage
+
+      expect(totals.keys).to eq(["primary_residence", "rental", :total])
+      expect(totals["primary_residence"]).to have_attributes(gross: 400_000, debt: 300_000, net: 100_000, ltv: 75.0)
+      expect(totals["rental"]).to have_attributes(gross: 300_000, debt: 80_000, net: 220_000)
+      expect(totals[:total]).to have_attributes(gross: 700_000, debt: 380_000, net: 320_000)
+    end
+
+    it "never derives an overall LTV, since it would mix usages" do
+      bs = create(:balance_sheet)
+      build_property(bs, name: "Maison", usage: :primary_residence, value: 400_000, debt: 300_000)
+
+      expect(bs.real_estate_totals_by_usage[:total].ltv).to be_nil
+    end
+
+    it "keys the unassigned bucket with nil and keeps it after the usages" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      build_property(bs, name: "Maison", usage: :primary_residence, value: 400_000)
+      orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: orphan, value: 80_000)
+
+      totals = bs.real_estate_totals_by_usage
+
+      expect(totals.keys).to eq(["primary_residence", nil, :total])
+      expect(totals[nil]).to have_attributes(gross: 80_000, debt: 0, net: 80_000, ltv: 0.0)
+      expect(totals[:total].gross).to eq(480_000)
+    end
+
+    it "only holds the total on a balance sheet without any property line" do
+      bs = create(:balance_sheet)
+
+      totals = bs.real_estate_totals_by_usage
+
+      expect(totals.keys).to eq([:total])
+      expect(totals[:total]).to have_attributes(gross: 0, debt: 0, net: 0, ltv: nil)
+    end
+  end
 end
