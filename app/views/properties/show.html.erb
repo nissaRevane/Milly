@@ -77,14 +77,18 @@
         <% @liabilities.each do |liability| %>
           <tr>
             <td>
-              <div class="cell-title"><%= liability.name %></div>
-              <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
-                <%= liability.liability_type_label %>
-              </span>
+              <%= link_to liability_path(liability), class: "row-link" do %>
+                <div class="cell-title"><%= liability.name %></div>
+                <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
+                  <%= liability.liability_type_label %>
+                </span>
+              <% end %>
             </td>
             <td class="text-right">
-              <% line = @liability_lines[liability.id] %>
-              <%= line ? owned_value_cell(line.remaining_capital, line.owned_remaining_capital, liability.ownership_share) : "—" %>
+              <%= link_to liability_path(liability), class: "row-link" do %>
+                <% line = @liability_lines[liability.id] %>
+                <%= line ? owned_value_cell(line.remaining_capital, line.owned_remaining_capital, liability.ownership_share) : "—" %>
+              <% end %>
             </td>
           </tr>
         <% end %>

@@ -68,6 +68,17 @@ RSpec.describe "Properties", type: :request do
       expect(response.body).not_to include("Prêt voiture")
     end
 
+    it "links each dette row to the liability page" do
+      liability = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan, property: property)
+
+      get property_path(property)
+
+      doc = Nokogiri::HTML(response.body)
+      links = doc.css(%(a.row-link[href="#{liability_path(liability)}"]))
+      expect(links).not_to be_empty
+      expect(links.map(&:text).join).to include("Prêt maison")
+    end
+
     it "values the lines with the most recent balance sheet" do
       liability = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan,
                          property: property, ownership_share: 100)
