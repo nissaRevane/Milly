@@ -49,7 +49,9 @@ class BalanceSheetsController < ApplicationController
 
     # Each tab is a full server-rendered page: only compute what the active tab shows.
     if @tab == "real_estate"
-      @property_positions = @balance_sheet.property_positions
+      # The unassigned bucket is deliberately excluded from this tab: it shows only the
+      # biens, and the totals are computed from these same positions to stay consistent.
+      @property_positions = @balance_sheet.property_positions.reject(&:unassigned?)
       @real_estate_usage_totals = @balance_sheet.real_estate_totals_by_usage(@property_positions)
     else
       @assets_by_risk = @balance_sheet.assets_by_risk_level

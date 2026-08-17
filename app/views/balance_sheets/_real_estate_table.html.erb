@@ -1,0 +1,57 @@
+<%#
+  The whole content of the immobilier tab: a single table where each usage subtotal
+  row is followed by the rows of its biens, closed by the overall "Total immobilier" row.
+
+  +positions+ never carries the unassigned bucket (the controller rejects it), so
+  grouping by usage cannot yield a nil key, and +totals+ — computed from these same
+  positions — carries no nil bucket either. Positions arrive sorted usage-then-name,
+  so the group_by below preserves the Property.usages order.
+
+  +totals+ always carries its :total row, even on a sheet without a single real
+  estate line, so emptiness is decided on +positions+ instead (in summary.html.erb).
+%>
+<div class="table-scroll real-estate-table">
+  <table class="table table-compact">
+    <thead>
+      <tr>
+        <th><%= t("views.balance_sheets.properties.usage") %></th>
+        <th class="text-right"><%= t("views.balance_sheets.properties.gross") %></th>
+        <th class="text-right"><%= t("views.balance_sheets.properties.debt") %></th>
+        <th class="text-right"><%= t("views.balance_sheets.properties.net") %></th>
+        <th class="text-right"><%= t("views.balance_sheets.properties.ltv") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% positions.group_by { |position| position.property.usage }.each do |usage, usage_positions| %>
+        <tr class="property-usage-row">
+          <td>
+            <span class="badge badge-secondary"><%= property_usage_label(usage) %></span>
+          </td>
+          <td class="text-right"><%= number_to_currency(totals.fetch(usage).gross) %></td>
+          <td class="text-right"><%= number_to_currency(totals.fetch(usage).debt) %></td>
+          <td class="text-right"><%= number_to_currency(totals.fetch(usage).net) %></td>
+          <td class="text-right"><%= ltv_label(totals.fetch(usage).ltv) %></td>
+        </tr>
+
+        <% usage_positions.each do |position| %>
+          <tr class="property-bien-row">
+            <td><%= position.property.name %></td>
+            <td class="text-right"><%= number_to_currency(position.gross) %></td>
+            <td class="text-right"><%= number_to_currency(position.debt) %></td>
+            <td class="text-right"><%= number_to_currency(position.net) %></td>
+            <td class="text-right"><%= ltv_label(position.ltv) %></td>
+          </tr>
+        <% end %>
+      <% end %>
+
+      <%# The overall LTV is deliberately nil — see BalanceSheet#real_estate_totals_by_usage %>
+      <tr class="table-subtotal property-totals-row">
+        <td><%= t("views.balance_sheets.properties.total") %></td>
+        <td class="text-right"><%= number_to_currency(totals[:total].gross) %></td>
+        <td class="text-right"><%= number_to_currency(totals[:total].debt) %></td>
+        <td class="text-right"><%= number_to_currency(totals[:total].net) %></td>
+        <td class="text-right"><%= ltv_label(totals[:total].ltv) %></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -139,9 +139,9 @@ class BalanceSheet < ApplicationRecord
   # Real-estate aggregates for the summary view: an ordered Hash of UsageTotal keyed by
   # usage string, then nil for the unassigned bucket, then :total for the overall row.
   #
-  # +positions+ is a parameter so the summary action, which also renders the per-bien
-  # detail, computes property_positions once and passes it in instead of paying for the
-  # whole aggregation twice.
+  # +positions+ is a parameter because the controller passes in the FILTERED set (the
+  # unassigned bucket rejected), so the rows the table displays and the totals it shows
+  # are computed from the very same positions and cannot disagree.
   #
   # Beware of an asymmetry inherited from #property_positions and kept on purpose: a
   # property bucket takes EVERY line rattachée to that bien whatever its type, while the

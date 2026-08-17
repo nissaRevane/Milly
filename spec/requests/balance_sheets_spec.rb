@@ -118,8 +118,8 @@ RSpec.describe "BalanceSheets", type: :request do
         doc = Nokogiri::HTML(response.body)
         expect(doc.at_css(".tab-link-active").text.strip).to eq("Synthèse")
         expect(doc.at_css(".summary-column-assets")).not_to be_nil
-        expect(response.body).not_to include("property-usage-totals")
-        expect(response.body).not_to include("Immobilier par usage")
+        expect(response.body).not_to include("real-estate-table")
+        expect(response.body).not_to include("Total immobilier")
       end
 
       it "falls back to the synthèse tab on an unknown tab value" do
@@ -131,11 +131,11 @@ RSpec.describe "BalanceSheets", type: :request do
         doc = Nokogiri::HTML(response.body)
         expect(doc.at_css(".tab-link-active").text.strip).to eq("Synthèse")
         expect(doc.at_css(".summary-column-assets")).not_to be_nil
-        expect(response.body).not_to include("property-usage-totals")
+        expect(response.body).not_to include("real-estate-table")
       end
 
       describe "on the immobilier tab" do
-        it "shows the immobilier view instead of the actifs/passifs columns" do
+        it "shows the immobilier table instead of the actifs/passifs columns" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "real_estate")
@@ -144,24 +144,69 @@ RSpec.describe "BalanceSheets", type: :request do
           doc = Nokogiri::HTML(response.body)
           expect(doc.at_css(".tab-link-active").text.strip).to eq("Immobilier")
           expect(doc.at_css(".summary-column-assets")).to be_nil
-          expect(doc.at_css(".property-usage-totals")).not_to be_nil
-          expect(doc.at_css(".property-positions")).not_to be_nil
+          expect(doc.at_css(".real-estate-table")).not_to be_nil
+          expect(response.body).not_to include("property-card")
+          expect(response.body).not_to include("<details")
         end
 
-        it "totals the real estate by usage and closes with an overall row" do
+        it "interleaves each usage subtotal row with its bien rows, in usage order" do
+          bs = build_property_sheet
+          home = create(:property, user: user, name: "Maison Annecy", usage: :primary_residence)
+          home_asset = create(:asset, user: user, name: "Maison", asset_type: :real_estate, property: home)
+          create(:balance_sheet_asset, balance_sheet: bs, asset: home_asset, value: 300_000)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          rows = Nokogiri::HTML(response.body).css(".real-estate-table tbody tr")
+
+          expect(rows.map { |row| row["class"].to_s[/property-\S+-row/] }).to eq(
+            ["property-usage-row", "property-bien-row", "property-usage-row", "property-bien-row", "property-totals-row"]
+          )
+          expect(rows.map { |row| row.at_css("td").text.gsub(/\s+/, " ").strip }).to eq(
+            ["Résidence principale", "Maison Annecy", "Locatif", "Appartement Lyon", "Total immobilier"]
+          )
+        end
+
+        it "carries the usage subtotal and the bien amounts on their own rows" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "real_estate")
 
           expect(response).to have_http_status(:success)
-          doc = Nokogiri::HTML(response.body)
-          section = doc.at_css(".property-usage-totals")
+          rows = Nokogiri::HTML(response.body).css(".real-estate-table tbody tr")
+          cells = ->(row) { row.css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip } }
+          amounts = [currency(200_000), currency(150_000), currency(50_000), "75,0 %"].map { |v| v.gsub(/\s+/, " ") }
 
-          expect(section).not_to be_nil
-          usage_row = section.css("tbody tr").first
+          usage_row = rows.first
           expect(usage_row.at_css(".badge").text.strip).to eq("Locatif")
-          expect(usage_row.css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip }).to eq(
-            ["Locatif", currency(200_000), currency(150_000), currency(50_000), "75,0 %"].map { |v| v.gsub(/\s+/, " ") }
+          expect(cells.call(usage_row)).to eq(["Locatif"] + amounts)
+          expect(cells.call(rows[1])).to eq(["Appartement Lyon"] + amounts)
+        end
+
+        it "sums several biens of the same usage into the subtotal, each row keeping its own amounts" do
+          bs = build_property_sheet
+          studio = create(:property, user: user, name: "Studio Grenoble", usage: :rental)
+          studio_asset = create(:asset, user: user, name: "Studio", asset_type: :real_estate, property: studio)
+          studio_loan = create(:liability, user: user, name: "Prêt Grenoble", liability_type: :real_estate_loan, property: studio)
+          create(:balance_sheet_asset, balance_sheet: bs, asset: studio_asset, value: 100_000)
+          create(:balance_sheet_liability, balance_sheet: bs, liability: studio_loan, remaining_capital: 90_000)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          rows = Nokogiri::HTML(response.body).css(".real-estate-table tbody tr")
+          cells = ->(row) { row.css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip } }
+          amounts = ->(values) { values.map { |v| v.gsub(/\s+/, " ") } }
+
+          expect(cells.call(rows[0])).to eq(
+            ["Locatif"] + amounts.call([currency(300_000), currency(240_000), currency(60_000), "80,0 %"])
+          )
+          expect(cells.call(rows[1])).to eq(
+            ["Appartement Lyon"] + amounts.call([currency(200_000), currency(150_000), currency(50_000), "75,0 %"])
+          )
+          expect(cells.call(rows[2])).to eq(
+            ["Studio Grenoble"] + amounts.call([currency(100_000), currency(90_000), currency(10_000), "90,0 %"])
           )
         end
 
@@ -176,42 +221,38 @@ RSpec.describe "BalanceSheets", type: :request do
           expect(row.css("td").last.text.strip).to eq("—")
         end
 
-        it "lists the unassigned bucket with its own LTV" do
+        it "leaves the unassigned lines out of the rows and of the totals" do
           bs = build_property_sheet(with_unassigned: true)
 
           get summary_balance_sheet_path(bs, tab: "real_estate")
 
-          rows = Nokogiri::HTML(response.body).css(".property-usage-totals > .table-scroll tbody tr")
-          labels = rows.map { |row| row.at_css("td").text.gsub(/\s+/, " ").strip }
-
-          expect(labels).to eq(["Locatif", "Non rattaché", "Total immobilier"])
-          expect(rows[1].css("td").last.text.strip).to eq("0,0 %")
-        end
-
-        it "keeps the per property detail collapsed behind a disclosure" do
-          bs = build_property_sheet
-
-          get summary_balance_sheet_path(bs, tab: "real_estate")
-
-          details = Nokogiri::HTML(response.body).at_css(".property-usage-totals details")
-
-          expect(details["open"]).to be_nil
-          expect(details.at_css("summary").text).to include("Détail par bien")
-          expect(details.at_css("tbody tr td").text).to include("Appartement Lyon")
-        end
-
-        it "renders one card per bien, the unassigned bucket last" do
-          bs = build_property_sheet(with_unassigned: true)
-
-          get summary_balance_sheet_path(bs, tab: "real_estate")
+          expect(response).to have_http_status(:success)
+          expect(response.body).not_to include("Non rattaché")
+          expect(response.body).not_to include("Terrain orphelin")
 
           doc = Nokogiri::HTML(response.body)
-          band = doc.at_css(".property-positions")
+          labels = doc.css(".real-estate-table tbody tr").map { |row| row.at_css("td").text.gsub(/\s+/, " ").strip }
+          expect(labels).to eq(["Locatif", "Appartement Lyon", "Total immobilier"])
 
-          expect(band).not_to be_nil
-          expect(band.at_css(".property-card-header").text).to include("Appartement Lyon")
-          expect(band.css(".property-card").size).to eq(2)
-          expect(band.css(".property-card").last["class"]).to include("property-card-unassigned")
+          # The 40k orphan asset does not inflate the total: it only counts 200k of gross.
+          total_cells = doc.at_css(".property-totals-row").css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip }
+          expect(total_cells).to eq(
+            ["Total immobilier", currency(200_000), currency(150_000), currency(50_000), "—"].map { |v| v.gsub(/\s+/, " ") }
+          )
+        end
+
+        it "shows the empty state when only unassigned lines exist" do
+          bs = create(:balance_sheet, user: user)
+          orphan = create(:asset, user: user, name: "Terrain orphelin", asset_type: :real_estate)
+          loan = create(:liability, user: user, name: "Prêt sans bien", liability_type: :real_estate_loan)
+          create(:balance_sheet_asset, balance_sheet: bs, asset: orphan, value: 40_000)
+          create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 30_000)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          expect(response.body).not_to include("real-estate-table")
+          expect(response.body).to include("Aucun bien immobilier sur ce bilan.")
         end
 
         it "shows an empty state when the balance sheet has no real estate line" do
@@ -222,8 +263,7 @@ RSpec.describe "BalanceSheets", type: :request do
           get summary_balance_sheet_path(bs, tab: "real_estate")
 
           expect(response).to have_http_status(:success)
-          expect(response.body).not_to include("property-usage-totals")
-          expect(response.body).not_to include("property-positions")
+          expect(response.body).not_to include("real-estate-table")
           expect(response.body).to include("Aucun bien immobilier sur ce bilan.")
         end
       end

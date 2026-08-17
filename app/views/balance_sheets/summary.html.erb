@@ -16,8 +16,7 @@
 
 <% if @tab == "real_estate" %>
   <% if @property_positions.any? %>
-    <%= render "property_usage_totals", positions: @property_positions, totals: @real_estate_usage_totals %>
-    <%= render "property_positions", positions: @property_positions %>
+    <%= render "real_estate_table", positions: @property_positions, totals: @real_estate_usage_totals %>
   <% else %>
     <p class="empty-state"><%= t("views.balance_sheets.properties.empty") %></p>
   <% end %>
