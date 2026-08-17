@@ -44,7 +44,6 @@
         <% end %>
       <% end %>
 
-      <%# The overall LTV is deliberately nil — see BalanceSheet#real_estate_totals_by_usage %>
       <tr class="table-subtotal property-totals-row">
         <td><%= t("views.balance_sheets.properties.total") %></td>
         <td class="text-right"><%= number_to_currency(totals[:total].gross) %></td>

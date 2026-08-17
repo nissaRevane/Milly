@@ -29,7 +29,7 @@ class BalanceSheet < ApplicationRecord
   end
 
   # One row of the real-estate summary: an usage bucket or the overall total.
-  # +ltv+ is carried instead of derived because the overall total deliberately has none.
+  # +ltv+ is derived once at build time (see #usage_total) rather than lazily.
   UsageTotal = Struct.new(:gross, :debt, :net, :ltv, keyword_init: true)
 
   # Liability types that belong to a property even when none is linked yet.
@@ -155,9 +155,7 @@ class BalanceSheet < ApplicationRecord
     ordered_keys << nil if grouped.key?(nil)
 
     totals = ordered_keys.index_with { |usage| usage_total(grouped.fetch(usage)) }
-    # The overall LTV is deliberately nil: mixing a résidence principale with du locatif
-    # into a single ratio is not a meaningful metric, so the view renders an em dash.
-    totals[:total] = usage_total(positions, ltv: nil)
+    totals[:total] = usage_total(positions)
     totals
   end
 
@@ -186,11 +184,10 @@ class BalanceSheet < ApplicationRecord
     PropertyPosition.new(property: nil, asset_lines: asset_lines, liability_lines: liability_lines)
   end
 
-  def usage_total(positions, ltv: :derive)
+  def usage_total(positions)
     gross = positions.sum(&:gross)
     debt = positions.sum(&:debt)
-    ltv = self.class.ltv_for(gross, debt) if ltv == :derive
 
-    UsageTotal.new(gross: gross, debt: debt, net: gross - debt, ltv: ltv)
+    UsageTotal.new(gross: gross, debt: debt, net: gross - debt, ltv: self.class.ltv_for(gross, debt))
   end
 end

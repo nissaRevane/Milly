@@ -352,14 +352,14 @@ RSpec.describe BalanceSheet, type: :model do
       expect(totals.keys).to eq(["primary_residence", "rental", :total])
       expect(totals["primary_residence"]).to have_attributes(gross: 400_000, debt: 300_000, net: 100_000, ltv: 75.0)
       expect(totals["rental"]).to have_attributes(gross: 300_000, debt: 80_000, net: 220_000)
-      expect(totals[:total]).to have_attributes(gross: 700_000, debt: 380_000, net: 320_000)
+      expect(totals[:total]).to have_attributes(gross: 700_000, debt: 380_000, net: 320_000, ltv: 54.3)
     end
 
-    it "never derives an overall LTV, since it would mix usages" do
+    it "derives the overall LTV from the combined gross and debt" do
       bs = create(:balance_sheet)
       build_property(bs, name: "Maison", usage: :primary_residence, value: 400_000, debt: 300_000)
 
-      expect(bs.real_estate_totals_by_usage[:total].ltv).to be_nil
+      expect(bs.real_estate_totals_by_usage[:total].ltv).to eq(75.0)
     end
 
     it "keys the unassigned bucket with nil and keeps it after the usages" do

@@ -46,8 +46,8 @@ module ApplicationHelper
     Property.usage_label_for(usage)
   end
 
-  # An LTV is nil whenever the ratio would be meaningless (no gross value, or the
-  # overall total that mixes usages) — an em dash reads better than a blank cell.
+  # An LTV is nil only when there is no gross value to divide by — an em dash
+  # reads better than a blank cell.
   def ltv_label(ltv)
     return "—" if ltv.nil?
 

@@ -210,7 +210,7 @@ RSpec.describe "BalanceSheets", type: :request do
           )
         end
 
-        it "renders an em dash instead of an overall LTV" do
+        it "derives the overall LTV on the total row" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "real_estate")
@@ -218,7 +218,7 @@ RSpec.describe "BalanceSheets", type: :request do
           row = Nokogiri::HTML(response.body).at_css(".property-totals-row")
 
           expect(row.text).to include("Total immobilier")
-          expect(row.css("td").last.text.strip).to eq("—")
+          expect(row.css("td").last.text.gsub(/\s+/, " ").strip).to eq("75,0 %")
         end
 
         it "leaves the unassigned lines out of the rows and of the totals" do
@@ -237,7 +237,7 @@ RSpec.describe "BalanceSheets", type: :request do
           # The 40k orphan asset does not inflate the total: it only counts 200k of gross.
           total_cells = doc.at_css(".property-totals-row").css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip }
           expect(total_cells).to eq(
-            ["Total immobilier", currency(200_000), currency(150_000), currency(50_000), "—"].map { |v| v.gsub(/\s+/, " ") }
+            ["Total immobilier", currency(200_000), currency(150_000), currency(50_000), "75,0 %"].map { |v| v.gsub(/\s+/, " ") }
           )
         end
 
