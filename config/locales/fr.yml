@@ -111,8 +111,6 @@ fr:
         title: Mes Biens immobiliers
         new: Nouveau bien
         empty: Aucun bien immobilier enregistré.
-        name: Nom
-        usage: Usage
       form:
         name: Nom du bien
         usage: Usage
