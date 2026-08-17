@@ -35,8 +35,8 @@
               </td>
               <td class="text-right"><%= owned_value_cell(bsa.value, bsa.owned_value, bsa.asset.ownership_share) %></td>
               <td class="table-actions">
-                <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), class: "btn btn-sm btn-outline" %>
-                <%= button_to t("views.balance_sheets.show.delete"), balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",
+                <%= link_to "✏️", edit_balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), class: "btn btn-sm btn-outline" %>
+                <%= button_to "🗑️", balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",
                     form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
               </td>
             </tr>
@@ -83,8 +83,8 @@
               </td>
               <td class="text-right"><%= owned_value_cell(bsl.remaining_capital, bsl.owned_remaining_capital, bsl.liability.ownership_share) %></td>
               <td class="table-actions">
-                <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), class: "btn btn-sm btn-outline" %>
-                <%= button_to t("views.balance_sheets.show.delete"), balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), method: :delete, class: "btn btn-sm btn-danger",
+                <%= link_to "✏️", edit_balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), class: "btn btn-sm btn-outline" %>
+                <%= button_to "🗑️", balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), method: :delete, class: "btn btn-sm btn-danger",
                     form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
               </td>
             </tr>
