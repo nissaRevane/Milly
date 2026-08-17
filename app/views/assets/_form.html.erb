@@ -11,16 +11,34 @@
 
   <div class="form-group">
     <%= f.label :name, t("views.assets.form.name") %>
-    <%= f.text_field :name, class: "form-control", required: true %>
+    <%# The name of the actif of a bien is the name of the bien, renamed with it %>
+    <% if asset.owned_by_property? %>
+      <%= f.text_field :name, class: "form-control", disabled: true %>
+      <small class="form-hint"><%= t("views.assets.form.name_from_property") %></small>
+    <% else %>
+      <%= f.text_field :name, class: "form-control", required: true %>
+    <% end %>
   </div>
 
+  <%# "Immobilier" is never offered and never left: it is what creating a bien produces %>
   <div class="form-group">
-    <%= f.label :asset_type, t("views.assets.form.asset_type") %>
-    <%= f.select :asset_type, asset_type_options, {}, class: "form-control" %>
+    <% if asset.real_estate? %>
+      <%= label_tag :asset_type_label, t("views.assets.form.asset_type") %>
+      <%= text_field_tag :asset_type_label, asset.asset_type_label, class: "form-control", disabled: true %>
+      <small class="form-hint"><%= t("views.assets.form.asset_type_locked") %></small>
+    <% else %>
+      <%= f.label :asset_type, t("views.assets.form.asset_type") %>
+      <%= f.select :asset_type, selectable_asset_type_options, {}, class: "form-control" %>
+    <% end %>
   </div>
 
   <%# Only offered once the user has declared a property — an empty select would just puzzle %>
-  <% if @properties.any? %>
+  <% if asset.owned_by_property? %>
+    <div class="form-group">
+      <%= label_tag :property_name, t("views.assets.form.property") %>
+      <%= text_field_tag :property_name, asset.property.name, class: "form-control", disabled: true %>
+    </div>
+  <% elsif @properties.any? && !asset.real_estate? %>
     <div class="form-group">
       <%= f.label :property_id, t("views.assets.form.property") %>
       <%= f.collection_select :property_id, @properties, :id, :name,

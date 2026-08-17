@@ -52,13 +52,16 @@ RSpec.describe AccountExport do
     end
 
     it "references the property of an asset and of a liability by name" do
+      # The only asset here is the one created with the bien: it carries its name, and
+      # db/seeds.rb matches it back on that name when the export is re-seeded.
       property = create(:property, user: user, name: "Maison")
-      create(:asset, user: user, name: "Immobilier", asset_type: :real_estate, property: property)
       create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan, property: property)
 
       data = described_class.new(user).to_h
 
-      expect(data["assets"].sole["property"]).to eq("Maison")
+      expect(data["assets"].sole).to include(
+        "name" => "Maison", "asset_type" => "real_estate", "property" => "Maison"
+      )
       expect(data["liabilities"].sole["property"]).to eq("Maison")
     end
 

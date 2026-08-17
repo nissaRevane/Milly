@@ -16,8 +16,14 @@ module ApplicationHelper
     end
   end
 
+  # Every type, for the index filter: immobilier lines exist and must be filterable.
   def asset_type_options
     Asset.asset_types.keys.map { |key| [t("views.shared.asset_types.#{key}"), key] }
+  end
+
+  # What the form offers: immobilier is left out, it comes from creating a bien.
+  def selectable_asset_type_options
+    Asset.selectable_asset_types.map { |key| [t("views.shared.asset_types.#{key}"), key] }
   end
 
   def asset_type_label(type)

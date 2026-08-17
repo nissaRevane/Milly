@@ -37,8 +37,11 @@
           <td class="text-right"><%= ownership_share_label(asset.ownership_share) %></td>
           <td class="table-actions">
             <%= link_to "✏️", edit_asset_path(asset), class: "btn btn-sm btn-outline" %>
-            <%= button_to "🗑️", asset_path(asset), method: :delete, class: "btn btn-sm btn-danger",
-                form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+            <%# The actif of a bien is deleted from the bien, so it keeps no delete button here %>
+            <% unless asset.owned_by_property? %>
+              <%= button_to "🗑️", asset_path(asset), method: :delete, class: "btn btn-sm btn-danger",
+                  form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+            <% end %>
           </td>
         </tr>
       <% end %>

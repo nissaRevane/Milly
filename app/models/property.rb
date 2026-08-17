@@ -6,6 +6,17 @@ class Property < ApplicationRecord
   has_many :assets, dependent: :nullify
   has_many :liabilities, dependent: :nullify
 
+  # The actif that *is* the bien, created with it and named after it. Unlinked, never
+  # deleted, when the bien goes away — the has_many above already nullifies it.
+  has_one :real_estate_asset,
+          -> { where(asset_type: :real_estate) },
+          class_name: "Asset",
+          inverse_of: :property
+
+  # Runs inside the save transaction: a bien that cannot get its actif is not created.
+  after_create :create_own_real_estate_asset
+  after_update :rename_real_estate_asset, if: :saved_change_to_name?
+
   enum :usage, {
     primary_residence: 0,
     rental: 1,
@@ -23,5 +34,19 @@ class Property < ApplicationRecord
 
   def usage_label
     self.class.usage_label_for(usage)
+  end
+
+  private
+
+  # db/seeds.rb and AccountExport imports may already carry the actif of the bien; it is
+  # matched by name, so the one created here is the very record they then update.
+  # Named apart from the create_real_estate_asset the has_one generates, which it would
+  # otherwise shadow.
+  def create_own_real_estate_asset
+    assets.create!(user: user, name: name, asset_type: :real_estate)
+  end
+
+  def rename_real_estate_asset
+    real_estate_asset&.update!(name: name)
   end
 end

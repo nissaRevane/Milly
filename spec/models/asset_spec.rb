@@ -110,6 +110,93 @@ RSpec.describe Asset, type: :model do
     }
   end
 
+  describe "the immobilier type" do
+    describe ".selectable_asset_types" do
+      it "leaves it out: only a bien mints it" do
+        expect(Asset.selectable_asset_types).to eq(
+          %w[cash checking_account savings_account financial_investment receivable]
+        )
+      end
+    end
+
+    it "cannot be adopted by an existing asset" do
+      asset = create(:asset, asset_type: :savings_account)
+
+      asset.asset_type = :real_estate
+
+      expect(asset).not_to be_valid
+      expect(asset.errors[:asset_type]).to eq(
+        ["ne peut être « Immobilier » que pour l'actif créé avec un bien immobilier"]
+      )
+      expect(asset.reload.asset_type).to eq("savings_account")
+    end
+
+    it "cannot be left by the asset of a bien" do
+      asset = create(:property).real_estate_asset
+
+      asset.asset_type = :financial_investment
+
+      expect(asset).not_to be_valid
+      expect(asset.errors[:asset_type]).to be_present
+    end
+
+    it "survives an update that leaves the type alone" do
+      asset = create(:property).real_estate_asset
+
+      expect(asset.update(risk_level: :high, ownership_share: 50)).to be true
+      expect(asset.reload.asset_type).to eq("real_estate")
+    end
+  end
+
+  describe "the name of the asset of a bien" do
+    it "is the name of the bien, whatever is written on the asset" do
+      property = create(:property, name: "Maison")
+      asset = property.real_estate_asset
+
+      asset.update!(name: "Autre chose")
+
+      expect(asset.reload.name).to eq("Maison")
+    end
+
+    it "is free again once the bien has been deleted" do
+      property = create(:property, name: "Maison")
+      asset = property.real_estate_asset
+      property.destroy
+
+      asset.reload.update!(name: "Ancienne maison")
+
+      expect(asset.reload.name).to eq("Ancienne maison")
+    end
+
+    it "leaves the name of an asset merely rattaché to the bien alone" do
+      property = create(:property, name: "Maison")
+      asset = create(:asset, user: property.user, property: property, name: "Travaux")
+
+      expect(asset.reload.name).to eq("Travaux")
+    end
+  end
+
+  describe "#owned_by_property?" do
+    it "is true for the asset of a bien" do
+      expect(create(:property).real_estate_asset).to be_owned_by_property
+    end
+
+    it "is false for an immobilier asset whose bien is gone" do
+      property = create(:property)
+      asset = property.real_estate_asset
+      property.destroy
+
+      expect(asset.reload).not_to be_owned_by_property
+    end
+
+    it "is false for an asset merely rattaché to a bien" do
+      property = create(:property)
+      asset = create(:asset, user: property.user, property: property, asset_type: :savings_account)
+
+      expect(asset).not_to be_owned_by_property
+    end
+  end
+
   describe "#risk_level_label" do
     it "returns the French label for the risk level" do
       asset = build(:asset, risk_level: :medium)

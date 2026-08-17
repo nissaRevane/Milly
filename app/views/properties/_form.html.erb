@@ -19,6 +19,10 @@
     <%= f.select :usage, property_usage_options, {}, class: "form-control" %>
   </div>
 
+  <% if property.new_record? %>
+    <p class="form-hint"><%= t("views.properties.form.asset_hint") %></p>
+  <% end %>
+
   <div class="form-actions">
     <%= f.submit class: "btn btn-primary" %>
     <%= link_to "Annuler", properties_path, class: "btn btn-outline" %>

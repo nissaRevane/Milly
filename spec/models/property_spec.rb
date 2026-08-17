@@ -57,6 +57,52 @@ RSpec.describe Property, type: :model do
     end
   end
 
+  describe "the immobilier asset of the bien" do
+    it "is created with the bien, named after it" do
+      property = nil
+
+      expect { property = create(:property, name: "Maison") }.to change(Asset, :count).by(1)
+
+      asset = property.real_estate_asset
+      expect(asset.name).to eq("Maison")
+      expect(asset.asset_type).to eq("real_estate")
+      expect(asset.user).to eq(property.user)
+      expect(asset.ownership_share).to eq(100)
+    end
+
+    it "is not created when the bien is invalid" do
+      user = create(:user)
+      create(:property, user: user, name: "Maison")
+
+      expect { build(:property, user: user, name: "Maison").save }.not_to change(Asset, :count)
+    end
+
+    it "is renamed with the bien" do
+      property = create(:property, name: "Maison")
+      asset = property.real_estate_asset
+
+      property.update!(name: "Maison de famille")
+
+      expect(asset.reload.name).to eq("Maison de famille")
+    end
+
+    it "is left alone when the bien changes anything but its name" do
+      property = create(:property, name: "Maison", usage: :primary_residence)
+      asset = property.real_estate_asset
+
+      expect { property.update!(usage: :rental) }.not_to change { asset.reload.updated_at }
+    end
+
+    # Another actif may be rattaché to the same bien; only the immobilier one is the bien.
+    it "is the immobilier one, not any other asset of the bien" do
+      property = create(:property, name: "Maison")
+      create(:asset, user: property.user, property: property, asset_type: :savings_account)
+
+      expect(property.reload.real_estate_asset).to eq(property.assets.find_by(asset_type: :real_estate))
+      expect(property.real_estate_asset.name).to eq("Maison")
+    end
+  end
+
   describe "when destroyed" do
     it "unlinks its assets and liabilities instead of deleting them" do
       property = create(:property)

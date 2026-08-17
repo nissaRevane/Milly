@@ -60,6 +60,10 @@ fr:
           attributes:
             name:
               taken: est déjà utilisé pour un autre bien
+        asset:
+          attributes:
+            asset_type:
+              reserved_for_property: "ne peut être « Immobilier » que pour l'actif créé avec un bien immobilier"
   errors:
     messages:
       blank: doit être rempli(e)
@@ -109,6 +113,7 @@ fr:
       form:
         name: Nom du bien
         usage: Usage
+        asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement.
       edit:
         title: Modifier le bien
       new:
@@ -130,6 +135,8 @@ fr:
         ownership_share: "Quote-part détenue (%)"
         property: Bien immobilier rattaché
         property_none: Aucun bien
+        name_from_property: Le nom de cet actif est celui du bien immobilier ; renommez le bien pour le changer.
+        asset_type_locked: Le type « Immobilier » est défini par le bien immobilier et ne peut pas être modifié.
       edit:
         title: Modifier l'actif
       new:
@@ -270,6 +277,7 @@ fr:
       created: Actif créé avec succès.
       updated: Actif mis à jour avec succès.
       destroyed: Actif supprimé avec succès.
+      property_owned: "Cet actif appartient à un bien immobilier : supprimez le bien pour le supprimer."
     liabilities:
       created: Passif créé avec succès.
       updated: Passif mis à jour avec succès.

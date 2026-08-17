@@ -83,6 +83,29 @@ RSpec.describe "Properties", type: :request do
 
       expect(response).to have_http_status(:unprocessable_entity)
     end
+
+    it "creates the immobilier asset of the bien along with it" do
+      expect {
+        post properties_path, params: { property: { name: "Maison", usage: "rental" } }
+      }.to change(Asset, :count).by(1)
+
+      asset = Property.last.real_estate_asset
+      expect(asset.name).to eq("Maison")
+      expect(asset.asset_type).to eq("real_estate")
+      expect(asset.user).to eq(user)
+    end
+
+    it "creates no asset when the bien itself is rejected" do
+      expect {
+        post properties_path, params: { property: { name: "", usage: "rental" } }
+      }.not_to change(Asset, :count)
+    end
+
+    it "announces the asset on the form" do
+      get new_property_path
+
+      expect(response.body).to include("sera créé automatiquement")
+    end
   end
 
   describe "GET /properties/:id/edit" do
@@ -113,6 +136,22 @@ RSpec.describe "Properties", type: :request do
       expect(response).to redirect_to(properties_path)
     end
 
+    it "renames the immobilier asset of the bien along with it" do
+      asset = property.real_estate_asset
+
+      patch property_path(property), params: { property: { name: "New Name" } }
+
+      expect(asset.reload.name).to eq("New Name")
+    end
+
+    it "leaves the asset name alone when only the usage changes" do
+      asset = property.real_estate_asset
+
+      patch property_path(property), params: { property: { usage: "rental" } }
+
+      expect(asset.reload.name).to eq("Old Name")
+    end
+
     it "does not update with a blank name" do
       patch property_path(property), params: { property: { name: "" } }
 
@@ -130,6 +169,18 @@ RSpec.describe "Properties", type: :request do
       }.to change(Property, :count).by(-1)
 
       expect(response).to redirect_to(properties_path)
+    end
+
+    it "keeps its own immobilier asset, unlinked, so the balance sheet history survives" do
+      property = create(:property, user: user)
+      asset = property.real_estate_asset
+
+      expect {
+        delete property_path(property)
+      }.not_to change(Asset, :count)
+
+      expect(asset.reload.property_id).to be_nil
+      expect(asset.asset_type).to eq("real_estate")
     end
 
     it "keeps the linked asset and only unlinks it" do

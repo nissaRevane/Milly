@@ -116,7 +116,7 @@ RSpec.describe "Assets", type: :request do
     it "creates an asset with the submitted ownership share" do
       expect {
         post assets_path, params: {
-          asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", ownership_share: "60" }
+          asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", ownership_share: "60" }
         }
       }.to change(Asset, :count).by(1)
 
@@ -127,11 +127,134 @@ RSpec.describe "Assets", type: :request do
     it "does not create with an ownership share above 100" do
       expect {
         post assets_path, params: {
-          asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", ownership_share: "150" }
+          asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", ownership_share: "150" }
         }
       }.not_to change(Asset, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe "the immobilier type" do
+    it "is not offered by the form" do
+      get new_asset_path
+
+      doc = Nokogiri::HTML(response.body)
+      options = doc.css("select#asset_asset_type option").map { |option| option.text.strip }
+
+      expect(options).to eq(["Cash", "Compte courant", "Compte épargne", "Placement financier", "Créance"])
+      expect(options).not_to include("Immobilier")
+    end
+
+    it "is still offered by the index filter, where such lines have to be findable" do
+      create(:asset, user: user)
+
+      get assets_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("select#asset_type option").map { |option| option.text.strip }).to include("Immobilier")
+    end
+
+    it "refuses a submitted immobilier type instead of saving another one" do
+      expect {
+        post assets_path, params: { asset: { name: "Maison", risk_level: "low", asset_type: "real_estate" } }
+      }.not_to change(Asset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("que pour l&#39;actif créé avec un bien immobilier")
+    end
+
+    it "refuses to link a forged immobilier asset to a bien" do
+      property = create(:property, user: user)
+
+      expect {
+        post assets_path, params: {
+          asset: { name: "Autre", risk_level: "low", asset_type: "real_estate", property_id: property.id }
+        }
+      }.not_to change(Asset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "refuses to turn an existing asset into an immobilier one" do
+      asset = create(:asset, user: user, asset_type: "savings_account")
+
+      patch asset_path(asset), params: { asset: { asset_type: "real_estate" } }
+
+      expect(asset.reload.asset_type).to eq("savings_account")
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe "the asset of a bien" do
+    let(:property) { create(:property, user: user, name: "Maison") }
+    let(:asset) { property.real_estate_asset }
+
+    it "shows its name and type as read-only, and offers no bien select" do
+      get edit_asset_path(asset)
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("input#asset_name").first["disabled"]).to eq("disabled")
+      expect(doc.css("select#asset_asset_type")).to be_empty
+      expect(doc.css("select#asset_property_id")).to be_empty
+      expect(response.body).to include("Le nom de cet actif est celui du bien immobilier")
+    end
+
+    it "updates its risk level and ownership share" do
+      patch asset_path(asset), params: { asset: { risk_level: "high", ownership_share: "50" } }
+
+      expect(asset.reload.risk_level).to eq("high")
+      expect(asset.ownership_share).to eq(50)
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "ignores a submitted name, type and bien" do
+      other = create(:property, user: user, name: "Studio")
+
+      patch asset_path(asset), params: {
+        asset: { name: "Renommé", asset_type: "savings_account", property_id: other.id }
+      }
+
+      asset.reload
+      expect(asset.name).to eq("Maison")
+      expect(asset.asset_type).to eq("real_estate")
+      expect(asset.property).to eq(property)
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "carries no delete button, as it is deleted with its bien" do
+      asset
+
+      get assets_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("form[action='#{asset_path(asset)}']")).to be_empty
+      expect(doc.css("a[href='#{edit_asset_path(asset)}']")).to be_present
+    end
+
+    it "cannot be deleted on its own" do
+      asset
+
+      expect {
+        delete asset_path(asset)
+      }.not_to change(Asset, :count)
+
+      expect(response).to redirect_to(assets_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.assets.property_owned"))
+    end
+
+    # Deleting a bien unlinks its asset instead of deleting it, to keep the balance sheet
+    # history; what is left is the user's to delete and to rename.
+    it "can be deleted and renamed once its bien is gone" do
+      asset
+      property.destroy
+
+      patch asset_path(asset), params: { asset: { name: "Ancienne maison" } }
+      expect(asset.reload.name).to eq("Ancienne maison")
+
+      expect {
+        delete asset_path(asset)
+      }.to change(Asset, :count).by(-1)
     end
   end
 
@@ -161,7 +284,7 @@ RSpec.describe "Assets", type: :request do
       property = create(:property, user: user)
 
       post assets_path, params: {
-        asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", property_id: property.id }
+        asset: { name: "Travaux", risk_level: "low", asset_type: "receivable", property_id: property.id }
       }
 
       expect(Asset.last.property).to eq(property)
@@ -184,11 +307,12 @@ RSpec.describe "Assets", type: :request do
       foreign = create(:property, user: create(:user), name: "Villa du voisin")
 
       post assets_path, params: {
-        asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", property_id: foreign.id }
+        asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", property_id: foreign.id }
       }
 
-      expect(Asset.last.property_id).to be_nil
-      expect(foreign.reload.assets).to be_empty
+      created = user.assets.sole
+      expect(created.property_id).to be_nil
+      expect(foreign.reload.assets).not_to include(created)
     end
 
     it "refuses to link an existing asset to another user's property" do
@@ -198,7 +322,7 @@ RSpec.describe "Assets", type: :request do
       patch asset_path(asset), params: { asset: { property_id: foreign.id } }
 
       expect(asset.reload.property_id).to be_nil
-      expect(foreign.reload.assets).to be_empty
+      expect(foreign.reload.assets).not_to include(asset)
     end
   end
 
@@ -212,8 +336,8 @@ RSpec.describe "Assets", type: :request do
     end
 
     it "updates the asset type" do
-      patch asset_path(asset), params: { asset: { asset_type: "real_estate" } }
-      expect(asset.reload.asset_type).to eq("real_estate")
+      patch asset_path(asset), params: { asset: { asset_type: "financial_investment" } }
+      expect(asset.reload.asset_type).to eq("financial_investment")
       expect(response).to redirect_to(assets_path)
     end
 
