@@ -50,7 +50,7 @@ RSpec.describe "BalanceSheets", type: :request do
 
       expect(response).to have_http_status(:success)
       doc = Nokogiri::HTML(response.body)
-      cells = doc.css("table.table tbody tr").map { |row| row.css("td")[2].text.gsub(/\s+/, " ").strip }
+      cells = doc.css("table.table tbody tr").map { |row| row.at_css("td.text-right").text.gsub(/\s+/, " ").strip }
 
       expect(cells).to contain_exactly(
         "#{currency(100_000)}50 % de #{currency(200_000)}".gsub(/\s+/, " "),
@@ -68,7 +68,7 @@ RSpec.describe "BalanceSheets", type: :request do
       get balance_sheet_path(bs)
 
       doc = Nokogiri::HTML(response.body)
-      cell = doc.css("table.table tbody tr td")[2]
+      cell = doc.at_css("table.table tbody tr td.text-right")
 
       expect(cell.text.gsub(/\s+/, " ").strip).to eq(currency(5_000).gsub(/\s+/, " "))
       expect(cell.at_css(".owned-value-detail")).to be_nil

@@ -298,11 +298,6 @@ body {
   margin-left: 0;
 }
 
-.table-total td {
-  background: var(--color-bg);
-  border-top: 2px solid var(--color-border);
-}
-
 .table-subtotal td {
   background: #f1f5f9;
 }
@@ -445,6 +440,61 @@ body {
 
 .section-header h2 {
   font-size: 1.25rem;
+}
+
+/*
+ * Balance Sheet Detail: assets and liabilities stack by default and sit side by
+ * side once there is room for two tables.
+ *
+ * Side by side, both columns stretch to the taller one and the table wrapper
+ * takes the surplus height, which pins both totals to the bottom of their
+ * column so they line up whatever the number of lines on each side. The total
+ * has to live outside the table for this: browsers spread a stretched table's
+ * surplus height across its rows rather than pushing its tfoot down.
+ */
+.balance-sheet-columns {
+  display: grid;
+  gap: 2rem;
+}
+
+/* The grid gap already spaces the two sections apart */
+.balance-sheet-columns .section {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .balance-sheet-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .balance-sheet-columns .section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .balance-sheet-columns .table-scroll {
+    flex: 1;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.section-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+}
+
+/* Name on the first line, type badge stacked underneath, to save column width */
+.cell-title {
+  margin-bottom: 0.25rem;
 }
 
 /* Equity Box */
