@@ -1,4 +1,6 @@
 class BalanceSheetsController < ApplicationController
+  SUMMARY_TABS = %w[general real_estate].freeze
+
   before_action :set_balance_sheet, only: [:show, :edit, :update, :destroy, :summary]
 
   def index
@@ -43,10 +45,18 @@ class BalanceSheetsController < ApplicationController
   end
 
   def summary
-    @assets_by_risk = @balance_sheet.assets_by_risk_level
-    @assets_by_type = @balance_sheet.assets_by_type
-    @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
-    @liabilities_by_type = @balance_sheet.liabilities_by_type
+    @tab = SUMMARY_TABS.include?(params[:tab]) ? params[:tab] : "general"
+
+    # Each tab is a full server-rendered page: only compute what the active tab shows.
+    if @tab == "real_estate"
+      @property_positions = @balance_sheet.property_positions
+      @real_estate_usage_totals = @balance_sheet.real_estate_totals_by_usage(@property_positions)
+    else
+      @assets_by_risk = @balance_sheet.assets_by_risk_level
+      @assets_by_type = @balance_sheet.assets_by_type
+      @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
+      @liabilities_by_type = @balance_sheet.liabilities_by_type
+    end
   end
 
   private

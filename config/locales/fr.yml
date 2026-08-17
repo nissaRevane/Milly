@@ -223,11 +223,23 @@ fr:
         total_liabilities: Total Passifs
         equity: Fonds Propres
         back: Retour au bilan
+        tabs:
+          general: Synthèse
+          real_estate: Immobilier
       properties:
+        title: Immobilier par bien
+        usage_title: Immobilier par usage
+        usage: Usage
+        unassigned: Non rattaché
+        unassigned_hint: Rattachez ces lignes à un bien pour les voir consolidées.
+        to_link: À rattacher
         net: Valeur nette
         gross: Brut
         debt: Dette
         ltv: LTV
+        total: Total immobilier
+        detail: Détail par bien
+        empty: Aucun bien immobilier sur ce bilan.
     balance_sheet_assets:
       form:
         asset: Actif

@@ -109,17 +109,123 @@ RSpec.describe "BalanceSheets", type: :request do
     end
 
     describe "on the summary page" do
-      # The by-usage regrouping was dropped: the synthèse keeps its actifs/passifs
-      # reading, the per-bien detail lives on the property page.
-      it "does not regroup the real estate by usage" do
+      it "keeps the immobilier view off the default tab" do
         bs = build_property_sheet(with_unassigned: true)
 
         get summary_balance_sheet_path(bs)
 
         expect(response).to have_http_status(:success)
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css(".tab-link-active").text.strip).to eq("Synthèse")
+        expect(doc.at_css(".summary-column-assets")).not_to be_nil
         expect(response.body).not_to include("property-usage-totals")
         expect(response.body).not_to include("Immobilier par usage")
-        expect(response.body).not_to include("Détail par bien")
+      end
+
+      it "falls back to the synthèse tab on an unknown tab value" do
+        bs = build_property_sheet
+
+        get summary_balance_sheet_path(bs, tab: "xyz")
+
+        expect(response).to have_http_status(:success)
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css(".tab-link-active").text.strip).to eq("Synthèse")
+        expect(doc.at_css(".summary-column-assets")).not_to be_nil
+        expect(response.body).not_to include("property-usage-totals")
+      end
+
+      describe "on the immobilier tab" do
+        it "shows the immobilier view instead of the actifs/passifs columns" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".tab-link-active").text.strip).to eq("Immobilier")
+          expect(doc.at_css(".summary-column-assets")).to be_nil
+          expect(doc.at_css(".property-usage-totals")).not_to be_nil
+          expect(doc.at_css(".property-positions")).not_to be_nil
+        end
+
+        it "totals the real estate by usage and closes with an overall row" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          doc = Nokogiri::HTML(response.body)
+          section = doc.at_css(".property-usage-totals")
+
+          expect(section).not_to be_nil
+          usage_row = section.css("tbody tr").first
+          expect(usage_row.at_css(".badge").text.strip).to eq("Locatif")
+          expect(usage_row.css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip }).to eq(
+            ["Locatif", currency(200_000), currency(150_000), currency(50_000), "75,0 %"].map { |v| v.gsub(/\s+/, " ") }
+          )
+        end
+
+        it "renders an em dash instead of an overall LTV" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          row = Nokogiri::HTML(response.body).at_css(".property-totals-row")
+
+          expect(row.text).to include("Total immobilier")
+          expect(row.css("td").last.text.strip).to eq("—")
+        end
+
+        it "lists the unassigned bucket with its own LTV" do
+          bs = build_property_sheet(with_unassigned: true)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          rows = Nokogiri::HTML(response.body).css(".property-usage-totals > .table-scroll tbody tr")
+          labels = rows.map { |row| row.at_css("td").text.gsub(/\s+/, " ").strip }
+
+          expect(labels).to eq(["Locatif", "Non rattaché", "Total immobilier"])
+          expect(rows[1].css("td").last.text.strip).to eq("0,0 %")
+        end
+
+        it "keeps the per property detail collapsed behind a disclosure" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          details = Nokogiri::HTML(response.body).at_css(".property-usage-totals details")
+
+          expect(details["open"]).to be_nil
+          expect(details.at_css("summary").text).to include("Détail par bien")
+          expect(details.at_css("tbody tr td").text).to include("Appartement Lyon")
+        end
+
+        it "renders one card per bien, the unassigned bucket last" do
+          bs = build_property_sheet(with_unassigned: true)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          doc = Nokogiri::HTML(response.body)
+          band = doc.at_css(".property-positions")
+
+          expect(band).not_to be_nil
+          expect(band.at_css(".property-card-header").text).to include("Appartement Lyon")
+          expect(band.css(".property-card").size).to eq(2)
+          expect(band.css(".property-card").last["class"]).to include("property-card-unassigned")
+        end
+
+        it "shows an empty state when the balance sheet has no real estate line" do
+          bs = create(:balance_sheet, user: user)
+          cash = create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+          create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 5_000)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          expect(response.body).not_to include("property-usage-totals")
+          expect(response.body).not_to include("property-positions")
+          expect(response.body).to include("Aucun bien immobilier sur ce bilan.")
+        end
       end
     end
   end
