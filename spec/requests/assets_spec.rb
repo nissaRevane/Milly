@@ -171,11 +171,13 @@ RSpec.describe "Assets", type: :request do
   describe "authorization" do
     it "does not allow access to other user's assets" do
       other_user = create(:user)
-      other_asset = create(:asset, user: other_user)
+      other_asset = create(:asset, user: other_user, name: "Villa du voisin")
 
-      expect {
-        get edit_asset_path(other_asset)
-      }.to raise_error(ActiveRecord::RecordNotFound)
+      get edit_asset_path(other_asset)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))
+      expect(response.body).not_to include("Villa du voisin")
     end
   end
 end

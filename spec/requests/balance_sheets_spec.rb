@@ -132,9 +132,14 @@ RSpec.describe "BalanceSheets", type: :request do
     it "does not let a user duplicate someone else's balance sheet" do
       other = create(:balance_sheet, user: create(:user))
 
+      get new_balance_sheet_path(source_id: other.id)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))
+
       expect {
-        get new_balance_sheet_path(source_id: other.id)
-      }.to raise_error(ActiveRecord::RecordNotFound)
+        post balance_sheets_path, params: { balance_sheet: { closing_date: "2027-01-31" }, source_id: other.id }
+      }.not_to change(BalanceSheetAsset, :count)
     end
   end
 
