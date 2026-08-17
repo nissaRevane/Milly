@@ -1,5 +1,7 @@
 class AssetsController < ApplicationController
   before_action :set_asset, only: [:edit, :update, :destroy]
+  # The form partial offers the property select, and it is also re-rendered on failure.
+  before_action :set_properties, only: [:new, :create, :edit, :update]
 
   def index
     @asset_type_filter = params[:asset_type].presence_in(Asset.asset_types.keys)
@@ -42,7 +44,13 @@ class AssetsController < ApplicationController
     @asset = current_user.assets.find(params[:id])
   end
 
+  def set_properties
+    @properties = current_user.properties.order(:usage, :name)
+  end
+
   def asset_params
-    params.require(:asset).permit(:name, :risk_level, :asset_type, :ownership_share)
+    scope_property_id(
+      params.require(:asset).permit(:name, :risk_level, :asset_type, :ownership_share, :property_id)
+    )
   end
 end

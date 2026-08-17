@@ -19,6 +19,15 @@
     <%= f.select :asset_type, asset_type_options, {}, class: "form-control" %>
   </div>
 
+  <%# Only offered once the user has declared a property — an empty select would just puzzle %>
+  <% if @properties.any? %>
+    <div class="form-group">
+      <%= f.label :property_id, t("views.assets.form.property") %>
+      <%= f.collection_select :property_id, @properties, :id, :name,
+          { include_blank: t("views.assets.form.property_none") }, class: "form-control" %>
+    </div>
+  <% end %>
+
   <div class="form-group">
     <%= f.label :ownership_share, t("views.assets.form.ownership_share") %>
     <%= f.number_field :ownership_share, step: 0.01, min: 0, max: 100, class: "form-control", required: true %>

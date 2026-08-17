@@ -135,6 +135,72 @@ RSpec.describe "Liabilities", type: :request do
     end
   end
 
+  describe "linking a liability to a property" do
+    it "offers no property select when the user has no property" do
+      get new_liability_path
+
+      expect(response.body).not_to include("liability_property_id")
+      expect(response.body).not_to include("Bien immobilier rattaché")
+    end
+
+    it "offers the user's properties ordered by usage then name" do
+      create(:property, user: user, name: "Studio", usage: :rental)
+      create(:property, user: user, name: "Maison", usage: :primary_residence)
+      create(:property, user: create(:user), name: "Villa du voisin")
+
+      get new_liability_path
+
+      doc = Nokogiri::HTML(response.body)
+      options = doc.css("select#liability_property_id option").map { |option| option.text.strip }
+
+      expect(options).to eq(["Aucun bien", "Maison", "Studio"])
+      expect(response.body).to include("Bien immobilier rattaché")
+    end
+
+    it "creates a liability linked to a property" do
+      property = create(:property, user: user)
+
+      post liabilities_path, params: {
+        liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", property_id: property.id }
+      }
+
+      expect(Liability.last.property).to eq(property)
+      expect(response).to redirect_to(liabilities_path)
+    end
+
+    it "unlinks a liability when the blank option is submitted" do
+      property = create(:property, user: user)
+      liability = create(:liability, user: user, property: property)
+
+      patch liability_path(liability), params: { liability: { property_id: "" } }
+
+      expect(liability.reload.property_id).to be_nil
+      expect(response).to redirect_to(liabilities_path)
+    end
+
+    # See the assets spec: a forged property_id must never cross accounts.
+    it "refuses to link a new liability to another user's property" do
+      foreign = create(:property, user: create(:user), name: "Villa du voisin")
+
+      post liabilities_path, params: {
+        liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", property_id: foreign.id }
+      }
+
+      expect(Liability.last.property_id).to be_nil
+      expect(foreign.reload.liabilities).to be_empty
+    end
+
+    it "refuses to link an existing liability to another user's property" do
+      liability = create(:liability, user: user)
+      foreign = create(:property, user: create(:user), name: "Villa du voisin")
+
+      patch liability_path(liability), params: { liability: { property_id: foreign.id } }
+
+      expect(liability.reload.property_id).to be_nil
+      expect(foreign.reload.liabilities).to be_empty
+    end
+  end
+
   describe "PATCH /liabilities/:id" do
     let(:liability) { create(:liability, user: user, name: "Old Name") }
 

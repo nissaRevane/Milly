@@ -135,6 +135,73 @@ RSpec.describe "Assets", type: :request do
     end
   end
 
+  describe "linking an asset to a property" do
+    it "offers no property select when the user has no property" do
+      get new_asset_path
+
+      expect(response.body).not_to include("asset_property_id")
+      expect(response.body).not_to include("Bien immobilier rattaché")
+    end
+
+    it "offers the user's properties ordered by usage then name" do
+      create(:property, user: user, name: "Studio", usage: :rental)
+      create(:property, user: user, name: "Maison", usage: :primary_residence)
+      create(:property, user: create(:user), name: "Villa du voisin")
+
+      get new_asset_path
+
+      doc = Nokogiri::HTML(response.body)
+      options = doc.css("select#asset_property_id option").map { |option| option.text.strip }
+
+      expect(options).to eq(["Aucun bien", "Maison", "Studio"])
+      expect(response.body).to include("Bien immobilier rattaché")
+    end
+
+    it "creates an asset linked to a property" do
+      property = create(:property, user: user)
+
+      post assets_path, params: {
+        asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", property_id: property.id }
+      }
+
+      expect(Asset.last.property).to eq(property)
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "unlinks an asset when the blank option is submitted" do
+      property = create(:property, user: user)
+      asset = create(:asset, user: user, property: property)
+
+      patch asset_path(asset), params: { asset: { property_id: "" } }
+
+      expect(asset.reload.property_id).to be_nil
+      expect(response).to redirect_to(assets_path)
+    end
+
+    # A forged property_id would otherwise satisfy the foreign key and leak the other
+    # account's bien (name and usage) onto this user's balance sheet.
+    it "refuses to link a new asset to another user's property" do
+      foreign = create(:property, user: create(:user), name: "Villa du voisin")
+
+      post assets_path, params: {
+        asset: { name: "Maison", risk_level: "low", asset_type: "real_estate", property_id: foreign.id }
+      }
+
+      expect(Asset.last.property_id).to be_nil
+      expect(foreign.reload.assets).to be_empty
+    end
+
+    it "refuses to link an existing asset to another user's property" do
+      asset = create(:asset, user: user)
+      foreign = create(:property, user: create(:user), name: "Villa du voisin")
+
+      patch asset_path(asset), params: { asset: { property_id: foreign.id } }
+
+      expect(asset.reload.property_id).to be_nil
+      expect(foreign.reload.assets).to be_empty
+    end
+  end
+
   describe "PATCH /assets/:id" do
     let(:asset) { create(:asset, user: user, name: "Old Name") }
 
