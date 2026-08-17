@@ -9,11 +9,13 @@
       <% @properties.each do |property| %>
         <tr>
           <td>
-            <div class="cell-title"><%= link_to property.name, property_path(property) %></div>
-            <span class="badge badge-secondary"><%= property.usage_label %></span>
+            <%= link_to property_path(property), class: "row-link" do %>
+              <div class="cell-title"><%= property.name %></div>
+              <span class="badge badge-secondary"><%= property.usage_label %></span>
+            <% end %>
           </td>
-          <td><%= property.address.presence || "—" %></td>
-          <td class="text-right"><%= property.purchase_price ? number_to_currency(property.purchase_price) : "—" %></td>
+          <td><%= link_to property.address.presence || "—", property_path(property), class: "row-link" %></td>
+          <td class="text-right"><%= link_to property.purchase_price ? number_to_currency(property.purchase_price) : "—", property_path(property), class: "row-link" %></td>
           <td class="table-actions">
             <%= link_to "✏️", edit_property_path(property), class: "btn btn-sm btn-outline" %>
             <%= button_to "🗑️", property_path(property), method: :delete, class: "btn btn-sm btn-danger",
