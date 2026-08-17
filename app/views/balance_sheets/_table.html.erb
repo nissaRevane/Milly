@@ -12,14 +12,21 @@
     <% balance_sheets.each do |bs| %>
       <tr>
         <td>
-          <span class="hide-on-mobile"><%= l(bs.closing_date, format: :long) %></span>
-          <span class="show-on-mobile"><%= l(bs.closing_date, format: :default) %></span>
+          <%= link_to summary_balance_sheet_path(bs), class: "row-link" do %>
+            <span class="hide-on-mobile"><%= l(bs.closing_date, format: :long) %></span>
+            <span class="show-on-mobile"><%= l(bs.closing_date, format: :default) %></span>
+          <% end %>
         </td>
-        <td class="text-success hide-on-mobile"><%= number_to_currency(bs.total_assets) %></td>
-        <td class="text-danger hide-on-mobile"><%= number_to_currency(bs.total_liabilities) %></td>
-        <td class="<%= bs.equity >= 0 ? 'text-success' : 'text-danger' %>"><%= number_to_currency(bs.equity) %></td>
+        <td class="text-success hide-on-mobile">
+          <%= link_to number_to_currency(bs.total_assets), summary_balance_sheet_path(bs), class: "row-link" %>
+        </td>
+        <td class="text-danger hide-on-mobile">
+          <%= link_to number_to_currency(bs.total_liabilities), summary_balance_sheet_path(bs), class: "row-link" %>
+        </td>
+        <td class="<%= bs.equity >= 0 ? 'text-success' : 'text-danger' %>">
+          <%= link_to number_to_currency(bs.equity), summary_balance_sheet_path(bs), class: "row-link" %>
+        </td>
         <td class="table-actions">
-          <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(bs), class: "btn btn-primary btn-sm" %>
           <%= link_to t("views.balance_sheets.index.duplicate"), new_balance_sheet_path(source_id: bs.id), class: "btn btn-outline btn-sm" %>
           <%= link_to "✏️", balance_sheet_path(bs), class: "btn btn-sm btn-outline" %>
           <%= button_to "🗑️", balance_sheet_path(bs), method: :delete, class: "btn btn-sm btn-danger",

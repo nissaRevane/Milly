@@ -30,6 +30,20 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(items.drop(1).map { |item| item["open"] }).to all(be_nil)
       expect(items.first.at_css(".badge")&.text&.strip).to eq("2")
     end
+
+    it "links the row cells to the summary page instead of a dedicated button" do
+      bs = create(:balance_sheet, user: user)
+
+      get balance_sheets_path
+
+      doc = Nokogiri::HTML(response.body)
+      row = doc.at_css(".table tbody tr")
+
+      row_links = row.css("a.row-link")
+      expect(row_links).not_to be_empty
+      expect(row_links.map { |link| link["href"] }).to all(eq(summary_balance_sheet_path(bs)))
+      expect(doc.at_css(".table-actions a.btn-primary")).to be_nil
+    end
   end
 
   describe "GET /balance_sheets/:id" do
