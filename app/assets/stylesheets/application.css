@@ -542,19 +542,6 @@ body {
   font-size: 0.8125rem;
 }
 
-/*
- * Real Estate band (balance sheet summary)
- *
- * A bien immobilier reunites an actif and its passif, so the band sits full width
- * rather than inside one of the two columns. The per-bien detail is a drill-down
- * inside it — the bilan itself no longer repeats the lines per bien.
- */
-
-/* Overall row of the by-usage table, already greyed by .table-subtotal */
-.property-totals-row td {
-  font-weight: 700;
-}
-
 /* Equity Box */
 .equity-box {
   display: flex;

@@ -224,16 +224,10 @@ fr:
         equity: Fonds Propres
         back: Retour au bilan
       properties:
-        usage_title: Immobilier par usage
-        usage: Usage
-        unassigned: Non rattaché
-        to_link: À rattacher
         net: Valeur nette
         gross: Brut
         debt: Dette
         ltv: LTV
-        total: Total immobilier
-        detail: Détail par bien
     balance_sheet_assets:
       form:
         asset: Actif
