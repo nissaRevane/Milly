@@ -9,7 +9,7 @@ Milly::Application.routes.draw do
 
   resource :export, only: [:show]
 
-  resources :properties, except: [:show]
+  resources :properties
   resources :assets, except: [:show]
   resources :liabilities, except: [:show]
 

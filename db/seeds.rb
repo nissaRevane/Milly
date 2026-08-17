@@ -19,6 +19,11 @@ puts "User created: #{user.email}"
 properties = seed_data.fetch("properties", []).map do |data|
   property = Property.find_or_initialize_by(user: user, name: data["name"])
   property.usage = data["usage"]
+  # Only touched when the seed file says something about them: seeding is re-runnable,
+  # and a file written before these fields existed must not erase what the UI has set.
+  %w[address purchase_price acquired_on].each do |field|
+    property[field] = data[field] if data.key?(field)
+  end
   property.save!
   property
 end

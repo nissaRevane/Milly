@@ -1,0 +1,119 @@
+<div class="page-header">
+  <h1>
+    <%= @property.name %>
+    <span class="badge badge-secondary"><%= @property.usage_label %></span>
+  </h1>
+  <div class="page-header-actions">
+    <%= link_to t("views.properties.show.edit"), edit_property_path(@property), class: "btn btn-primary" %>
+    <%= link_to t("views.properties.show.back"), properties_path, class: "btn btn-outline" %>
+  </div>
+</div>
+
+<div class="section">
+  <dl class="property-facts">
+    <div class="property-fact">
+      <dt><%= t("views.properties.form.address") %></dt>
+      <dd><%= @property.address.presence || "—" %></dd>
+    </div>
+    <div class="property-fact">
+      <dt><%= t("views.properties.form.purchase_price") %></dt>
+      <dd><%= @property.purchase_price ? number_to_currency(@property.purchase_price) : "—" %></dd>
+    </div>
+    <div class="property-fact">
+      <dt><%= t("views.properties.form.acquired_on") %></dt>
+      <dd><%= @property.acquired_on ? l(@property.acquired_on, format: :long) : "—" %></dd>
+    </div>
+  </dl>
+</div>
+
+<%#
+  Actifs and dettes are listed from the LINK (property_id), not from the balance sheet:
+  a line rattachée to the bien belongs to its fiche even when no bilan values it yet.
+  The amounts, on the other hand, only ever come from the most recent bilan — mixing
+  dates would produce a net value that never existed on any single date.
+%>
+<div class="section">
+  <div class="section-header">
+    <h2><%= t("views.properties.show.assets") %></h2>
+    <% if @balance_sheet %>
+      <span class="section-hint">
+        <%= t("views.properties.show.valued_at", date: l(@balance_sheet.closing_date, format: :long)) %>
+      </span>
+    <% end %>
+  </div>
+
+  <% if @assets.any? %>
+    <table class="table">
+      <tbody>
+        <% @assets.each do |asset| %>
+          <tr>
+            <td>
+              <div class="cell-title"><%= asset.name %></div>
+              <span class="badge <%= risk_level_badge_class(asset.risk_level) %>" title="<%= risk_level_label(asset.risk_level) %>">
+                <%= asset.asset_type_label %>
+              </span>
+            </td>
+            <td class="text-right">
+              <% line = @asset_lines[asset.id] %>
+              <%= line ? owned_value_cell(line.value, line.owned_value, asset.ownership_share) : "—" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="empty-state"><%= t("views.properties.show.no_assets") %></p>
+  <% end %>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <h2><%= t("views.properties.show.liabilities") %></h2>
+  </div>
+
+  <% if @liabilities.any? %>
+    <table class="table">
+      <tbody>
+        <% @liabilities.each do |liability| %>
+          <tr>
+            <td>
+              <div class="cell-title"><%= liability.name %></div>
+              <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
+                <%= liability.liability_type_label %>
+              </span>
+            </td>
+            <td class="text-right">
+              <% line = @liability_lines[liability.id] %>
+              <%= line ? owned_value_cell(line.remaining_capital, line.owned_remaining_capital, liability.ownership_share) : "—" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="empty-state"><%= t("views.properties.show.no_liabilities") %></p>
+  <% end %>
+</div>
+
+<% if @balance_sheet %>
+  <div class="section">
+    <dl class="property-facts">
+      <div class="property-fact">
+        <dt><%= t("views.balance_sheets.properties.gross") %></dt>
+        <dd><%= number_to_currency(@position.gross) %></dd>
+      </div>
+      <div class="property-fact">
+        <dt><%= t("views.balance_sheets.properties.debt") %></dt>
+        <dd class="text-danger"><%= number_to_currency(@position.debt) %></dd>
+      </div>
+      <div class="property-fact">
+        <dt><%= t("views.balance_sheets.properties.ltv") %></dt>
+        <dd><%= ltv_label(@position.ltv) %></dd>
+      </div>
+      <div class="property-fact property-fact-net">
+        <dt><%= t("views.balance_sheets.properties.net") %></dt>
+        <dd><%= number_to_currency(@position.net) %></dd>
+      </div>
+    </dl>
+  </div>
+<% end %>

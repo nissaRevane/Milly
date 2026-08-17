@@ -28,6 +28,9 @@ fr:
       property:
         name: Nom
         usage: Usage
+        address: Adresse
+        purchase_price: Valeur à l'achat
+        acquired_on: Date d'acquisition
       asset:
         name: Nom
         risk_level: Niveau de risque
@@ -113,7 +116,19 @@ fr:
       form:
         name: Nom du bien
         usage: Usage
+        address: Adresse
+        purchase_price: Valeur à l'achat
+        purchase_price_hint: Prix payé pour le bien entier, quote-part non appliquée.
+        acquired_on: Date d'acquisition
         asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement.
+      show:
+        edit: Modifier
+        back: Retour aux biens
+        assets: Actifs rattachés
+        liabilities: Dettes rattachées
+        no_assets: Aucun actif rattaché à ce bien.
+        no_liabilities: Aucune dette rattachée à ce bien.
+        valued_at: "Valorisé au bilan du %{date}"
       edit:
         title: Modifier le bien
       new:

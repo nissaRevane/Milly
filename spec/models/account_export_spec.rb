@@ -46,9 +46,22 @@ RSpec.describe AccountExport do
       data = described_class.new(user).to_h
 
       expect(data["properties"]).to eq([
-        { "name" => "Maison", "usage" => "primary_residence" },
-        { "name" => "Studio", "usage" => "rental" }
+        { "name" => "Maison", "usage" => "primary_residence",
+          "address" => nil, "purchase_price" => nil, "acquired_on" => nil },
+        { "name" => "Studio", "usage" => "rental",
+          "address" => nil, "purchase_price" => nil, "acquired_on" => nil }
       ])
+    end
+
+    it "exports the descriptive fields of a bien" do
+      create(:property, user: user, name: "Maison", address: "1 rue des Lilas, Nice",
+             purchase_price: 320_000, acquired_on: Date.new(2019, 6, 12))
+
+      expect(described_class.new(user).to_h["properties"].sole).to include(
+        "address" => "1 rue des Lilas, Nice",
+        "purchase_price" => 320_000,
+        "acquired_on" => "2019-06-12"
+      )
     end
 
     it "references the property of an asset and of a liability by name" do

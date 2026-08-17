@@ -1,8 +1,26 @@
 class PropertiesController < ApplicationController
-  before_action :set_property, only: [:edit, :update, :destroy]
+  before_action :set_property, only: [:show, :edit, :update, :destroy]
 
   def index
     @properties = current_user.properties.order(:usage, :name)
+  end
+
+  # The fiche of a bien: what it is (address, purchase price, acquisition date) and what
+  # it weighs today — its actifs and its dettes, valued on the most recent balance sheet.
+  def show
+    @assets = @property.assets.order(:asset_type, :name)
+    @liabilities = @property.liabilities.order(:liability_type, :name)
+    @balance_sheet = current_user.balance_sheets.order(closing_date: :desc).first
+    @asset_lines = latest_lines(@balance_sheet&.balance_sheet_assets&.includes(:asset), :asset_id, @assets)
+    @liability_lines = latest_lines(@balance_sheet&.balance_sheet_liabilities&.includes(:liability), :liability_id, @liabilities)
+
+    # Reuses the struct the balance sheet aggregates with, so the brut / dette / net /
+    # LTV shown here can never drift from the ones on the bilan summary.
+    @position = BalanceSheet::PropertyPosition.new(
+      property: @property,
+      asset_lines: @asset_lines.values,
+      liability_lines: @liability_lines.values
+    )
   end
 
   def new
@@ -40,7 +58,16 @@ class PropertiesController < ApplicationController
     @property = current_user.properties.find(params[:id])
   end
 
+  # The lines of the most recent balance sheet that value the given records, keyed by
+  # the record id. A record with no line there is simply absent: it has never been
+  # valued, or not on that date, and the view renders an em dash.
+  def latest_lines(scope, foreign_key, records)
+    return {} if scope.nil? || records.empty?
+
+    scope.where(foreign_key => records.map(&:id)).index_by(&foreign_key)
+  end
+
   def property_params
-    params.require(:property).permit(:name, :usage)
+    params.require(:property).permit(:name, :usage, :address, :purchase_price, :acquired_on)
   end
 end

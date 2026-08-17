@@ -19,6 +19,22 @@
     <%= f.select :usage, property_usage_options, {}, class: "form-control" %>
   </div>
 
+  <div class="form-group">
+    <%= f.label :address, t("views.properties.form.address") %>
+    <%= f.text_field :address, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :purchase_price, t("views.properties.form.purchase_price") %>
+    <%= f.number_field :purchase_price, step: 0.01, min: 0, class: "form-control" %>
+    <p class="form-hint"><%= t("views.properties.form.purchase_price_hint") %></p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :acquired_on, t("views.properties.form.acquired_on") %>
+    <%= f.date_field :acquired_on, class: "form-control" %>
+  </div>
+
   <% if property.new_record? %>
     <p class="form-hint"><%= t("views.properties.form.asset_hint") %></p>
   <% end %>

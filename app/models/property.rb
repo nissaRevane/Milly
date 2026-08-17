@@ -28,6 +28,12 @@ class Property < ApplicationRecord
   # "Maison" would collapse into one on an export → import round trip.
   validates :name, presence: true, uniqueness: { scope: :user_id }
 
+  # Optional, like the two other descriptive fields: a bien is worth what the balance
+  # sheet says today, the purchase price is only there to be compared with it.
+  validates :purchase_price,
+            numericality: { greater_than_or_equal_to: 0 },
+            allow_nil: true
+
   def self.usage_label_for(usage)
     EnumLabel.for("property_usages", usage)
   end

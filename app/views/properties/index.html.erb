@@ -9,14 +9,16 @@
       <tr>
         <th><%= t("views.properties.index.name") %></th>
         <th><%= t("views.properties.index.usage") %></th>
+        <th><%= t("views.properties.form.address") %></th>
         <th class="table-actions"></th>
       </tr>
     </thead>
     <tbody>
       <% @properties.each do |property| %>
         <tr>
-          <td><%= property.name %></td>
+          <td><%= link_to property.name, property_path(property) %></td>
           <td><span class="badge badge-secondary"><%= property.usage_label %></span></td>
+          <td><%= property.address.presence || "—" %></td>
           <td class="table-actions">
             <%= link_to "✏️", edit_property_path(property), class: "btn btn-sm btn-outline" %>
             <%= button_to "🗑️", property_path(property), method: :delete, class: "btn btn-sm btn-danger",

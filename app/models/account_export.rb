@@ -40,10 +40,16 @@ class AccountExport
     }
   end
 
+  # The three descriptive fields are optional, and exported even when empty: db/seeds.rb
+  # only touches what the file mentions, so writing them always is what makes clearing
+  # an address survive an export → import round trip.
   def property_data(property)
     {
       "name" => property.name,
-      "usage" => property.usage
+      "usage" => property.usage,
+      "address" => property.address,
+      "purchase_price" => property.purchase_price && number(property.purchase_price),
+      "acquired_on" => property.acquired_on&.iso8601
     }
   end
 

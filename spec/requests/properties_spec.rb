@@ -42,6 +42,81 @@ RSpec.describe "Properties", type: :request do
     end
   end
 
+  describe "GET /properties/:id" do
+    let(:property) do
+      create(:property, user: user, name: "Maison", usage: :rental,
+             address: "1 rue des Lilas, Nice", purchase_price: 320_000,
+             acquired_on: Date.new(2019, 6, 12))
+    end
+
+    it "renders the descriptive fields of the bien" do
+      get property_path(property)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("1 rue des Lilas, Nice")
+      expect(response.body).to include("320")
+      expect(response.body).to include("12 juin 2019")
+    end
+
+    it "lists the dettes rattachées to the bien" do
+      create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan, property: property)
+      create(:liability, user: user, name: "Prêt voiture", liability_type: :short_term_debt)
+
+      get property_path(property)
+
+      expect(response.body).to include("Prêt maison")
+      expect(response.body).not_to include("Prêt voiture")
+    end
+
+    it "values the lines with the most recent balance sheet" do
+      liability = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan,
+                         property: property, ownership_share: 100)
+      old = create(:balance_sheet, user: user, closing_date: Date.new(2023, 12, 31))
+      recent = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      create(:balance_sheet_asset, balance_sheet: old, asset: property.real_estate_asset, value: 300_000)
+      create(:balance_sheet_asset, balance_sheet: recent, asset: property.real_estate_asset, value: 350_000)
+      create(:balance_sheet_liability, balance_sheet: old, liability: liability, remaining_capital: 200_000)
+      create(:balance_sheet_liability, balance_sheet: recent, liability: liability, remaining_capital: 180_000)
+
+      get property_path(property)
+
+      # Brut 350 000, dette 180 000, net 170 000 — read off the 2024 bilan only.
+      expect(response.body).to include("350 000,00")
+      expect(response.body).to include("180 000,00")
+      expect(response.body).to include("170 000,00")
+      expect(response.body).not_to include("300 000,00")
+      expect(response.body).to include("31 décembre 2024")
+    end
+
+    it "renders a bien no bilan values yet" do
+      create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan, property: property)
+
+      get property_path(property)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Prêt maison")
+    end
+
+    # The LTV divides by the brut: absent from the latest bilan, the bien is worth 0
+    # there and the ratio has to stay an em dash rather than blow up.
+    it "renders a bien absent from the latest bilan" do
+      create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+
+      get property_path(property)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("—")
+    end
+
+    it "does not show another user's property" do
+      other_property = create(:property, user: create(:user), name: "Villa du voisin")
+
+      get property_path(other_property)
+
+      expect(response).to redirect_to(root_path)
+    end
+  end
+
   describe "GET /properties/new" do
     it "returns success" do
       get new_property_path
@@ -66,6 +141,26 @@ RSpec.describe "Properties", type: :request do
       expect(Property.last.usage).to eq("primary_residence")
       expect(Property.last.user).to eq(user)
       expect(response).to redirect_to(properties_path)
+    end
+
+    it "creates a property with its descriptive fields" do
+      post properties_path, params: { property: { name: "Maison", usage: "rental",
+                                                  address: "1 rue des Lilas, Nice",
+                                                  purchase_price: "320000.50",
+                                                  acquired_on: "2019-06-12" } }
+
+      property = Property.last
+      expect(property.address).to eq("1 rue des Lilas, Nice")
+      expect(property.purchase_price).to eq(320_000.50)
+      expect(property.acquired_on).to eq(Date.new(2019, 6, 12))
+    end
+
+    it "does not create with a negative purchase price" do
+      expect {
+        post properties_path, params: { property: { name: "Maison", usage: "rental", purchase_price: "-1" } }
+      }.not_to change(Property, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "does not create with an unknown usage" do
@@ -134,6 +229,25 @@ RSpec.describe "Properties", type: :request do
 
       expect(property.reload.usage).to eq("rental")
       expect(response).to redirect_to(properties_path)
+    end
+
+    it "updates the descriptive fields" do
+      patch property_path(property), params: { property: { address: "2 avenue Jean Médecin, Nice",
+                                                           purchase_price: "410000",
+                                                           acquired_on: "2021-03-01" } }
+
+      property.reload
+      expect(property.address).to eq("2 avenue Jean Médecin, Nice")
+      expect(property.purchase_price).to eq(410_000)
+      expect(property.acquired_on).to eq(Date.new(2021, 3, 1))
+    end
+
+    it "clears a descriptive field submitted empty" do
+      property.update!(address: "1 rue des Lilas, Nice")
+
+      patch property_path(property), params: { property: { address: "" } }
+
+      expect(property.reload.address).to eq("")
     end
 
     it "renames the immobilier asset of the bien along with it" do

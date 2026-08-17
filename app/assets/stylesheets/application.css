@@ -498,6 +498,42 @@ body {
 }
 
 /*
+ * Property fiche (properties#show)
+ *
+ * Two bands of label/value pairs — what the bien is, then what it weighs — laid out
+ * as a grid that reflows to a single column on narrow screens.
+ */
+.property-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.property-fact dt {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.property-fact dd {
+  font-weight: 600;
+}
+
+.property-fact-net dd {
+  font-weight: 700;
+}
+
+/* The date the amounts of the fiche are read at, next to the section title */
+.section-hint {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/*
  * Real Estate bands (balance sheet show + summary)
  *
  * A bien immobilier reunites an actif and its passif, so both bands sit full

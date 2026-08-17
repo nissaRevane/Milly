@@ -39,6 +39,19 @@ RSpec.describe Property, type: :model do
       expect(property).not_to be_valid
       expect(property.errors[:usage]).to be_present
     end
+
+    # The three descriptive fields are optional: every bien created before they existed
+    # has none, and a bien is usable on the balance sheet without them.
+    it "is valid without an address, a purchase price or an acquisition date" do
+      expect(build(:property, address: nil, purchase_price: nil, acquired_on: nil)).to be_valid
+    end
+
+    it "is invalid with a negative purchase price" do
+      property = build(:property, purchase_price: -1)
+
+      expect(property).not_to be_valid
+      expect(property.errors[:purchase_price]).to be_present
+    end
   end
 
   describe "enums" do
