@@ -32,6 +32,28 @@ module ApplicationHelper
     Liability.liability_type_label_for(type)
   end
 
+  def property_usage_options
+    Property.usages.keys.map { |key| [t("views.shared.property_usages.#{key}"), key] }
+  end
+
+  def property_usage_label(usage)
+    Property.usage_label_for(usage)
+  end
+
+  # The unassigned bucket is keyed by nil in both property_positions and
+  # real_estate_totals_by_usage: it gets the "non rattaché" wording, not an usage label.
+  def property_bucket_label(usage)
+    usage.presence ? property_usage_label(usage) : t("views.balance_sheets.properties.unassigned")
+  end
+
+  # An LTV is nil whenever the ratio would be meaningless (no gross value, or the
+  # overall total that mixes usages) — an em dash reads better than a blank cell.
+  def ltv_label(ltv)
+    return "—" if ltv.nil?
+
+    number_to_percentage(ltv, precision: 1)
+  end
+
   def ownership_share_label(share)
     precision = (share.to_d % 1).zero? ? 0 : 2
     number_to_percentage(share, precision: precision)

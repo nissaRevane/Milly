@@ -3,7 +3,27 @@ require "rails_helper"
 RSpec.describe Asset, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:user) }
+    it { is_expected.to belong_to(:property).optional }
     it { is_expected.to have_many(:balance_sheet_assets).dependent(:destroy) }
+  end
+
+  describe "the property link" do
+    it "accepts a property of the same user" do
+      property = create(:property)
+
+      expect(build(:asset, user: property.user, property: property)).to be_valid
+    end
+
+    it "accepts no property at all" do
+      expect(build(:asset, property: nil)).to be_valid
+    end
+
+    it "rejects a property belonging to another user" do
+      asset = build(:asset, property: create(:property))
+
+      expect(asset).not_to be_valid
+      expect(asset.errors[:property]).to eq(["n'est pas valide"])
+    end
   end
 
   describe "validations" do

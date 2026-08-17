@@ -1,4 +1,5 @@
 class Asset < ApplicationRecord
+  include PropertyLinkable
   include RiskCategorizable
   include Shareable
 

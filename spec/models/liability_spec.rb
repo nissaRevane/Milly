@@ -3,7 +3,27 @@ require "rails_helper"
 RSpec.describe Liability, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:user) }
+    it { is_expected.to belong_to(:property).optional }
     it { is_expected.to have_many(:balance_sheet_liabilities).dependent(:destroy) }
+  end
+
+  describe "the property link" do
+    it "accepts a property of the same user" do
+      property = create(:property)
+
+      expect(build(:liability, user: property.user, property: property)).to be_valid
+    end
+
+    it "accepts no property at all" do
+      expect(build(:liability, property: nil)).to be_valid
+    end
+
+    it "rejects a property belonging to another user" do
+      liability = build(:liability, property: create(:property))
+
+      expect(liability).not_to be_valid
+      expect(liability.errors[:property]).to eq(["n'est pas valide"])
+    end
   end
 
   describe "validations" do

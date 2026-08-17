@@ -1,4 +1,5 @@
 class Liability < ApplicationRecord
+  include PropertyLinkable
   include RiskCategorizable
   include Shareable
 

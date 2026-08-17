@@ -11,6 +11,7 @@ fr:
   activerecord:
     models:
       user: Utilisateur
+      property: Bien immobilier
       asset: Actif
       liability: Passif
       balance_sheet: Bilan
@@ -24,16 +25,21 @@ fr:
         password: Mot de passe
         password_confirmation: Confirmation du mot de passe
         remember_me: Se souvenir de moi
+      property:
+        name: Nom
+        usage: Usage
       asset:
         name: Nom
         risk_level: Niveau de risque
         asset_type: Type
         ownership_share: Quote-part
+        property: Bien immobilier
       liability:
         name: Nom
         risk_level: Niveau de risque
         liability_type: Type
         ownership_share: Quote-part
+        property: Bien immobilier
       balance_sheet:
         closing_date: Date de clôture
       balance_sheet_asset:
@@ -50,10 +56,15 @@ fr:
           attributes:
             email:
               taken: est déjà utilisé
+        property:
+          attributes:
+            name:
+              taken: est déjà utilisé pour un autre bien
   errors:
     messages:
       blank: doit être rempli(e)
       inclusion: n'est pas inclus(e) dans la liste
+      invalid: n'est pas valide
       required: doit exister
       not_a_number: n'est pas un nombre
       greater_than_or_equal_to: doit être supérieur ou égal à %{count}
@@ -80,6 +91,7 @@ fr:
       submit: Enregistrer
   views:
     nav:
+      properties: Biens
       assets: Actifs
       liabilities: Passifs
       balance_sheets: Bilans
@@ -87,6 +99,20 @@ fr:
       sign_out: Déconnexion
       sign_in: Connexion
       sign_up: Inscription
+    properties:
+      index:
+        title: Mes Biens immobiliers
+        new: Nouveau bien
+        empty: Aucun bien immobilier enregistré.
+        name: Nom
+        usage: Usage
+      form:
+        name: Nom du bien
+        usage: Usage
+      edit:
+        title: Modifier le bien
+      new:
+        title: Nouveau bien
     assets:
       index:
         title: Mes Actifs
@@ -102,6 +128,8 @@ fr:
         risk_level: Niveau de risque
         asset_type: Type d'actif
         ownership_share: "Quote-part détenue (%)"
+        property: Bien immobilier rattaché
+        property_none: Aucun bien
       edit:
         title: Modifier l'actif
       new:
@@ -121,6 +149,8 @@ fr:
         risk_level: Niveau de risque
         liability_type: Type de passif
         ownership_share: "Quote-part détenue (%)"
+        property: Bien immobilier rattaché
+        property_none: Aucun bien
       edit:
         title: Modifier le passif
       new:
@@ -173,6 +203,19 @@ fr:
         total_liabilities: Total Passifs
         equity: Fonds Propres
         back: Retour au bilan
+      properties:
+        title: Immobilier par bien
+        usage_title: Immobilier par usage
+        usage: Usage
+        unassigned: Non rattaché
+        to_link: À rattacher
+        unassigned_hint: Rattachez ces lignes à un bien pour les voir consolidées.
+        net: Valeur nette
+        gross: Brut
+        debt: Dette
+        ltv: LTV
+        total: Total immobilier
+        detail: Détail par bien
     balance_sheet_assets:
       form:
         asset: Actif
@@ -198,6 +241,11 @@ fr:
         cta: Commencer
     shared:
       owned_value_detail: "%{share} de %{total}"
+      # Scope name pinned by Property.usage_label_for → EnumLabel.for("property_usages", …)
+      property_usages:
+        primary_residence: Résidence principale
+        rental: Locatif
+        secondary_residence: Résidence secondaire
       risk_levels:
         low: Faible
         medium: Moyen
@@ -214,6 +262,10 @@ fr:
         short_term_debt: Dette court terme
         security_deposit: Dépôt de garantie
   flash:
+    properties:
+      created: Bien immobilier créé avec succès.
+      updated: Bien immobilier mis à jour avec succès.
+      destroyed: Bien immobilier supprimé avec succès.
     assets:
       created: Actif créé avec succès.
       updated: Actif mis à jour avec succès.
