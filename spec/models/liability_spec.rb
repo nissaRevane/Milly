@@ -117,6 +117,93 @@ RSpec.describe Liability, type: :model do
     end
   end
 
+  describe "amortization terms" do
+    it "accepts a real estate loan carrying the seven fields" do
+      expect(build(:liability, :amortizable)).to be_valid
+    end
+
+    it "accepts a liability carrying none of them" do
+      expect(build(:liability)).to be_valid
+    end
+
+    it "requires every other field as soon as one is filled" do
+      liability = build(:liability, borrowed_capital: 100_000).tap(&:valid?)
+
+      (Liability::AMORTIZATION_FIELDS - [:borrowed_capital]).each do |field|
+        expect(liability.errors[field]).to include("doit être rempli(e)")
+      end
+    end
+
+    it "reserves the fields for real estate loans" do
+      liability = build(:liability, :amortizable, liability_type: :security_deposit).tap(&:valid?)
+
+      expect(liability.errors[:liability_type])
+        .to include("doit être « Crédit immobilier » pour porter un tableau d'amortissement")
+    end
+
+    it "rejects non-positive amounts and durations" do
+      liability = build(:liability, :amortizable,
+                        borrowed_capital: 0, monthly_payment: -1, duration_months: 0,
+                        annual_rate: -1, first_payment_interest: -1).tap(&:valid?)
+
+      expect(liability.errors[:borrowed_capital]).to include("doit être supérieur à 0")
+      expect(liability.errors[:monthly_payment]).to be_present
+      expect(liability.errors[:duration_months]).to be_present
+      expect(liability.errors[:annual_rate]).to be_present
+      expect(liability.errors[:first_payment_interest]).to be_present
+    end
+
+    it "rejects a fractional duration" do
+      liability = build(:liability, :amortizable, duration_months: 12.5).tap(&:valid?)
+
+      expect(liability.errors[:duration_months]).to include("doit être un nombre entier")
+    end
+
+    it "rejects a first payment principal above the borrowed capital" do
+      liability = build(:liability, :amortizable, first_payment_principal: 200_001).tap(&:valid?)
+
+      expect(liability.errors[:first_payment_principal]).to be_present
+    end
+
+    it "accepts a zero rate" do
+      expect(build(:liability, :amortizable, annual_rate: 0)).to be_valid
+    end
+  end
+
+  describe "#amortizable?" do
+    it "is true only when the seven fields are present" do
+      expect(build(:liability, :amortizable)).to be_amortizable
+      expect(build(:liability)).not_to be_amortizable
+      expect(build(:liability, :amortizable, monthly_payment: nil)).not_to be_amortizable
+    end
+  end
+
+  describe "#amortization_schedule" do
+    it "returns a memoized schedule when amortizable" do
+      liability = build(:liability, :amortizable)
+
+      expect(liability.amortization_schedule).to be_a(AmortizationSchedule)
+      expect(liability.amortization_schedule).to equal(liability.amortization_schedule)
+    end
+
+    it "returns nil when not amortizable" do
+      expect(build(:liability).amortization_schedule).to be_nil
+    end
+  end
+
+  describe "#suggested_remaining_capital" do
+    it "returns nil when the liability carries no amortization terms" do
+      expect(build(:liability).suggested_remaining_capital(Date.new(2025, 1, 1))).to be_nil
+    end
+
+    it "derives the CRD from the schedule at the given date" do
+      liability = build(:liability, :amortizable)
+
+      expect(liability.suggested_remaining_capital(Date.new(2024, 3, 10))).to eq(BigDecimal("199350"))
+      expect(liability.suggested_remaining_capital(Date.new(2024, 4, 5))).to eq(BigDecimal("198739.18"))
+    end
+  end
+
   describe "#liability_type_label" do
     it "returns the French label for the liability type" do
       liability = build(:liability, liability_type: :real_estate_loan)

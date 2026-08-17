@@ -24,6 +24,34 @@ RSpec.describe "BalanceSheetLiabilities", type: :request do
       expect(response.body).to include("value=\"#{free_liability.id}\"")
     end
 
+    it "carries the projected CRD at the closing date as the suggested value of an amortizable loan" do
+      sheet = create(:balance_sheet, user: user, closing_date: Date.new(2024, 4, 20))
+      loan = create(:liability, :amortizable, user: user, name: "Prêt amortissable")
+
+      get new_balance_sheet_balance_sheet_liability_path(sheet)
+
+      # Deux échéances passées au 20/04/2024 : CRD = 198 739,18 € (voir amortization_schedule_spec).
+      expect(response.body).to include(
+        "<option data-suggested-value=\"198739.18\" value=\"#{loan.id}\">"
+      )
+    end
+
+    it "carries no suggested value for a liability without amortization terms" do
+      get new_balance_sheet_balance_sheet_liability_path(balance_sheet)
+
+      expect(response.body).to include("<option value=\"#{free_liability.id}\">")
+    end
+
+    # Le défaut de colonne (0.0) remplirait le champ d'un montant que personne n'a saisi,
+    # et le capital restant dû suggéré ne s'installerait plus.
+    it "leaves the remaining capital field empty instead of pre-filling the column default" do
+      get new_balance_sheet_balance_sheet_liability_path(balance_sheet)
+
+      field = Nokogiri::HTML(response.body).at_css("#balance_sheet_liability_remaining_capital")
+
+      expect(field["value"]).to be_nil
+    end
+
     it "excludes liabilities belonging to another user" do
       other_liability = create(:liability, user: create(:user), name: "Autre")
 

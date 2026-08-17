@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000013) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_01_000014) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000013) do
     t.integer "liability_type", default: 0, null: false
     t.decimal "ownership_share", precision: 5, scale: 2, default: "100.0", null: false
     t.bigint "property_id"
+    t.decimal "borrowed_capital", precision: 15, scale: 2
+    t.decimal "annual_rate", precision: 6, scale: 3
+    t.integer "duration_months"
+    t.decimal "monthly_payment", precision: 15, scale: 2
+    t.date "first_payment_on"
+    t.decimal "first_payment_principal", precision: 15, scale: 2
+    t.decimal "first_payment_interest", precision: 15, scale: 2
     t.index ["property_id"], name: "index_liabilities_on_property_id"
     t.index ["user_id"], name: "index_liabilities_on_user_id"
   end

@@ -64,6 +64,28 @@ RSpec.describe AccountExport do
       )
     end
 
+    it "exports the amortization terms of an amortizable loan" do
+      create(:liability, :amortizable, user: user, name: "Prêt maison")
+
+      expect(described_class.new(user).to_h["liabilities"].sole).to include(
+        "borrowed_capital" => 200_000,
+        "annual_rate" => 3,
+        "duration_months" => 240,
+        "monthly_payment" => 1109.2,
+        "first_payment_on" => "2024-03-05",
+        "first_payment_principal" => 650,
+        "first_payment_interest" => 312.5
+      )
+    end
+
+    it "leaves the amortization keys out for a liability without terms" do
+      create(:liability, user: user, name: "Dette simple")
+
+      expect(described_class.new(user).to_h["liabilities"].sole.keys).to eq(
+        %w[name risk_level liability_type ownership_share property]
+      )
+    end
+
     it "references the property of an asset and of a liability by name" do
       # The only asset here is the one created with the bien: it carries its name, and
       # db/seeds.rb matches it back on that name when the export is re-seeded.

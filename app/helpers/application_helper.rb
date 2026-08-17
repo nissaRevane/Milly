@@ -60,12 +60,12 @@ module ApplicationHelper
   end
 
   # La valeur suggérée telle qu'un <input type="number"> l'accepte, nil quand il n'y en a
-  # pas : point décimal, et pas de « ,0 » parasite affiché quand le montant est rond.
-  def suggested_value_attribute(asset)
-    value = asset.suggested_value
+  # pas : point décimal (to_s("F"), la notation par défaut de BigDecimal est
+  # scientifique), et pas de « ,0 » parasite affiché quand le montant est rond.
+  def suggested_value_attribute(value)
     return nil if value.nil?
 
-    value.frac.zero? ? value.to_i.to_s : value.to_s
+    value.frac.zero? ? value.to_i.to_s : value.to_s("F")
   end
 
   def owned_value_cell(total_value, owned_value, share)

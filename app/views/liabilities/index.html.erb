@@ -28,7 +28,7 @@
     <tbody>
       <% @liabilities.each do |liability| %>
         <tr>
-          <td><%= liability.name %></td>
+          <td><%= link_to liability.name, liability_path(liability) %></td>
           <td>
             <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
               <%= liability.liability_type_label %>

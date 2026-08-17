@@ -63,14 +63,31 @@ class AccountExport
     }
   end
 
+  # The amortization fields are all-or-nothing on the model, so they are exported the
+  # same way: all seven when the loan carries a schedule, none otherwise. db/seeds.rb
+  # guards each one with data.key?, so seed files written before they existed stay valid.
   def liability_data(liability)
-    {
+    data = {
       "name" => liability.name,
       "risk_level" => liability.risk_level,
       "liability_type" => liability.liability_type,
       "ownership_share" => number(liability.ownership_share),
       "property" => liability.property&.name
     }
+
+    if liability.amortizable?
+      data.merge!(
+        "borrowed_capital" => number(liability.borrowed_capital),
+        "annual_rate" => number(liability.annual_rate),
+        "duration_months" => liability.duration_months,
+        "monthly_payment" => number(liability.monthly_payment),
+        "first_payment_on" => liability.first_payment_on.iso8601,
+        "first_payment_principal" => number(liability.first_payment_principal),
+        "first_payment_interest" => number(liability.first_payment_interest)
+      )
+    end
+
+    data
   end
 
   def balance_sheets_data

@@ -80,6 +80,70 @@ RSpec.describe "Liabilities", type: :request do
     end
   end
 
+  describe "GET /liabilities/:id" do
+    it "renders the amortization schedule of an amortizable loan" do
+      liability = create(:liability, :amortizable, user: user, name: "Prêt maison")
+
+      get liability_path(liability)
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("Prêt maison")
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("h2").map(&:text).map(&:strip)).to include("Tableau d'amortissement")
+
+      rows = doc.css(".amortization-table tbody tr")
+      expect(rows.length).to eq(liability.amortization_schedule.rows.length)
+
+      first_cells = rows.first.css("td").map { |cell| cell.text.gsub(/\s+/, " ").strip }
+      currency = ->(amount) { ActionController::Base.helpers.number_to_currency(amount).gsub(/\s+/, " ") }
+      expect(first_cells).to eq(["1", "05/03/2024", currency.call(312.50), currency.call(650), currency.call(199_350)])
+    end
+
+    it "shows a hint instead of a table when the liability carries no schedule" do
+      liability = create(:liability, user: user, name: "Dette simple")
+
+      get liability_path(liability)
+
+      expect(response).to have_http_status(:success)
+      hint = Nokogiri::HTML(response.body).at_css(".empty-state")
+      expect(hint.text).to include("Aucun tableau d'amortissement défini pour ce passif.")
+      expect(response.body).not_to include("amortization-table")
+    end
+
+    it "shows a neutral hint for liability types that cannot carry a schedule" do
+      liability = create(:liability, user: user, liability_type: :security_deposit, name: "Caution")
+
+      get liability_path(liability)
+
+      expect(response).to have_http_status(:success)
+      hint = Nokogiri::HTML(response.body).at_css(".empty-state")
+      expect(hint.text).to include("Les tableaux d'amortissement ne concernent que les prêts immobiliers.")
+      expect(hint.text).not_to include("Renseignez les caractéristiques du prêt")
+      expect(response.body).not_to include("amortization-table")
+    end
+
+    it "does not show another user's liability" do
+      other = create(:liability, :amortizable, user: create(:user))
+
+      get liability_path(other)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))
+    end
+  end
+
+  describe "the link from the index to the show page" do
+    it "links each liability name to its page" do
+      liability = create(:liability, user: user, name: "Prêt")
+
+      get liabilities_path
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("a[href='#{liability_path(liability)}']")&.text&.strip).to eq("Prêt")
+    end
+  end
+
   describe "GET /liabilities/new" do
     it "returns success" do
       get new_liability_path
@@ -122,6 +186,38 @@ RSpec.describe "Liabilities", type: :request do
 
       expect(Liability.last.ownership_share).to eq(60.0)
       expect(response).to redirect_to(liabilities_path)
+    end
+
+    it "creates a loan with its amortization terms" do
+      expect {
+        post liabilities_path, params: {
+          liability: {
+            name: "Prêt maison", risk_level: "low", liability_type: "real_estate_loan",
+            borrowed_capital: "200000", annual_rate: "3.125", duration_months: "240",
+            monthly_payment: "1109.20", first_payment_on: "2024-03-05",
+            first_payment_principal: "650", first_payment_interest: "312.50"
+          }
+        }
+      }.to change(Liability, :count).by(1)
+
+      liability = Liability.last
+      expect(liability).to be_amortizable
+      expect(liability.annual_rate).to eq(BigDecimal("3.125"))
+      expect(liability.duration_months).to eq(240)
+      expect(response).to redirect_to(liabilities_path)
+    end
+
+    it "rejects a partial set of amortization terms" do
+      expect {
+        post liabilities_path, params: {
+          liability: {
+            name: "Prêt maison", risk_level: "low", liability_type: "real_estate_loan",
+            borrowed_capital: "200000"
+          }
+        }
+      }.not_to change(Liability, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "does not create with an ownership share above 100" do

@@ -316,6 +316,24 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(source.reload.balance_sheet_assets.count).to eq(1)
     end
 
+    it "projects the CRD of an amortizable loan to the new closing date instead of copying it" do
+      loan = create(:liability, :amortizable, user: user, name: "Prêt amortissable")
+      create(:balance_sheet_liability, balance_sheet: source, liability: loan, remaining_capital: 123_456)
+
+      post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+
+      copy = BalanceSheet.order(:created_at).last
+      copied_loan_line = copy.balance_sheet_liabilities.find_by(liability_id: loan.id)
+
+      expect(copied_loan_line.remaining_capital).to eq(loan.suggested_remaining_capital(Date.new(2026, 6, 30)))
+      expect(copied_loan_line.remaining_capital).not_to eq(123_456)
+      expect(copied_loan_line.remaining_capital).to be_between(0, 200_000)
+
+      # Le passif sans tableau d'amortissement reste copié tel quel.
+      plain_line = copy.balance_sheet_liabilities.find_by(liability_id: liability.id)
+      expect(plain_line.remaining_capital).to eq(90_000)
+    end
+
     it "does not copy anything when the closing date is already taken" do
       expect {
         post balance_sheets_path, params: { balance_sheet: { closing_date: "2025-12-31" }, source_id: source.id }

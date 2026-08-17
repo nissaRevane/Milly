@@ -1,5 +1,5 @@
 class LiabilitiesController < ApplicationController
-  before_action :set_liability, only: [:edit, :update, :destroy]
+  before_action :set_liability, only: [:show, :edit, :update, :destroy]
   # The form partial offers the property select, and it is also re-rendered on failure.
   before_action :set_properties, only: [:new, :create, :edit, :update]
 
@@ -7,6 +7,9 @@ class LiabilitiesController < ApplicationController
     @liability_type_filter = params[:liability_type].presence_in(Liability.liability_types.keys)
     @liabilities = current_user.liabilities.order(:liability_type, :risk_level, :name)
     @liabilities = @liabilities.where(liability_type: @liability_type_filter) if @liability_type_filter
+  end
+
+  def show
   end
 
   def new
@@ -50,7 +53,10 @@ class LiabilitiesController < ApplicationController
 
   def liability_params
     scope_property_id(
-      params.require(:liability).permit(:name, :risk_level, :liability_type, :ownership_share, :property_id)
+      params.require(:liability).permit(
+        :name, :risk_level, :liability_type, :ownership_share, :property_id,
+        *Liability::AMORTIZATION_FIELDS
+      )
     )
   end
 end

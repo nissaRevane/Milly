@@ -59,8 +59,19 @@ class BalanceSheet < ApplicationRecord
       source.balance_sheet_assets.each do |line|
         balance_sheet_assets.create!(asset_id: line.asset_id, value: line.value)
       end
-      source.balance_sheet_liabilities.each do |line|
-        balance_sheet_liabilities.create!(liability_id: line.liability_id, remaining_capital: line.remaining_capital)
+      # Un prêt qui porte un tableau d'amortissement n'est pas recopié tel quel : son
+      # capital restant dû est projeté à la date de clôture du nouveau bilan — recopier
+      # l'ancien montant figerait la dette à une date où elle ne vaut plus cela. Les
+      # passifs sans tableau gardent le comportement d'origine, la copie verbatim.
+      source.balance_sheet_liabilities.includes(:liability).each do |line|
+        remaining_capital =
+          if line.liability.amortizable?
+            line.liability.suggested_remaining_capital(closing_date)
+          else
+            line.remaining_capital
+          end
+
+        balance_sheet_liabilities.create!(liability_id: line.liability_id, remaining_capital: remaining_capital)
       end
     end
   end

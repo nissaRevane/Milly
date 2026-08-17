@@ -38,6 +38,51 @@
     <%= f.select :risk_level, risk_level_options, {}, class: "form-control" %>
   </div>
 
+  <%#
+    Toujours affiché : la validation côté serveur réserve ces champs aux crédits
+    immobiliers et impose le tout-ou-rien, inutile d'ajouter du JS pour cela.
+  %>
+  <fieldset class="form-fieldset">
+    <legend><%= t("views.liabilities.form.amortization_legend") %></legend>
+    <p class="form-hint"><%= t("views.liabilities.form.amortization_hint") %></p>
+
+    <div class="form-group">
+      <%= f.label :borrowed_capital, t("views.liabilities.form.borrowed_capital") %>
+      <%= f.number_field :borrowed_capital, step: 0.01, min: 0, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :annual_rate, t("views.liabilities.form.annual_rate") %>
+      <%= f.number_field :annual_rate, step: 0.001, min: 0, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :duration_months, t("views.liabilities.form.duration_months") %>
+      <%= f.number_field :duration_months, step: 1, min: 1, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :monthly_payment, t("views.liabilities.form.monthly_payment") %>
+      <%= f.number_field :monthly_payment, step: 0.01, min: 0, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :first_payment_on, t("views.liabilities.form.first_payment_on") %>
+      <%= f.date_field :first_payment_on, class: "form-control" %>
+      <small class="form-hint"><%= t("views.liabilities.form.first_payment_hint") %></small>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :first_payment_principal, t("views.liabilities.form.first_payment_principal") %>
+      <%= f.number_field :first_payment_principal, step: 0.01, min: 0, class: "form-control" %>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :first_payment_interest, t("views.liabilities.form.first_payment_interest") %>
+      <%= f.number_field :first_payment_interest, step: 0.01, min: 0, class: "form-control" %>
+    </div>
+  </fieldset>
+
   <div class="form-actions">
     <%= f.submit class: "btn btn-primary" %>
     <%= link_to "Annuler", liabilities_path, class: "btn btn-outline" %>

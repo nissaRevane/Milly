@@ -16,7 +16,7 @@
   <div class="form-group">
     <%= f.label :asset_id, t("views.balance_sheet_assets.form.asset") %>
     <%= f.select :asset_id,
-                 @available_assets.map { |asset| [asset.name, asset.id, { data: { suggested_value: suggested_value_attribute(asset) } }] },
+                 @available_assets.map { |asset| [asset.name, asset.id, { data: { suggested_value: suggested_value_attribute(asset.suggested_value) } }] },
                  { prompt: "-- Sélectionner un actif --" },
                  class: "form-control",
                  data: { suggested_value_target: "source", action: "change->suggested-value#apply" } %>

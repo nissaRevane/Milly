@@ -1,0 +1,69 @@
+<div class="page-header">
+  <h1>
+    <%= @liability.name %>
+    <span class="badge <%= risk_level_badge_class(@liability.risk_level) %>" title="<%= risk_level_label(@liability.risk_level) %>">
+      <%= @liability.liability_type_label %>
+    </span>
+  </h1>
+  <div class="page-header-actions">
+    <%= link_to t("views.liabilities.show.edit"), edit_liability_path(@liability), class: "btn btn-primary" %>
+    <%= link_to t("views.liabilities.show.back"), liabilities_path, class: "btn btn-outline" %>
+  </div>
+</div>
+
+<% if @liability.amortizable? %>
+  <div class="section">
+    <dl class="property-facts">
+      <div class="property-fact">
+        <dt><%= t("views.liabilities.form.borrowed_capital") %></dt>
+        <dd><%= number_to_currency(@liability.borrowed_capital) %></dd>
+      </div>
+      <div class="property-fact">
+        <dt><%= t("views.liabilities.show.annual_rate") %></dt>
+        <dd><%= number_to_percentage(@liability.annual_rate, precision: 3, strip_insignificant_zeros: true) %></dd>
+      </div>
+      <div class="property-fact">
+        <dt><%= t("views.liabilities.form.duration_months") %></dt>
+        <dd><%= @liability.duration_months %></dd>
+      </div>
+      <div class="property-fact">
+        <dt><%= t("views.liabilities.form.monthly_payment") %></dt>
+        <dd><%= number_to_currency(@liability.monthly_payment) %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2><%= t("views.liabilities.show.schedule_title") %></h2>
+    </div>
+    <div class="table-scroll">
+      <table class="table table-compact amortization-table">
+        <thead>
+          <tr>
+            <th><%= t("views.liabilities.show.number") %></th>
+            <th><%= t("views.liabilities.show.due_on") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.interest") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.principal") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.remaining_capital") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @liability.amortization_schedule.rows.each do |row| %>
+            <tr>
+              <td><%= row.number %></td>
+              <td><%= l(row.due_on) %></td>
+              <td class="text-right"><%= number_to_currency(row.interest) %></td>
+              <td class="text-right"><%= number_to_currency(row.principal) %></td>
+              <td class="text-right"><%= number_to_currency(row.remaining_capital) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% elsif @liability.real_estate_loan? %>
+  <p class="empty-state"><%= t("views.liabilities.show.no_schedule") %></p>
+<% else %>
+  <p class="empty-state"><%= t("views.liabilities.show.no_schedule_unavailable") %></p>
+<% end %>

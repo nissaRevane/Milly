@@ -11,7 +11,7 @@ Milly::Application.routes.draw do
 
   resources :properties
   resources :assets, except: [:show]
-  resources :liabilities, except: [:show]
+  resources :liabilities
 
   resources :balance_sheets do
     member do

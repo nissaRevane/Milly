@@ -56,6 +56,11 @@ liabilities = seed_data["liabilities"].map do |data|
   liability.ownership_share = data.fetch("ownership_share", 100)
   # See the asset loop above: absent key means "leave the link alone".
   liability.property = find_property.call(data) if data.key?("property")
+  # Amortization fields, only touched when the seed file mentions them: a file written
+  # before they existed must not erase a schedule the UI has defined since.
+  Liability::AMORTIZATION_FIELDS.map(&:to_s).each do |field|
+    liability[field] = data[field] if data.key?(field)
+  end
   liability.save!
   liability
 end
