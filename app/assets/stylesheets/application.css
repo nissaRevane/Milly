@@ -96,6 +96,7 @@ body {
   padding: 0.5rem 1rem;
   border: 1px solid transparent;
   border-radius: var(--radius);
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -285,17 +286,25 @@ body {
   color: var(--color-text-muted);
 }
 
+/* Stays a real table cell: display:flex would drop it out of the row layout */
 .table-actions {
+  width: 1%;
   text-align: right;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.25rem;
+}
+
+/* button_to renders a <form>, which would otherwise break onto its own line */
+.table-actions form {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .table-actions .btn {
-  margin-left: 0;
+  vertical-align: middle;
+}
+
+.table-actions > * + * {
+  margin-left: 0.25rem;
 }
 
 .table-subtotal td {
