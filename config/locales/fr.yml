@@ -185,7 +185,7 @@ fr:
         property: Bien immobilier rattaché
         property_none: Aucun bien
         amortization_legend: "Tableau d'amortissement (prêts immobiliers)"
-        amortization_hint: "Tous les champs sont à renseigner ensemble, et uniquement pour un crédit immobilier. Laissez-les vides pour un passif sans tableau d'amortissement."
+        amortization_hint: "Tous les champs sont à renseigner ensemble. Laissez-les vides pour un passif sans tableau d'amortissement."
         borrowed_capital: Capital emprunté
         annual_rate: "Taux annuel (%)"
         duration_months: "Durée (mois)"

@@ -1,4 +1,5 @@
-<%= form_with(model: liability, class: "form") do |f| %>
+<%= form_with(model: liability, class: "form",
+    data: { controller: "conditional-fields", conditional_fields_show_when_value: "real_estate_loan" }) do |f| %>
   <% if liability.errors.any? %>
     <div class="alert alert-danger">
       <ul>
@@ -16,7 +17,8 @@
 
   <div class="form-group">
     <%= f.label :liability_type, t("views.liabilities.form.liability_type") %>
-    <%= f.select :liability_type, liability_type_options, {}, class: "form-control" %>
+    <%= f.select :liability_type, liability_type_options, {}, class: "form-control",
+        data: { conditional_fields_target: "select", action: "change->conditional-fields#toggle" } %>
   </div>
 
   <%# Only offered once the user has declared a property — an empty select would just puzzle %>
@@ -39,10 +41,11 @@
   </div>
 
   <%#
-    Toujours affiché : la validation côté serveur réserve ces champs aux crédits
-    immobiliers et impose le tout-ou-rien, inutile d'ajouter du JS pour cela.
+    Visible seulement pour un crédit immobilier (masqué côté serveur pour éviter tout
+    flash) ; la validation modèle reste le filet de sécurité côté serveur.
   %>
-  <fieldset class="form-fieldset">
+  <fieldset class="form-fieldset" data-conditional-fields-target="fields"
+      <%= "hidden" unless liability.real_estate_loan? %>>
     <legend><%= t("views.liabilities.form.amortization_legend") %></legend>
     <p class="form-hint"><%= t("views.liabilities.form.amortization_hint") %></p>
 

@@ -151,6 +151,38 @@ RSpec.describe "Liabilities", type: :request do
     end
   end
 
+  describe "the amortization fieldset visibility" do
+    def amortization_fieldset
+      Nokogiri::HTML(response.body).at_css("fieldset[data-conditional-fields-target='fields']")
+    end
+
+    it "shows the fieldset on the new form, where a real estate loan is preselected" do
+      get new_liability_path
+
+      expect(amortization_fieldset).not_to be_nil
+      expect(amortization_fieldset.attribute("hidden")).to be_nil
+      expect(response.body).to include('data-controller="conditional-fields"')
+      expect(response.body).to include('data-conditional-fields-show-when-value="real_estate_loan"')
+    end
+
+    it "shows the fieldset when editing a real estate loan" do
+      liability = create(:liability, user: user, liability_type: :real_estate_loan)
+
+      get edit_liability_path(liability)
+
+      expect(amortization_fieldset.attribute("hidden")).to be_nil
+    end
+
+    it "hides the fieldset when editing a liability of another type" do
+      liability = create(:liability, user: user, liability_type: :security_deposit)
+
+      get edit_liability_path(liability)
+
+      expect(amortization_fieldset).not_to be_nil
+      expect(amortization_fieldset.attribute("hidden")).not_to be_nil
+    end
+  end
+
   describe "POST /liabilities" do
     it "creates a new liability" do
       expect {
