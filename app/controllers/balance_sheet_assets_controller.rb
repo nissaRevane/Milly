@@ -3,8 +3,11 @@ class BalanceSheetAssetsController < ApplicationController
   before_action :set_balance_sheet_asset, only: [:edit, :update, :destroy]
   before_action :set_available_assets, only: [:new, :create, :edit, :update]
 
+  # value: nil écarte le défaut de colonne (0.0) : un « 0,0 » pré-rempli est un montant
+  # que personne n'a saisi, et il empêchait la valeur suggérée de s'installer dans un
+  # champ vide (voir le contrôleur Stimulus suggested-value).
   def new
-    @balance_sheet_asset = @balance_sheet.balance_sheet_assets.build
+    @balance_sheet_asset = @balance_sheet.balance_sheet_assets.build(value: nil)
   end
 
   def create
@@ -48,7 +51,8 @@ class BalanceSheetAssetsController < ApplicationController
     used_asset_ids = @balance_sheet.balance_sheet_assets.pluck(:asset_id)
     used_asset_ids -= [@balance_sheet_asset.asset_id] if @balance_sheet_asset&.asset_id
 
-    @available_assets = current_user.assets.where.not(id: used_asset_ids).order(:name)
+    # :property est chargé pour Asset#suggested_value, que le formulaire lit sur chaque option.
+    @available_assets = current_user.assets.includes(:property).where.not(id: used_asset_ids).order(:name)
   end
 
   def balance_sheet_asset_params

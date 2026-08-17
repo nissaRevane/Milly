@@ -46,6 +46,14 @@ class Asset < ApplicationRecord
     real_estate? && property_id.present?
   end
 
+  # Le montant proposé quand l'actif entre dans un bilan, nil quand rien n'est connu.
+  # Pour l'actif d'un bien c'est le prix d'achat : avant la première estimation, c'est la
+  # seule valeur que l'utilisateur ait déjà saisie pour ce bien. Ce n'est qu'une
+  # suggestion — le bilan reste ce que l'utilisateur y écrit.
+  def suggested_value
+    property.purchase_price if owned_by_property?
+  end
+
   private
 
   def adopt_property_name

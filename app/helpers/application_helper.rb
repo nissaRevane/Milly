@@ -65,6 +65,15 @@ module ApplicationHelper
     number_to_percentage(share, precision: precision)
   end
 
+  # La valeur suggérée telle qu'un <input type="number"> l'accepte, nil quand il n'y en a
+  # pas : point décimal, et pas de « ,0 » parasite affiché quand le montant est rond.
+  def suggested_value_attribute(asset)
+    value = asset.suggested_value
+    return nil if value.nil?
+
+    value.frac.zero? ? value.to_i.to_s : value.to_s
+  end
+
   def owned_value_cell(total_value, owned_value, share)
     return number_to_currency(owned_value) if share.to_d == 100
 

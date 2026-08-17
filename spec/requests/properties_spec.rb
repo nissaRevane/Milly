@@ -188,6 +188,7 @@ RSpec.describe "Properties", type: :request do
       expect(asset.name).to eq("Maison")
       expect(asset.asset_type).to eq("real_estate")
       expect(asset.user).to eq(user)
+      expect(asset.risk_level).to eq("medium")
     end
 
     it "creates no asset when the bien itself is rejected" do

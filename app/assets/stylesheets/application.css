@@ -534,46 +534,12 @@ body {
 }
 
 /*
- * Real Estate bands (balance sheet show + summary)
+ * Real Estate band (balance sheet summary)
  *
- * A bien immobilier reunites an actif and its passif, so both bands sit full
- * width under the two columns rather than inside one of them. The per-bien band
- * reuses .cards-grid / .card wholesale — only the header layout, the warning
- * accent for the "non rattaché" bucket and the net footer are new.
+ * A bien immobilier reunites an actif and its passif, so the band sits full width
+ * rather than inside one of the two columns. The per-bien detail is a drill-down
+ * inside it — the bilan itself no longer repeats the lines per bien.
  */
-.property-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-/* Visually distinct: these lines are waiting to be linked to a bien */
-.property-card-unassigned {
-  border-left: 4px solid var(--color-warning);
-}
-
-.property-card-hint {
-  padding: 0.5rem 1.25rem;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-}
-
-.property-card .table {
-  margin-bottom: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.property-card .table tr:last-child td {
-  border-bottom: none;
-}
-
-.property-card-net {
-  justify-content: space-between;
-  font-weight: 700;
-}
 
 /* Overall row of the by-usage table, already greyed by .table-subtotal */
 .property-totals-row td {

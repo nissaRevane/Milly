@@ -1,4 +1,4 @@
-<%= form_with(model: [@balance_sheet, balance_sheet_asset], class: "form") do |f| %>
+<%= form_with(model: [@balance_sheet, balance_sheet_asset], class: "form", data: { controller: "suggested-value" }) do |f| %>
   <% if balance_sheet_asset.errors.any? %>
     <div class="alert alert-danger">
       <ul>
@@ -9,14 +9,23 @@
     </div>
   <% end %>
 
+  <%#
+    Chaque option porte la valeur à proposer pour cet actif (Asset#suggested_value) : le
+    contrôleur suggested-value la recopie dans le champ montant à la sélection.
+  %>
   <div class="form-group">
     <%= f.label :asset_id, t("views.balance_sheet_assets.form.asset") %>
-    <%= f.collection_select :asset_id, @available_assets, :id, :name, { prompt: "-- Sélectionner un actif --" }, class: "form-control" %>
+    <%= f.select :asset_id,
+                 @available_assets.map { |asset| [asset.name, asset.id, { data: { suggested_value: suggested_value_attribute(asset) } }] },
+                 { prompt: "-- Sélectionner un actif --" },
+                 class: "form-control",
+                 data: { suggested_value_target: "source", action: "change->suggested-value#apply" } %>
   </div>
 
   <div class="form-group">
     <%= f.label :value, t("views.balance_sheet_assets.form.value") %>
-    <%= f.number_field :value, step: 0.01, min: 0, class: "form-control", required: true %>
+    <%= f.number_field :value, step: 0.01, min: 0, class: "form-control", required: true,
+                       data: { suggested_value_target: "value" } %>
     <small class="form-hint"><%= t("views.balance_sheet_assets.form.value_hint") %></small>
   </div>
 

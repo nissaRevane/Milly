@@ -48,8 +48,11 @@ class Property < ApplicationRecord
   # matched by name, so the one created here is the very record they then update.
   # Named apart from the create_real_estate_asset the has_one generates, which it would
   # otherwise shadow.
+  # Le risque « Moyen » n'est qu'un point de départ, modifiable sur la fiche de l'actif :
+  # il vaut mieux que le défaut de colonne (« Faible »), qui décrirait mal de l'immobilier.
+  # db/seeds.rb et les imports AccountExport écrasent ce niveau avec celui qu'ils portent.
   def create_own_real_estate_asset
-    assets.create!(user: user, name: name, asset_type: :real_estate)
+    assets.create!(user: user, name: name, asset_type: :real_estate, risk_level: :medium)
   end
 
   def rename_real_estate_asset

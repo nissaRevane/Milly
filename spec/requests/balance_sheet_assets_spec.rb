@@ -24,6 +24,32 @@ RSpec.describe "BalanceSheetAssets", type: :request do
       expect(response.body).to include("value=\"#{free_asset.id}\"")
     end
 
+    it "carries the purchase price of a bien as the suggested value of its asset" do
+      property = create(:property, user: user, purchase_price: 300_000)
+
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).to include(
+        "<option data-suggested-value=\"300000\" value=\"#{property.real_estate_asset.id}\">"
+      )
+    end
+
+    # Le défaut de colonne (0.0) remplirait le champ d'un montant que personne n'a saisi,
+    # et la valeur suggérée ne s'installerait plus.
+    it "leaves the value field empty instead of pre-filling the column default" do
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      field = Nokogiri::HTML(response.body).at_css("#balance_sheet_asset_value")
+
+      expect(field["value"]).to be_nil
+    end
+
+    it "carries no suggested value for an asset without a purchase price" do
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).to include("<option value=\"#{free_asset.id}\">")
+    end
+
     it "excludes assets belonging to another user" do
       other_asset = create(:asset, user: create(:user), name: "Autre")
 

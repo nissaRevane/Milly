@@ -83,6 +83,20 @@ RSpec.describe Property, type: :model do
       expect(asset.ownership_share).to eq(100)
     end
 
+    it "starts at a medium risk level rather than the column default" do
+      asset = create(:property, name: "Maison").real_estate_asset
+
+      expect(asset.risk_level).to eq("medium")
+    end
+
+    it "keeps the risk level an import or a seed carries" do
+      property = create(:property, name: "Maison")
+
+      property.real_estate_asset.update!(risk_level: :high)
+
+      expect(property.reload.real_estate_asset.risk_level).to eq("high")
+    end
+
     it "is not created when the bien is invalid" do
       user = create(:user)
       create(:property, user: user, name: "Maison")

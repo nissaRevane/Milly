@@ -120,7 +120,7 @@ fr:
         purchase_price: Valeur à l'achat
         purchase_price_hint: Prix payé pour le bien entier, quote-part non appliquée.
         acquired_on: Date d'acquisition
-        asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement.
+        asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement, avec un risque « Moyen » que vous pourrez ajuster.
       show:
         edit: Modifier
         back: Retour aux biens
@@ -226,12 +226,10 @@ fr:
         equity: Fonds Propres
         back: Retour au bilan
       properties:
-        title: Immobilier par bien
         usage_title: Immobilier par usage
         usage: Usage
         unassigned: Non rattaché
         to_link: À rattacher
-        unassigned_hint: Rattachez ces lignes à un bien pour les voir consolidées.
         net: Valeur nette
         gross: Brut
         debt: Dette

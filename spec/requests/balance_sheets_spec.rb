@@ -94,62 +94,16 @@ RSpec.describe "BalanceSheets", type: :request do
     end
 
     describe "on the show page" do
-      it "renders one full width block per property, after the columns and before the equity box" do
-        bs = build_property_sheet
-
-        get balance_sheet_path(bs)
-
-        expect(response).to have_http_status(:success)
-        doc = Nokogiri::HTML(response.body)
-        band = doc.at_css(".property-positions")
-
-        expect(band).not_to be_nil
-        expect(band.at_css(".property-card-header").text).to include("Appartement Lyon")
-        expect(band.at_css(".property-card-header .badge").text.strip).to eq("Locatif")
-        expect(band.css(".property-card").size).to eq(1)
-
-        # The band sits outside the two columns, and ahead of the equity box
-        expect(doc.at_css(".balance-sheet-columns .property-positions")).to be_nil
-        expect(response.body.index("property-positions")).to be < response.body.index("equity-box")
-      end
-
-      it "shows the liability as a negative and the resulting net value" do
-        bs = build_property_sheet
-
-        get balance_sheet_path(bs)
-
-        card = Nokogiri::HTML(response.body).at_css(".property-card")
-        amounts = card.css("tbody td.text-right").map { |cell| cell.text.gsub(/\s+/, " ").strip }
-
-        expect(amounts).to eq([currency(200_000), currency(-150_000)].map { |a| a.gsub(/\s+/, " ") })
-        expect(card.at_css(".property-card-net").text).to include("Valeur nette")
-        expect(card.at_css(".property-card-net").text.gsub(/\s+/, " ")).to include(currency(50_000).gsub(/\s+/, " "))
-      end
-
-      it "adds a distinct warning block for real estate lines with no property" do
+      # The bilan lists the lines once, in its actifs and passifs columns. Regrouping them
+      # per bien belongs to the synthèse, which is where that reading lives now.
+      it "does not repeat the lines regrouped per bien" do
         bs = build_property_sheet(with_unassigned: true)
 
         get balance_sheet_path(bs)
 
-        doc = Nokogiri::HTML(response.body)
-        unassigned = doc.at_css(".property-card-unassigned")
-
-        expect(unassigned).not_to be_nil
-        expect(unassigned.at_css(".property-card-header").text).to include("Non rattaché")
-        expect(unassigned.at_css(".badge-warning").text.strip).to eq("À rattacher")
-        expect(unassigned.text).to include("Terrain orphelin")
-        # Always last, after the real properties
-        expect(doc.css(".property-card").last["class"]).to include("property-card-unassigned")
-      end
-
-      it "renders nothing at all when the balance sheet has no real estate line" do
-        bs = create(:balance_sheet, user: user)
-        cash = create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
-        create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 5_000)
-
-        get balance_sheet_path(bs)
-
+        expect(response).to have_http_status(:success)
         expect(response.body).not_to include("property-positions")
+        expect(response.body).not_to include("property-card")
         expect(response.body).not_to include("Immobilier par bien")
       end
     end

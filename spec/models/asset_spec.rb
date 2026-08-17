@@ -197,6 +197,39 @@ RSpec.describe Asset, type: :model do
     end
   end
 
+  describe "#suggested_value" do
+    it "is the purchase price of the bien for its own asset" do
+      property = create(:property, purchase_price: 300_000)
+
+      expect(property.real_estate_asset.suggested_value).to eq(300_000)
+    end
+
+    it "is nil when the bien has no purchase price" do
+      property = create(:property, purchase_price: nil)
+
+      expect(property.real_estate_asset.suggested_value).to be_nil
+    end
+
+    it "is nil for an asset merely rattaché to a bien" do
+      property = create(:property, purchase_price: 300_000)
+      asset = create(:asset, user: property.user, property: property, asset_type: :savings_account)
+
+      expect(asset.suggested_value).to be_nil
+    end
+
+    it "is nil for an immobilier asset whose bien is gone" do
+      property = create(:property, purchase_price: 300_000)
+      asset = property.real_estate_asset
+      property.destroy
+
+      expect(asset.reload.suggested_value).to be_nil
+    end
+
+    it "is nil for any other asset" do
+      expect(build(:asset, asset_type: :checking_account).suggested_value).to be_nil
+    end
+  end
+
   describe "#risk_level_label" do
     it "returns the French label for the risk level" do
       asset = build(:asset, risk_level: :medium)
