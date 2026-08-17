@@ -64,7 +64,7 @@ RSpec.describe "BalanceSheets", type: :request do
 
       expect(response).to have_http_status(:success)
       doc = Nokogiri::HTML(response.body)
-      cells = doc.css(".balance-sheet-columns table.table tbody tr").map { |row| row.at_css("td.text-right").text.gsub(/\s+/, " ").strip }
+      cells = doc.css(".balance-sheet-columns table.table tbody tr:not(.table-group-header)").map { |row| row.at_css("td.text-right").text.gsub(/\s+/, " ").strip }
 
       expect(cells).to contain_exactly(
         "#{currency(100_000)}50 % de #{currency(200_000)}".gsub(/\s+/, " "),
@@ -82,10 +82,70 @@ RSpec.describe "BalanceSheets", type: :request do
       get balance_sheet_path(bs)
 
       doc = Nokogiri::HTML(response.body)
-      cell = doc.at_css(".balance-sheet-columns table.table tbody tr td.text-right")
+      cell = doc.at_css(".balance-sheet-columns table.table tbody tr:not(.table-group-header) td.text-right")
 
       expect(cell.text.gsub(/\s+/, " ").strip).to eq(currency(5_000).gsub(/\s+/, " "))
       expect(cell.at_css(".owned-value-detail")).to be_nil
+    end
+
+    it "groups the lines by type under a single header row per type" do
+      bs = create(:balance_sheet, user: user)
+      livret = create(:asset, user: user, name: "Livret A", asset_type: :cash)
+      compte = create(:asset, user: user, name: "Compte courant", asset_type: :cash)
+      immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      loan = create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: livret, value: 1_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: compte, value: 500)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: immo, value: 200_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 150_000)
+
+      get balance_sheet_path(bs)
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+      headers = doc.css(".balance-sheet-columns .table-group-header")
+
+      expect(headers.map { |row| row.at_css(".badge").text.strip }).to eq(["Cash", "Immobilier", "Crédit immobilier"])
+      expect(headers.map { |row| row.at_css(".summary-category-count").text.strip }).to eq(["2", "1", "1"])
+      cash_header = headers.first
+      expect(cash_header.at_css(".table-group-amount").text.gsub(/\s+/, " ").strip).to eq(currency(1_500).gsub(/\s+/, " "))
+    end
+
+    it "shows the risk level on each line instead of the type" do
+      bs = create(:balance_sheet, user: user)
+      asset = create(:asset, user: user, name: "Livret A", asset_type: :cash, risk_level: :low)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 1_000)
+
+      get balance_sheet_path(bs)
+
+      doc = Nokogiri::HTML(response.body)
+      row = doc.at_css(".balance-sheet-columns table.table tbody tr:not(.table-group-header)")
+
+      expect(row.at_css(".badge.badge-success").text.strip).to eq("Faible")
+    end
+
+    it "replaces the edit link with an inline value form on each line" do
+      bs = create(:balance_sheet, user: user)
+      asset = create(:asset, user: user, name: "Livret A", asset_type: :cash)
+      loan = create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
+      bsa = create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 1_000)
+      bsl = create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 150_000)
+
+      get balance_sheet_path(bs)
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("a[href='#{edit_balance_sheet_balance_sheet_asset_path(bs, bsa)}']")).to be_empty
+      expect(doc.css("a[href='#{edit_balance_sheet_balance_sheet_liability_path(bs, bsl)}']")).to be_empty
+
+      asset_form = doc.at_css("form[action='#{balance_sheet_balance_sheet_asset_path(bs, bsa)}'].inline-edit-form")
+      expect(asset_form).not_to be_nil
+      expect(asset_form["hidden"]).not_to be_nil
+      expect(asset_form.at_css("input[name='balance_sheet_asset[value]']")["value"]).to eq("1000")
+
+      liability_form = doc.at_css("form[action='#{balance_sheet_balance_sheet_liability_path(bs, bsl)}'].inline-edit-form")
+      expect(liability_form).not_to be_nil
+      expect(liability_form["hidden"]).not_to be_nil
+      expect(liability_form.at_css("input[name='balance_sheet_liability[remaining_capital]']")["value"]).to eq("150000")
     end
   end
 

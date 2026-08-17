@@ -342,6 +342,36 @@ body {
   background: #f1f5f9;
 }
 
+/* Ligne d'en-tête de groupe du bilan : même lecture que .summary-category-header */
+.table-group-header td {
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
+.table-group-amount {
+  font-weight: 700;
+}
+
+/* Montant cliquable du bilan : un bouton qui ressemble au texte qu'il remplace. */
+.inline-edit-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: right;
+}
+
+.inline-edit-trigger:hover {
+  text-decoration: underline dotted;
+}
+
+.inline-edit-input {
+  max-width: 8.5rem;
+  text-align: right;
+}
+
 .table-compact th,
 .table-compact td {
   padding: 0.5rem 0.75rem;

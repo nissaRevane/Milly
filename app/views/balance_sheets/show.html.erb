@@ -16,25 +16,52 @@
         <%= link_to t("views.balance_sheets.show.add_asset"), new_balance_sheet_balance_sheet_asset_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
       </div>
 
-      <% if @balance_sheet_assets.any? %>
+      <% if @assets_by_type.any? %>
         <div class="table-scroll">
           <table class="table">
             <tbody>
-              <% @balance_sheet_assets.each do |bsa| %>
-                <tr>
+              <% Asset.asset_types.keys.each do |type| %>
+                <% items = @assets_by_type.fetch(type, []) %>
+                <% next if items.empty? %>
+
+                <tr class="table-group-header">
                   <td>
-                    <div class="cell-title"><%= bsa.asset.name %></div>
-                    <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>" title="<%= risk_level_label(bsa.asset.risk_level) %>">
-                      <%= bsa.asset.asset_type_label %>
-                    </span>
+                    <span class="badge badge-secondary"><%= asset_type_label(type) %></span>
+                    <span class="summary-category-count"><%= items.size %></span>
                   </td>
-                  <td class="text-right"><%= owned_value_cell(bsa.value, bsa.owned_value, bsa.asset.ownership_share) %></td>
-                  <td class="table-actions">
-                    <%= link_to "✏️", edit_balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), class: "btn btn-sm btn-outline" %>
-                    <%= button_to "🗑️", balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",
-                        form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
-                  </td>
+                  <td class="text-right table-group-amount"><%= number_to_currency(items.sum(&:owned_value)) %></td>
+                  <td></td>
                 </tr>
+                <% items.each do |bsa| %>
+                  <tr>
+                    <td>
+                      <div class="cell-title"><%= bsa.asset.name %></div>
+                      <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>"><%= risk_level_label(bsa.asset.risk_level) %></span>
+                    </td>
+                    <td class="text-right">
+                      <div data-controller="inline-edit">
+                        <button type="button" class="inline-edit-trigger" data-inline-edit-target="display"
+                                data-action="inline-edit#edit"
+                                title="<%= t("views.balance_sheets.show.click_to_edit") %>">
+                          <%= owned_value_cell(bsa.value, bsa.owned_value, bsa.asset.ownership_share) %>
+                        </button>
+                        <%= form_with model: [@balance_sheet, bsa], class: "inline-edit-form",
+                                      data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                                      html: { hidden: true } do |f| %>
+                          <%= f.number_field :value, step: "0.01", min: "0", required: true,
+                                value: suggested_value_attribute(bsa.value),
+                                class: "inline-edit-input",
+                                data: { inline_edit_target: "input",
+                                        action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="table-actions">
+                      <%= button_to "🗑️", balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",
+                          form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+                    </td>
+                  </tr>
+                <% end %>
               <% end %>
             </tbody>
           </table>
@@ -55,25 +82,52 @@
         <%= link_to t("views.balance_sheets.show.add_liability"), new_balance_sheet_balance_sheet_liability_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
       </div>
 
-      <% if @balance_sheet_liabilities.any? %>
+      <% if @liabilities_by_type.any? %>
         <div class="table-scroll">
           <table class="table">
             <tbody>
-              <% @balance_sheet_liabilities.each do |bsl| %>
-                <tr>
+              <% Liability.liability_types.keys.each do |type| %>
+                <% items = @liabilities_by_type.fetch(type, []) %>
+                <% next if items.empty? %>
+
+                <tr class="table-group-header">
                   <td>
-                    <div class="cell-title"><%= bsl.liability.name %></div>
-                    <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>" title="<%= risk_level_label(bsl.liability.risk_level) %>">
-                      <%= bsl.liability.liability_type_label %>
-                    </span>
+                    <span class="badge badge-secondary"><%= liability_type_label(type) %></span>
+                    <span class="summary-category-count"><%= items.size %></span>
                   </td>
-                  <td class="text-right"><%= owned_value_cell(bsl.remaining_capital, bsl.owned_remaining_capital, bsl.liability.ownership_share) %></td>
-                  <td class="table-actions">
-                    <%= link_to "✏️", edit_balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), class: "btn btn-sm btn-outline" %>
-                    <%= button_to "🗑️", balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), method: :delete, class: "btn btn-sm btn-danger",
-                        form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
-                  </td>
+                  <td class="text-right table-group-amount"><%= number_to_currency(items.sum(&:owned_remaining_capital)) %></td>
+                  <td></td>
                 </tr>
+                <% items.each do |bsl| %>
+                  <tr>
+                    <td>
+                      <div class="cell-title"><%= bsl.liability.name %></div>
+                      <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>"><%= risk_level_label(bsl.liability.risk_level) %></span>
+                    </td>
+                    <td class="text-right">
+                      <div data-controller="inline-edit">
+                        <button type="button" class="inline-edit-trigger" data-inline-edit-target="display"
+                                data-action="inline-edit#edit"
+                                title="<%= t("views.balance_sheets.show.click_to_edit") %>">
+                          <%= owned_value_cell(bsl.remaining_capital, bsl.owned_remaining_capital, bsl.liability.ownership_share) %>
+                        </button>
+                        <%= form_with model: [@balance_sheet, bsl], class: "inline-edit-form",
+                                      data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                                      html: { hidden: true } do |f| %>
+                          <%= f.number_field :remaining_capital, step: "0.01", min: "0", required: true,
+                                value: suggested_value_attribute(bsl.remaining_capital),
+                                class: "inline-edit-input",
+                                data: { inline_edit_target: "input",
+                                        action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="table-actions">
+                      <%= button_to "🗑️", balance_sheet_balance_sheet_liability_path(@balance_sheet, bsl), method: :delete, class: "btn btn-sm btn-danger",
+                          form: { data: { turbo_confirm: t("views.balance_sheets.show.confirm_delete") } } %>
+                    </td>
+                  </tr>
+                <% end %>
               <% end %>
             </tbody>
           </table>

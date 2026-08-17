@@ -248,6 +248,7 @@ fr:
         edit: Modifier
         delete: Supprimer
         confirm_delete: Êtes-vous sûr ?
+        click_to_edit: Cliquer pour modifier
         back: Retour aux bilans
       summary:
         title: "Synthèse du bilan au %{date}"
