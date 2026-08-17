@@ -15,12 +15,28 @@ end
 
 puts "User created: #{user.email}"
 
+# Create properties (before assets and liabilities, which reference them by name)
+properties = seed_data.fetch("properties", []).map do |data|
+  property = Property.find_or_initialize_by(user: user, name: data["name"])
+  property.usage = data["usage"]
+  property.save!
+  property
+end
+
+puts "#{properties.count} properties created"
+
+# Looks a property up by name; seed files written before properties existed have no key.
+find_property = ->(data) { properties.find { |p| p.name == data["property"] } if data["property"].present? }
+
 # Create assets
 assets = seed_data["assets"].map do |data|
   asset = Asset.find_or_initialize_by(user: user, name: data["name"])
   asset.risk_level = data["risk_level"]
   asset.asset_type = data["asset_type"]
   asset.ownership_share = data.fetch("ownership_share", 100)
+  # Only touched when the seed file says something about it: seeding is re-runnable, and
+  # a file written before properties existed must not unlink what the UI has linked since.
+  asset.property = find_property.call(data) if data.key?("property")
   asset.save!
   asset
 end
@@ -33,6 +49,8 @@ liabilities = seed_data["liabilities"].map do |data|
   liability.risk_level = data["risk_level"]
   liability.liability_type = data["liability_type"]
   liability.ownership_share = data.fetch("ownership_share", 100)
+  # See the asset loop above: absent key means "leave the link alone".
+  liability.property = find_property.call(data) if data.key?("property")
   liability.save!
   liability
 end

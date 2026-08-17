@@ -31,12 +31,35 @@ RSpec.describe AccountExport do
       data = described_class.new(user).to_h
 
       expect(data["assets"]).to eq([
-        { "name" => "Liquidités", "risk_level" => "low", "asset_type" => "cash", "ownership_share" => 100 },
-        { "name" => "Immobilier", "risk_level" => "medium", "asset_type" => "real_estate", "ownership_share" => 50 }
+        { "name" => "Liquidités", "risk_level" => "low", "asset_type" => "cash", "ownership_share" => 100, "property" => nil },
+        { "name" => "Immobilier", "risk_level" => "medium", "asset_type" => "real_estate", "ownership_share" => 50, "property" => nil }
       ])
       expect(data["liabilities"]).to eq([
-        { "name" => "Dettes LT", "risk_level" => "low", "liability_type" => "real_estate_loan", "ownership_share" => 50 }
+        { "name" => "Dettes LT", "risk_level" => "low", "liability_type" => "real_estate_loan", "ownership_share" => 50, "property" => nil }
       ])
+    end
+
+    it "exports properties in creation order" do
+      create(:property, user: user, name: "Maison", usage: :primary_residence)
+      create(:property, user: user, name: "Studio", usage: :rental)
+
+      data = described_class.new(user).to_h
+
+      expect(data["properties"]).to eq([
+        { "name" => "Maison", "usage" => "primary_residence" },
+        { "name" => "Studio", "usage" => "rental" }
+      ])
+    end
+
+    it "references the property of an asset and of a liability by name" do
+      property = create(:property, user: user, name: "Maison")
+      create(:asset, user: user, name: "Immobilier", asset_type: :real_estate, property: property)
+      create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan, property: property)
+
+      data = described_class.new(user).to_h
+
+      expect(data["assets"].sole["property"]).to eq("Maison")
+      expect(data["liabilities"].sole["property"]).to eq("Maison")
     end
 
     it "exports balance sheets oldest first, keyed by line name" do
@@ -67,6 +90,12 @@ RSpec.describe AccountExport do
       expect(data["liabilities"]).to be_empty
       expect(data["balance_sheets"]).to be_empty
     end
+
+    it "leaves out the properties of other accounts" do
+      create(:property, user: create(:user), name: "Pas à moi")
+
+      expect(described_class.new(user).to_h["properties"]).to be_empty
+    end
   end
 
   describe "#to_json" do
@@ -82,11 +111,29 @@ RSpec.describe AccountExport do
       expect(JSON.parse(json).dig("balance_sheets", 0, "assets", "Liquidités")).to eq(3140.23)
     end
 
+    # The hand-written seed file predates properties, so the export is now a strict
+    # superset of it: every key it already had is still there, in the same order, and
+    # the only additions are the property keys that db/seeds.rb reads when present.
     it "matches the structure db/seeds.rb reads" do
       seed_data = JSON.parse(File.read(Rails.root.join("db", "seed_data.json")))
+      create(:asset, user: user)
+      create(:liability, user: user)
+      create(:balance_sheet, user: user)
+      data = described_class.new(user).to_h
 
-      expect(described_class.new(user).to_h.keys).to eq(seed_data.keys)
-      expect(described_class.new(user).to_h["user"].keys).to match_array(seed_data["user"].keys)
+      expect(data.keys & seed_data.keys).to eq(seed_data.keys)
+      expect(data.keys - seed_data.keys).to eq(["properties"])
+      expect(data["user"].keys).to match_array(seed_data["user"].keys)
+
+      %w[assets liabilities].each do |collection|
+        seed_keys = seed_data[collection].first.keys
+        exported_keys = data[collection].first.keys
+
+        expect(exported_keys & seed_keys).to eq(seed_keys)
+        expect(exported_keys - seed_keys).to eq(["property"])
+      end
+
+      expect(data["balance_sheets"].first.keys).to eq(seed_data["balance_sheets"].first.keys)
     end
   end
 

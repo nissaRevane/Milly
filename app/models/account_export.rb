@@ -22,8 +22,9 @@ class AccountExport
   def to_h
     {
       "user" => user_data,
-      "assets" => @user.assets.order(:id).map { |asset| asset_data(asset) },
-      "liabilities" => @user.liabilities.order(:id).map { |liability| liability_data(liability) },
+      "properties" => @user.properties.order(:id).map { |property| property_data(property) },
+      "assets" => @user.assets.includes(:property).order(:id).map { |asset| asset_data(asset) },
+      "liabilities" => @user.liabilities.includes(:property).order(:id).map { |liability| liability_data(liability) },
       "balance_sheets" => balance_sheets_data
     }
   end
@@ -39,12 +40,20 @@ class AccountExport
     }
   end
 
+  def property_data(property)
+    {
+      "name" => property.name,
+      "usage" => property.usage
+    }
+  end
+
   def asset_data(asset)
     {
       "name" => asset.name,
       "risk_level" => asset.risk_level,
       "asset_type" => asset.asset_type,
-      "ownership_share" => number(asset.ownership_share)
+      "ownership_share" => number(asset.ownership_share),
+      "property" => asset.property&.name
     }
   end
 
@@ -53,7 +62,8 @@ class AccountExport
       "name" => liability.name,
       "risk_level" => liability.risk_level,
       "liability_type" => liability.liability_type,
-      "ownership_share" => number(liability.ownership_share)
+      "ownership_share" => number(liability.ownership_share),
+      "property" => liability.property&.name
     }
   end
 
