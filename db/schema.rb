@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000010) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_01_000012) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000010) do
     t.datetime "updated_at", null: false
     t.integer "asset_type", default: 1, null: false
     t.decimal "ownership_share", precision: 5, scale: 2, default: "100.0", null: false
+    t.bigint "property_id"
+    t.index ["property_id"], name: "index_assets_on_property_id"
     t.index ["user_id"], name: "index_assets_on_user_id"
   end
 
@@ -64,7 +66,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000010) do
     t.datetime "updated_at", null: false
     t.integer "liability_type", default: 0, null: false
     t.decimal "ownership_share", precision: 5, scale: 2, default: "100.0", null: false
+    t.bigint "property_id"
+    t.index ["property_id"], name: "index_liabilities_on_property_id"
     t.index ["user_id"], name: "index_liabilities_on_user_id"
+  end
+
+  create_table "properties", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.integer "usage", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_properties_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -81,11 +94,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000010) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "assets", "properties"
   add_foreign_key "assets", "users"
   add_foreign_key "balance_sheet_assets", "assets"
   add_foreign_key "balance_sheet_assets", "balance_sheets"
   add_foreign_key "balance_sheet_liabilities", "balance_sheets"
   add_foreign_key "balance_sheet_liabilities", "liabilities"
   add_foreign_key "balance_sheets", "users"
+  add_foreign_key "liabilities", "properties"
   add_foreign_key "liabilities", "users"
+  add_foreign_key "properties", "users"
 end
