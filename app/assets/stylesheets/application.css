@@ -834,6 +834,21 @@ body {
   margin-bottom: 0;
 }
 
+/* Responsive utilities */
+.show-on-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none;
+  }
+
+  .show-on-mobile {
+    display: inline;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .summary-grid {

@@ -2,8 +2,8 @@
   <thead>
     <tr>
       <th><%= t("views.balance_sheets.index.closing_date", default: "Date") %></th>
-      <th><%= t("views.balance_sheets.index.total_assets") %></th>
-      <th><%= t("views.balance_sheets.index.total_liabilities") %></th>
+      <th class="hide-on-mobile"><%= t("views.balance_sheets.index.total_assets") %></th>
+      <th class="hide-on-mobile"><%= t("views.balance_sheets.index.total_liabilities") %></th>
       <th><%= t("views.balance_sheets.index.equity") %></th>
       <th></th>
     </tr>
@@ -11,9 +11,12 @@
   <tbody>
     <% balance_sheets.each do |bs| %>
       <tr>
-        <td><%= l(bs.closing_date, format: :long) %></td>
-        <td class="text-success"><%= number_to_currency(bs.total_assets) %></td>
-        <td class="text-danger"><%= number_to_currency(bs.total_liabilities) %></td>
+        <td>
+          <span class="hide-on-mobile"><%= l(bs.closing_date, format: :long) %></span>
+          <span class="show-on-mobile"><%= l(bs.closing_date, format: :default) %></span>
+        </td>
+        <td class="text-success hide-on-mobile"><%= number_to_currency(bs.total_assets) %></td>
+        <td class="text-danger hide-on-mobile"><%= number_to_currency(bs.total_liabilities) %></td>
         <td class="<%= bs.equity >= 0 ? 'text-success' : 'text-danger' %>"><%= number_to_currency(bs.equity) %></td>
         <td class="table-actions">
           <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(bs), class: "btn btn-primary btn-sm" %>
