@@ -8,6 +8,7 @@ class BalanceSheetsController < ApplicationController
   def show
     @balance_sheet_assets = @balance_sheet.balance_sheet_assets.includes(:asset).order("assets.name")
     @balance_sheet_liabilities = @balance_sheet.balance_sheet_liabilities.includes(:liability).order("liabilities.name")
+    @property_positions = @balance_sheet.property_positions
   end
 
   def new
@@ -47,6 +48,8 @@ class BalanceSheetsController < ApplicationController
     @assets_by_type = @balance_sheet.assets_by_type
     @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
     @liabilities_by_type = @balance_sheet.liabilities_by_type
+    @property_positions = @balance_sheet.property_positions
+    @real_estate_usage_totals = @balance_sheet.real_estate_totals_by_usage(@property_positions)
   end
 
   private

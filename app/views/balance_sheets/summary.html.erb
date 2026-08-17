@@ -130,6 +130,9 @@
   </div>
 </div>
 
+<!-- Real estate weight: full width, it reunites both columns -->
+<%= render "property_usage_totals", totals: @real_estate_usage_totals, positions: @property_positions %>
+
 <!-- Equity Summary -->
 <div class="equity-box <%= @balance_sheet.equity >= 0 ? 'equity-positive' : 'equity-negative' %>">
   <span class="equity-label"><%= t("views.balance_sheets.summary.equity") %></span>

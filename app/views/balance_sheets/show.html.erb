@@ -88,6 +88,9 @@
     </div>
   </div>
 
+  <!-- Real estate, regrouped per property: full width, it reunites both columns -->
+  <%= render "property_positions", positions: @property_positions %>
+
   <!-- Equity -->
   <div class="equity-box <%= @balance_sheet.equity >= 0 ? 'equity-positive' : 'equity-negative' %>">
     <span class="equity-label"><%= t("views.balance_sheets.show.equity") %></span>
