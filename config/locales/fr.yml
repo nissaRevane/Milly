@@ -234,6 +234,8 @@ fr:
       created: Ligne de passif ajoutée avec succès.
       updated: Ligne de passif mise à jour avec succès.
       destroyed: Ligne de passif supprimée avec succès.
+    errors:
+      not_found: La ressource demandée est introuvable.
   number:
     percentage:
       format:
