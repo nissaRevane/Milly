@@ -35,8 +35,9 @@
                 <% items.each do |bsa| %>
                   <tr>
                     <td>
-                      <div class="cell-title"><%= bsa.asset.name %></div>
-                      <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>"><%= risk_level_label(bsa.asset.risk_level) %></span>
+                      <div class="cell-title">
+                        <span class="badge <%= risk_level_badge_class(bsa.asset.risk_level) %>" title="<%= risk_level_label(bsa.asset.risk_level) %>"><%= bsa.asset.name %></span>
+                      </div>
                     </td>
                     <td class="text-right">
                       <div data-controller="inline-edit">
@@ -101,8 +102,9 @@
                 <% items.each do |bsl| %>
                   <tr>
                     <td>
-                      <div class="cell-title"><%= bsl.liability.name %></div>
-                      <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>"><%= risk_level_label(bsl.liability.risk_level) %></span>
+                      <div class="cell-title">
+                        <span class="badge <%= risk_level_badge_class(bsl.liability.risk_level) %>" title="<%= risk_level_label(bsl.liability.risk_level) %>"><%= bsl.liability.name %></span>
+                      </div>
                     </td>
                     <td class="text-right">
                       <div data-controller="inline-edit">
