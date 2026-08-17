@@ -39,7 +39,7 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "renders both the full and the owned amount for a partially owned line" do
+    it "renders the owned amount, the share and the full amount in a single cell" do
       bs = create(:balance_sheet, user: user)
       half = create(:asset, user: user, name: "Maison", asset_type: :real_estate, ownership_share: 50)
       quarter = create(:asset, user: user, name: "Terrain", asset_type: :real_estate, ownership_share: 25)
@@ -49,17 +49,29 @@ RSpec.describe "BalanceSheets", type: :request do
       get balance_sheet_path(bs)
 
       expect(response).to have_http_status(:success)
-      # Full values
-      expect(response.body).to include(currency(200_000))
-      expect(response.body).to include(currency(80_000))
-      # Per-line owned values, none of which equals the 120 000 total
-      expect(response.body).to include(currency(100_000))
-      expect(response.body).to include(currency(20_000))
+      doc = Nokogiri::HTML(response.body)
+      cells = doc.css("table.table tbody tr").map { |row| row.css("td")[2].text.gsub(/\s+/, " ").strip }
+
+      expect(cells).to contain_exactly(
+        "#{currency(100_000)}50 % de #{currency(200_000)}".gsub(/\s+/, " "),
+        "#{currency(20_000)}25 % de #{currency(80_000)}".gsub(/\s+/, " ")
+      )
       expect(bs.total_assets).to eq(120_000)
       expect(response.body).to include(currency(120_000))
-      # Share column
-      expect(response.body).to include("50 %")
-      expect(response.body).to include("25 %")
+    end
+
+    it "renders only the value for a fully owned line" do
+      bs = create(:balance_sheet, user: user)
+      asset = create(:asset, user: user, name: "Livret A", ownership_share: 100)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 5_000)
+
+      get balance_sheet_path(bs)
+
+      doc = Nokogiri::HTML(response.body)
+      cell = doc.css("table.table tbody tr td")[2]
+
+      expect(cell.text.gsub(/\s+/, " ").strip).to eq(currency(5_000).gsub(/\s+/, " "))
+      expect(cell.at_css(".owned-value-detail")).to be_nil
     end
   end
 

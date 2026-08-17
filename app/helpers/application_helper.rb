@@ -36,4 +36,18 @@ module ApplicationHelper
     precision = (share.to_d % 1).zero? ? 0 : 2
     number_to_percentage(share, precision: precision)
   end
+
+  def owned_value_cell(total_value, owned_value, share)
+    return number_to_currency(owned_value) if share.to_d == 100
+
+    safe_join([
+      number_to_currency(owned_value),
+      tag.span(
+        t("views.shared.owned_value_detail",
+          share: ownership_share_label(share),
+          total: number_to_currency(total_value)),
+        class: "owned-value-detail"
+      )
+    ])
+  end
 end

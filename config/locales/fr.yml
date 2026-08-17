@@ -197,6 +197,7 @@ fr:
         subtitle: Votre bilan patrimonial personnel
         cta: Commencer
     shared:
+      owned_value_detail: "%{share} de %{total}"
       risk_levels:
         low: Faible
         medium: Moyen

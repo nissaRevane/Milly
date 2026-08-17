@@ -312,6 +312,12 @@ body {
   padding: 0.5rem 0.75rem;
 }
 
+.owned-value-detail {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
 .text-right {
   text-align: right;
 }
