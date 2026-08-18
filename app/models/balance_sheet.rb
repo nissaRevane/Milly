@@ -50,6 +50,42 @@ class BalanceSheet < ApplicationRecord
     end
   end
 
+  # Un bilan réduit à ses trois totaux, pour le tableau de bord : la courbe n'a besoin de
+  # rien d'autre, et les recharger ligne à ligne pour tracer soixante points serait absurde.
+  # Voir .timeline_for, qui les construit.
+  TimelinePoint = Struct.new(:balance_sheet, :total_assets, :total_liabilities, keyword_init: true) do
+    def closing_date
+      balance_sheet.closing_date
+    end
+
+    def equity
+      total_assets - total_liabilities
+    end
+  end
+
+  # Une catégorie de la ventilation dans le temps : un montant par bilan, dans l'ordre où
+  # les bilans ont été fournis. +key+ est stable et nomme la teinte que le CSS lui donne ;
+  # +label+ est ce que la légende affiche. Voir .assets_breakdown_for.
+  BreakdownSeries = Struct.new(:key, :label, :values, keyword_init: true) do
+    def blank_everywhere?
+      values.all?(&:zero?)
+    end
+  end
+
+  # Le type d'actif et le type de passif dont la ventilation est éclatée par usage du bien.
+  # Un patrimoine immobilier lu d'un seul tenant ne dit pas ce qui bouge : une résidence
+  # principale, un locatif et une résidence secondaire ne se pilotent pas de la même façon,
+  # et la courbe doit pouvoir les séparer — discrètement, par des nuances d'une même teinte.
+  #
+  # Seul ce type-là est éclaté. Un compte courant rattaché à un bien reste un compte courant :
+  # regrouper toutes les lignes d'un bien est le travail de l'onglet Immobilier
+  # (voir #property_positions), pas celui d'une ventilation par catégorie.
+  SPLIT_ASSET_TYPE = "real_estate".freeze
+  SPLIT_LIABILITY_TYPE = "real_estate_loan".freeze
+
+  # La sous-catégorie des lignes immobilières qu'aucun bien ne porte encore.
+  UNASSIGNED_USAGE = "unassigned".freeze
+
   # Liability types that belong to a property even when none is linked yet.
   UNASSIGNED_LIABILITY_TYPES = %w[real_estate_loan security_deposit].freeze
 
@@ -81,6 +117,65 @@ class BalanceSheet < ApplicationRecord
     Variation.new(amount: amount, rate: before.zero? ? nil : (amount.to_d / before.abs * 100).round(1))
   end
 
+  # Les trois totaux de chaque bilan de +sheets+, dans l'ordre où +sheets+ arrive.
+  #
+  # Deux requêtes agrégées pour toute la série, là où lire #total_assets / #total_liabilities
+  # bilan par bilan en ferait deux PAR bilan : le tableau de bord trace l'historique complet,
+  # et un utilisateur qui tient un bilan par mois depuis cinq ans en compte déjà soixante.
+  #
+  # Les expressions SQL sont celles des lignes elles-mêmes (BalanceSheetAsset::OWNED_VALUE_SQL),
+  # pas une copie : la courbe du tableau de bord et la synthèse d'un même bilan ne peuvent donc
+  # pas afficher deux montants différents. Un bilan sans aucune ligne n'a pas de groupe dans le
+  # résultat du GROUP BY et retombe sur 0 — le même 0 que renvoient les totaux d'un bilan vide.
+  def self.timeline_for(sheets)
+    sheets = sheets.to_a
+    return [] if sheets.empty?
+
+    ids = sheets.map(&:id)
+    assets = BalanceSheetAsset.joins(:asset).where(balance_sheet_id: ids)
+      .group(:balance_sheet_id).sum(BalanceSheetAsset::OWNED_VALUE_SQL)
+    liabilities = BalanceSheetLiability.joins(:liability).where(balance_sheet_id: ids)
+      .group(:balance_sheet_id).sum(BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL)
+
+    sheets.map do |sheet|
+      TimelinePoint.new(
+        balance_sheet: sheet,
+        total_assets: assets.fetch(sheet.id, 0),
+        total_liabilities: liabilities.fetch(sheet.id, 0)
+      )
+    end
+  end
+
+  # La ventilation des actifs de +sheets+ dans le temps : une série par catégorie, chaque
+  # série portant un montant par bilan. L'immobilier y est éclaté par usage du bien.
+  #
+  # Une seule requête agrégée pour toute la série, comme .timeline_for et pour la même
+  # raison : le tableau de bord lit l'historique entier.
+  def self.assets_breakdown_for(sheets)
+    breakdown_for(
+      sheets,
+      scope: BalanceSheetAsset.joins(:asset).left_joins(asset: :property),
+      type_column: "assets.asset_type",
+      amount_sql: BalanceSheetAsset::OWNED_VALUE_SQL,
+      types: Asset.asset_types,
+      split_type: SPLIT_ASSET_TYPE,
+      label: Asset.method(:asset_type_label_for)
+    )
+  end
+
+  # Le pendant pour la dette, les crédits immobiliers éclatés par usage du bien financé.
+  def self.liabilities_breakdown_for(sheets)
+    breakdown_for(
+      sheets,
+      scope: BalanceSheetLiability.joins(:liability).left_joins(liability: :property),
+      type_column: "liabilities.liability_type",
+      amount_sql: BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL,
+      types: Liability.liability_types,
+      split_type: SPLIT_LIABILITY_TYPE,
+      label: Liability.method(:liability_type_label_for)
+    )
+  end
+
   def copy_lines_from(source)
     transaction do
       source.balance_sheet_assets.each do |line|
@@ -104,15 +199,11 @@ class BalanceSheet < ApplicationRecord
   end
 
   def total_assets
-    balance_sheet_assets
-      .joins(:asset)
-      .sum("ROUND(balance_sheet_assets.value * ROUND(assets.ownership_share / 100, 4), 2)")
+    balance_sheet_assets.joins(:asset).sum(BalanceSheetAsset::OWNED_VALUE_SQL)
   end
 
   def total_liabilities
-    balance_sheet_liabilities
-      .joins(:liability)
-      .sum("ROUND(balance_sheet_liabilities.remaining_capital * ROUND(liabilities.ownership_share / 100, 4), 2)")
+    balance_sheet_liabilities.joins(:liability).sum(BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL)
   end
 
   def equity
@@ -274,6 +365,70 @@ class BalanceSheet < ApplicationRecord
 
     PropertyPosition.new(property: nil, asset_lines: asset_lines, liability_lines: liability_lines)
   end
+
+  # Le corps commun des deux ventilations. Le regroupement SQL descend jusqu'à l'usage du
+  # bien, y compris pour les types qui ne sont pas éclatés : leurs lignes rattachées à des
+  # biens différents reviennent alors sur plusieurs rangs, que l'accumulation ci-dessous
+  # additionne sous la même catégorie.
+  #
+  # Les enums sont regroupés sur une colonne SQL qualifiée : selon la jointure, ActiveRecord
+  # rend le nom déserialisé ou l'entier brut, d'où le passage par .enum_name.
+  def self.breakdown_for(sheets, scope:, type_column:, amount_sql:, types:, split_type:, label:)
+    sheets = sheets.to_a
+    return [] if sheets.empty?
+
+    index_of = sheets.each_with_index.to_h { |sheet, index| [sheet.id, index] }
+    amounts = Hash.new { |hash, key| hash[key] = Array.new(sheets.size, 0) }
+
+    scope.where(balance_sheet_id: sheets.map(&:id))
+      .group(:balance_sheet_id, type_column, "properties.usage")
+      .sum(amount_sql)
+      .each do |(sheet_id, type_value, usage_value), amount|
+        key = breakdown_key(enum_name(types, type_value), enum_name(Property.usages, usage_value), split_type)
+        amounts[key][index_of.fetch(sheet_id)] += amount
+      end
+
+    breakdown_categories(types, split_type, label)
+      .select { |key, _| amounts.key?(key) }
+      .map { |key, name| BreakdownSeries.new(key: key, label: name, values: amounts[key]) }
+      .reject(&:blank_everywhere?)
+  end
+  private_class_method :breakdown_for
+
+  def self.breakdown_key(type, usage, split_type)
+    return type unless type == split_type
+
+    "#{type}:#{usage || UNASSIGNED_USAGE}"
+  end
+  private_class_method :breakdown_key
+
+  # Le nom d'une valeur d'enum, quelle que soit la forme sous laquelle elle revient du
+  # regroupement : ActiveRecord la déserialise quand il sait rattacher la colonne groupée à
+  # son modèle, et rend l'entier brut sinon. Parier sur l'une des deux formes marcherait
+  # jusqu'au jour où la jointure change — d'où cette normalisation.
+  def self.enum_name(values, value)
+    return nil if value.nil?
+
+    values.key?(value.to_s) ? value.to_s : values.key(value)
+  end
+  private_class_method :enum_name
+
+  # Les catégories dans l'ordre où elles s'empilent, de bas en haut : celui des enums, le
+  # type éclaté laissant place à ses usages puis au bucket non rattaché. Un ordre figé, et
+  # surtout pas déduit des montants : une catégorie qui changerait de rang — donc de
+  # couleur — d'un bilan à l'autre rendrait la courbe illisible.
+  def self.breakdown_categories(types, split_type, label)
+    types.keys.flat_map do |type|
+      next [[type, label.call(type)]] unless type == split_type
+
+      usages = Property.usages.keys.map { |usage| [usage, Property.usage_label_for(usage)] }
+      usages << [UNASSIGNED_USAGE, I18n.t("views.shared.unassigned_property")]
+      usages.map do |usage, usage_label|
+        ["#{type}:#{usage}", I18n.t("views.shared.breakdown_split", type: label.call(type), usage: usage_label)]
+      end
+    end
+  end
+  private_class_method :breakdown_categories
 
   def usage_total(positions)
     gross = positions.sum(&:gross)

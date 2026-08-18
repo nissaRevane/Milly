@@ -1,0 +1,64 @@
+<%#
+  L'onglet graphiques : les chiffres de la synthèse, lus en formes plutôt qu'en tableaux.
+
+  Rien n'y est calculé qui ne le soit déjà ailleurs — mêmes regroupements, mêmes variations,
+  mêmes totaux immobiliers. Un anneau et un tableau du même bilan ne peuvent donc pas dire
+  deux choses différentes.
+%>
+<div class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-label"><%= t("views.balance_sheets.summary.total_assets") %></span>
+    <span class="stat-value"><%= number_to_currency(@balance_sheet.total_assets) %></span>
+    <span class="stat-hint"><%= variation_note(@variations[:assets]) if @variations %></span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label"><%= t("views.balance_sheets.summary.total_liabilities") %></span>
+    <span class="stat-value"><%= number_to_currency(@balance_sheet.total_liabilities) %></span>
+    <%# La dette qui baisse est la bonne nouvelle : la couleur suit ce sens-là, pas le signe. %>
+    <span class="stat-hint"><%= variation_note(@variations[:liabilities], favorable: :down) if @variations %></span>
+  </div>
+
+  <div class="stat-card stat-card-highlight">
+    <span class="stat-label"><%= t("views.balance_sheets.summary.equity") %></span>
+    <span class="stat-value"><%= number_to_currency(@balance_sheet.equity) %></span>
+    <span class="stat-hint"><%= variation_note(@variations[:equity]) if @variations %></span>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.assets_by_type") %></h2>
+    <%= donut_chart(Asset.asset_types.keys.map { |type|
+          { label: asset_type_label(type), amount: @assets_by_type.fetch(type, []).sum(&:owned_value) }
+        }) || tag.p(t("views.balance_sheets.summary.charts.no_assets"), class: "empty-state") %>
+  </section>
+
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.liabilities_by_type") %></h2>
+    <%= donut_chart(Liability.liability_types.keys.map { |type|
+          { label: liability_type_label(type), amount: @liabilities_by_type.fetch(type, []).sum(&:owned_remaining_capital) }
+        }) || tag.p(t("views.balance_sheets.summary.charts.no_liabilities"), class: "empty-state") %>
+  </section>
+</div>
+
+<section class="chart-card">
+  <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.assets_by_risk") %></h2>
+  <%= bar_breakdown(%w[low medium high].map { |level|
+        { label: risk_level_label(level),
+          amount: @assets_by_risk.fetch(level, []).sum(&:owned_value),
+          tone: "chart-fill-risk-#{level}" }
+      }) || tag.p(t("views.balance_sheets.summary.charts.no_assets"), class: "empty-state") %>
+</section>
+
+<% if @property_positions.any? %>
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.real_estate") %></h2>
+    <p class="chart-hint"><%= t("views.balance_sheets.summary.charts.real_estate_hint") %></p>
+    <%# Les barres se lisent sur la valeur nette : le brut et la dette d'un bien bougent
+        chacun pour leurs raisons, seule leur différence dit ce que le bien pèse. %>
+    <%= bar_breakdown(@property_positions.map { |position|
+          { label: position.property.name, amount: position.net }
+        }) %>
+  </section>
+<% end %>

@@ -1,5 +1,5 @@
 class BalanceSheetsController < ApplicationController
-  SUMMARY_TABS = %w[general real_estate].freeze
+  SUMMARY_TABS = %w[general real_estate dashboard].freeze
 
   before_action :set_balance_sheet, only: [:show, :edit, :update, :destroy, :summary]
 
@@ -61,10 +61,20 @@ class BalanceSheetsController < ApplicationController
     @following = @balance_sheet.following
 
     # Each tab is a full server-rendered page: only compute what the active tab shows.
-    if @tab == "real_estate"
+    case @tab
+    when "real_estate"
       @property_positions = @balance_sheet.real_estate_positions
       @real_estate_usage_totals = @balance_sheet.real_estate_totals_by_usage(@property_positions)
       @real_estate_variation = @previous && @balance_sheet.real_estate_variation_against(@previous, @property_positions)
+    when "dashboard"
+      # Les mêmes regroupements que la synthèse, lus en graphiques plutôt qu'en tableaux :
+      # l'onglet ne calcule rien de neuf, il donne une autre forme aux mêmes chiffres. Les
+      # positions immobilières viennent en plus, une barre par bien.
+      @assets_by_type = @balance_sheet.assets_by_type
+      @liabilities_by_type = @balance_sheet.liabilities_by_type
+      @assets_by_risk = @balance_sheet.assets_by_risk_level
+      @property_positions = @balance_sheet.real_estate_positions
+      @variations = @previous && @balance_sheet.variations_against(@previous)
     else
       @assets_by_risk = @balance_sheet.assets_by_risk_level
       @assets_by_type = @balance_sheet.assets_by_type

@@ -4,6 +4,9 @@ fr:
       default: "%d/%m/%Y"
       long: "%d %B %Y"
       short: "%d %b"
+      # L'axe des graphiques : un mois et une année, la seule granularité qu'une étiquette
+      # tous les trente pixels puisse porter sans devenir illisible.
+      chart_axis: "%b %Y"
     day_names: [dimanche, lundi, mardi, mercredi, jeudi, vendredi, samedi]
     abbr_day_names: [dim, lun, mar, mer, jeu, ven, sam]
     month_names: [~, janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]
@@ -114,6 +117,7 @@ fr:
       submit: Enregistrer
   views:
     nav:
+      dashboard: Tableau de bord
       properties: Biens
       assets: Actifs
       liabilities: Passifs
@@ -284,6 +288,15 @@ fr:
         tabs:
           general: Synthèse
           real_estate: Immobilier
+          dashboard: Graphiques
+        charts:
+          assets_by_type: "Répartition des actifs"
+          liabilities_by_type: "Répartition de la dette"
+          assets_by_risk: Actifs par niveau de risque
+          real_estate: Patrimoine immobilier
+          real_estate_hint: Valeur nette de chaque bien, dette déduite.
+          no_assets: Aucun actif sur ce bilan.
+          no_liabilities: Aucun passif sur ce bilan.
       properties:
         usage: Usage
         net: Valeur nette
@@ -310,6 +323,27 @@ fr:
         title: Ajouter un passif au bilan
       edit:
         title: Modifier la ligne de passif
+    dashboard:
+      title: Tableau de bord
+      empty: Aucun bilan pour l'instant. Le tableau de bord se remplira dès le premier.
+      create_first: Créer mon premier bilan
+      open_latest: Voir le dernier bilan
+      net_worth: Patrimoine net
+      as_of: "au %{date}"
+      since_previous: Depuis le bilan précédent
+      no_previous: Premier bilan de l'historique
+      over_a_year: Sur un an
+      no_year_ago: "Moins d'un an d'historique"
+      real_estate_ltv: LTV immobilière
+      real_estate_net: "Valeur nette : %{amount}"
+      equity_chart: Évolution du patrimoine net
+      equity_chart_hint: Un point par bilan. L'échelle suit les montants et ne part pas de zéro.
+      assets_breakdown: Évolution des actifs
+      assets_breakdown_hint: Par catégorie, l'immobilier détaillé par usage du bien.
+      liabilities_breakdown: Évolution de la dette
+      liabilities_breakdown_hint: Par catégorie, les crédits immobiliers détaillés par usage du bien.
+      no_assets: Aucun actif dans l'historique.
+      no_liabilities: Aucune dette dans l'historique.
     pages:
       home:
         title: Bienvenue sur Milly
@@ -317,6 +351,9 @@ fr:
         cta: Commencer
     shared:
       owned_value_detail: "%{share} de %{total}"
+      # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
+      breakdown_split: "%{type} · %{usage}"
+      unassigned_property: Non rattaché
       # Scope name pinned by Property.usage_label_for → EnumLabel.for("property_usages", …)
       property_usages:
         primary_residence: Résidence principale

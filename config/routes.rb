@@ -7,8 +7,10 @@ Milly::Application.routes.draw do
     get "mon-compte", to: "users/registrations#edit", as: :account
   end
 
+  # L'accueil d'un utilisateur connecté est son tableau de bord ; la liste des bilans reste
+  # à sa place, sur /balance_sheets, et garde son entrée dans la navbar.
   authenticated :user do
-    root "balance_sheets#index", as: :authenticated_root
+    root "dashboard#show", as: :authenticated_root
   end
 
   root "pages#home"

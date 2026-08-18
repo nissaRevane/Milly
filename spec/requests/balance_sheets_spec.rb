@@ -307,6 +307,77 @@ RSpec.describe "BalanceSheets", type: :request do
         expect(response.body).not_to include("real-estate-table")
       end
 
+      describe "on the graphiques tab" do
+        it "renders the bilan as charts instead of tables" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          expect(response).to have_http_status(:success)
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".tab-link-active").text.strip).to eq("Graphiques")
+          expect(doc.at_css(".summary-column-assets")).to be_nil
+          expect(doc.at_css(".real-estate-table")).to be_nil
+          expect(doc.css(".chart-donut").size).to eq(2)
+        end
+
+        # L'onglet ne recalcule rien : il doit dire exactement ce que la synthèse dit.
+        it "headlines the same three totals as the synthèse" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          amounts = doc.css(".stat-grid .stat-value").map { |value| value.text.strip }
+          expect(amounts).to eq([currency(200_000), currency(150_000), currency(50_000)])
+        end
+
+        # Les parts de l'anneau sont des cercles en pointillés : sans le trait d'union dans
+        # les noms d'attributs, le navigateur les ignore en silence et les parts se
+        # superposent en un unique cercle fin. Rien dans le HTML ne le trahirait sans cela.
+        it "gives each slice of the ring its own arc" do
+          bs = create(:balance_sheet, user: user)
+          create(:balance_sheet_asset, balance_sheet: bs,
+                                       asset: create(:asset, user: user, asset_type: :savings_account),
+                                       value: 30_000)
+          create(:balance_sheet_asset, balance_sheet: bs,
+                                       asset: create(:asset, user: user, asset_type: :financial_investment),
+                                       value: 10_000)
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          slices = Nokogiri::HTML(response.body).css(".chart-donut-ring .chart-slice")
+          expect(slices.size).to eq(2)
+          expect(slices.map { |slice| slice["stroke-width"] }).to all(be_present)
+          # Trois quarts du tour pour la part de 75 %, et un décalage nul pour la première.
+          expect(slices.first["stroke-dasharray"].split.first.to_f)
+            .to be_within(0.5).of(2 * Math::PI * 75 * 0.75)
+          expect(slices.first["stroke-dashoffset"].to_f).to eq(0)
+          expect(slices.last["stroke-dashoffset"].to_f).to be < 0
+        end
+
+        it "draws one bar per bien, read on its valeur nette" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          row = Nokogiri::HTML(response.body).css(".bar-breakdown").last.at_css(".bar-breakdown-row")
+          expect(row.at_css(".bar-breakdown-label").text.strip).to eq("Appartement Lyon")
+          expect(row.at_css(".bar-breakdown-amount").text.strip).to eq(currency(50_000))
+        end
+
+        it "keeps the tab when stepping to a neighbouring bilan" do
+          older = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+          get summary_balance_sheet_path(current, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".summary-nav a[rel=prev]")["href"])
+            .to eq(summary_balance_sheet_path(older, tab: "dashboard"))
+        end
+      end
+
       describe "on the immobilier tab" do
         it "shows the immobilier table instead of the actifs/passifs columns" do
           bs = build_property_sheet

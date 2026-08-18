@@ -15,6 +15,32 @@
   --color-text: #1e293b;
   --color-text-muted: #64748b;
   --color-border: #e2e8f0;
+  /* La palette des graphiques. Les helpers de ChartsHelper ne posent que des classes
+     (.chart-palette-1 … -6) : les couleurs restent ici, dans un seul endroit. */
+  --chart-1: #2563eb;
+  --chart-2: #0891b2;
+  --chart-3: #7c3aed;
+  --chart-4: #16a34a;
+  --chart-5: #d97706;
+  --chart-6: #db2777;
+  /* Les aires empilées. Chaque catégorie a sa teinte propre, SAUF l'immobilier : ses
+     sous-catégories partagent une même famille (indigo à l'actif, rouge au passif) et ne se
+     distinguent que par la nuance — assez pour les lire, pas assez pour les dissocier. */
+  --chart-cash: #d97706;
+  --chart-checking: #0891b2;
+  --chart-savings: #16a34a;
+  --chart-investment: #db2777;
+  --chart-receivable: #64748b;
+  --chart-re-1: #312e81;
+  --chart-re-2: #4f46e5;
+  --chart-re-3: #818cf8;
+  --chart-re-4: #c7d2fe;
+  --chart-short-term: #ea580c;
+  --chart-deposit: #7c3aed;
+  --chart-debt-re-1: #7f1d1d;
+  --chart-debt-re-2: #dc2626;
+  --chart-debt-re-3: #f87171;
+  --chart-debt-re-4: #fecaca;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1065,5 +1091,347 @@ a.summary-nav-arrow:hover {
   .accordion-content {
     padding: 0 0.5rem 0.5rem;
     overflow-x: auto;
+  }
+}
+
+
+/* ==========================================================================
+   Tableau de bord et graphiques
+
+   Tout le SVG est rendu par le serveur (voir app/helpers/charts_helper.rb) : les formes
+   n'y portent qu'une classe, et c'est ici que la couleur leur est donnée.
+   ========================================================================== */
+
+/* Tuiles chiffrées, au-dessus des courbes */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+}
+
+.stat-card-highlight {
+  border-color: var(--color-primary);
+}
+
+.stat-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* La variation garde sa couleur de gain/perte mais prend la taille de la tuile */
+.stat-value .variation {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.stat-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  min-height: 1.25rem;
+}
+
+/* Cartes de graphique */
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.chart-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-grid .chart-card {
+  margin-bottom: 0;
+}
+
+/* Le viewBox donne le repère, le CSS donne la largeur réelle */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-grid-line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  fill: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.chart-line-path {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-area {
+  fill: rgba(37, 99, 235, 0.12);
+  stroke: none;
+}
+
+.chart-point {
+  fill: var(--color-surface);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+/* L'anneau et sa légende, côte à côte tant que la carte est assez large */
+.chart-donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.chart-donut-ring {
+  flex: 0 0 auto;
+  width: 180px;
+  height: 180px;
+}
+
+.chart-slice {
+  transition: opacity 0.15s ease;
+}
+
+.chart-slice:hover {
+  opacity: 0.8;
+}
+
+.chart-legend {
+  flex: 1 1 220px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+/* Sous une aire empilée, la légende n'est plus à côté d'un anneau : elle prend toute la
+   largeur, en colonnes, plutôt que de s'étirer sur quinze lignes. */
+.chart-area-stack + .chart-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.375rem 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chart-legend-swatch {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--color-border);
+}
+
+.chart-legend-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-legend-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.chart-legend-share {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+/* Aires empilées : la bande sous le graphique, la pastille dans la légende. Une catégorie
+   tient sa couleur de sa clé (ChartsHelper#series_tone) et non de son rang, pour qu'elle la
+   garde quand une autre disparaît du bilan. */
+.chart-series-area {
+  stroke: var(--color-surface);
+  stroke-width: 0.75;
+}
+
+.chart-series-cash,
+.chart-series-checking-account,
+.chart-series-savings-account,
+.chart-series-financial-investment,
+.chart-series-receivable,
+.chart-series-short-term-debt,
+.chart-series-security-deposit,
+.chart-series-real-estate-primary-residence,
+.chart-series-real-estate-rental,
+.chart-series-real-estate-secondary-residence,
+.chart-series-real-estate-unassigned,
+.chart-series-real-estate-loan-primary-residence,
+.chart-series-real-estate-loan-rental,
+.chart-series-real-estate-loan-secondary-residence,
+.chart-series-real-estate-loan-unassigned {
+  fill: var(--series-color);
+  background: var(--series-color);
+}
+
+.chart-series-cash { --series-color: var(--chart-cash); }
+.chart-series-checking-account { --series-color: var(--chart-checking); }
+.chart-series-savings-account { --series-color: var(--chart-savings); }
+.chart-series-financial-investment { --series-color: var(--chart-investment); }
+.chart-series-receivable { --series-color: var(--chart-receivable); }
+
+/* L'immobilier de l'actif : une seule teinte, quatre nuances, dans l'ordre d'empilement */
+.chart-series-real-estate-primary-residence { --series-color: var(--chart-re-1); }
+.chart-series-real-estate-rental { --series-color: var(--chart-re-2); }
+.chart-series-real-estate-secondary-residence { --series-color: var(--chart-re-3); }
+.chart-series-real-estate-unassigned { --series-color: var(--chart-re-4); }
+
+.chart-series-short-term-debt { --series-color: var(--chart-short-term); }
+.chart-series-security-deposit { --series-color: var(--chart-deposit); }
+
+/* Les crédits immobiliers, même découpage dans la famille du passif */
+.chart-series-real-estate-loan-primary-residence { --series-color: var(--chart-debt-re-1); }
+.chart-series-real-estate-loan-rental { --series-color: var(--chart-debt-re-2); }
+.chart-series-real-estate-loan-secondary-residence { --series-color: var(--chart-debt-re-3); }
+.chart-series-real-estate-loan-unassigned { --series-color: var(--chart-debt-re-4); }
+
+/* La palette : une part de l'anneau la porte en stroke, une pastille de légende en fond */
+.chart-palette-1 { stroke: var(--chart-1); background: var(--chart-1); }
+.chart-palette-2 { stroke: var(--chart-2); background: var(--chart-2); }
+.chart-palette-3 { stroke: var(--chart-3); background: var(--chart-3); }
+.chart-palette-4 { stroke: var(--chart-4); background: var(--chart-4); }
+.chart-palette-5 { stroke: var(--chart-5); background: var(--chart-5); }
+.chart-palette-6 { stroke: var(--chart-6); background: var(--chart-6); }
+
+/* Barres horizontales en HTML, pour les répartitions courtes */
+.bar-breakdown {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bar-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 12rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.bar-breakdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-breakdown-track {
+  display: block;
+  background: var(--color-bg);
+  border-radius: 999px;
+  height: 0.75rem;
+  overflow: hidden;
+}
+
+.bar-breakdown-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--chart-1);
+}
+
+.bar-breakdown-fill-negative {
+  background: var(--color-danger);
+}
+
+.bar-breakdown-fill.chart-fill-risk-low {
+  background: var(--color-success);
+}
+
+.bar-breakdown-fill.chart-fill-risk-medium {
+  background: var(--color-warning);
+}
+
+.bar-breakdown-fill.chart-fill-risk-high {
+  background: var(--color-danger);
+}
+
+.bar-breakdown-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.empty-state-action {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  /* Sur mobile, l'anneau passe au-dessus de sa légende plutôt qu'à côté */
+  .chart-donut {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chart-donut-ring {
+    align-self: center;
+  }
+
+  .bar-breakdown-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  /* La piste passe sous son libellé : deux colonnes ne suffisent plus à trois cellules */
+  .bar-breakdown-track {
+    grid-column: 1 / -1;
+    order: 3;
   }
 }

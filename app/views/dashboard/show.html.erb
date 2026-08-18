@@ -1,0 +1,88 @@
+<%#
+  Le tableau de bord : le patrimoine lu comme une série, et non bilan par bilan.
+
+  @current est nil tant que l'utilisateur n'a créé aucun bilan — il n'y a alors ni chiffre
+  ni courbe à montrer, seulement le chemin vers le premier bilan.
+%>
+<div class="page-header">
+  <h1><%= t("views.dashboard.title") %></h1>
+  <% if @current %>
+    <div class="page-header-actions">
+      <%= link_to t("views.dashboard.open_latest"),
+                  summary_balance_sheet_path(@current.balance_sheet),
+                  class: "btn btn-outline" %>
+      <%= link_to t("views.balance_sheets.index.new"), new_balance_sheet_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @current.nil? %>
+  <p class="empty-state"><%= t("views.dashboard.empty") %></p>
+  <p class="empty-state-action">
+    <%= link_to t("views.dashboard.create_first"), new_balance_sheet_path, class: "btn btn-primary" %>
+  </p>
+<% else %>
+  <div class="stat-grid">
+    <div class="stat-card stat-card-highlight">
+      <span class="stat-label"><%= t("views.dashboard.net_worth") %></span>
+      <span class="stat-value"><%= number_to_currency(@current.equity) %></span>
+      <span class="stat-hint"><%= t("views.dashboard.as_of", date: l(@current.closing_date, format: :long)) %></span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label"><%= t("views.dashboard.since_previous") %></span>
+      <span class="stat-value">
+        <%= @equity_variation ? variation_note(@equity_variation) : "—" %>
+      </span>
+      <span class="stat-hint">
+        <%= @previous ? l(@previous.closing_date, format: :long) : t("views.dashboard.no_previous") %>
+      </span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label"><%= t("views.dashboard.over_a_year") %></span>
+      <span class="stat-value">
+        <%= @yearly_variation ? variation_note(@yearly_variation) : "—" %>
+      </span>
+      <span class="stat-hint">
+        <%= @year_ago ? l(@year_ago.closing_date, format: :long) : t("views.dashboard.no_year_ago") %>
+      </span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label"><%= t("views.dashboard.real_estate_ltv") %></span>
+      <span class="stat-value"><%= ltv_label(@real_estate_total.ltv) %></span>
+      <span class="stat-hint">
+        <%= t("views.dashboard.real_estate_net", amount: number_to_currency(@real_estate_total.net)) %>
+      </span>
+    </div>
+  </div>
+
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.dashboard.equity_chart") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.equity_chart_hint") %></p>
+    <%= line_chart(@timeline.map { |point| [point.closing_date, point.equity] }) %>
+  </section>
+
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.dashboard.assets_breakdown") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.assets_breakdown_hint") %></p>
+    <% if @assets_breakdown.any? %>
+      <%= stacked_area_chart(@dates, @assets_breakdown) %>
+      <%= stacked_area_legend(@assets_breakdown) %>
+    <% else %>
+      <p class="empty-state"><%= t("views.dashboard.no_assets") %></p>
+    <% end %>
+  </section>
+
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.dashboard.liabilities_breakdown") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.liabilities_breakdown_hint") %></p>
+    <% if @liabilities_breakdown.any? %>
+      <%= stacked_area_chart(@dates, @liabilities_breakdown) %>
+      <%= stacked_area_legend(@liabilities_breakdown) %>
+    <% else %>
+      <p class="empty-state"><%= t("views.dashboard.no_liabilities") %></p>
+    <% end %>
+  </section>
+<% end %>
