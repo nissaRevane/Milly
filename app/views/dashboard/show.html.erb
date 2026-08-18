@@ -65,26 +65,24 @@
   </section>
 
   <section class="chart-card">
-    <h2 class="chart-title"><%= t("views.dashboard.composition_chart") %></h2>
-    <p class="chart-hint"><%= t("views.dashboard.composition_chart_hint") %></p>
-    <%= stacked_bars_chart(@timeline.map { |point| [point.closing_date, point.total_assets, point.total_liabilities] }) %>
-    <ul class="chart-legend chart-legend-inline">
-      <li class="chart-legend-item">
-        <span class="chart-legend-swatch chart-swatch-assets"></span>
-        <span class="chart-legend-label"><%= t("views.dashboard.assets") %></span>
-      </li>
-      <li class="chart-legend-item">
-        <span class="chart-legend-swatch chart-swatch-liabilities"></span>
-        <span class="chart-legend-label"><%= t("views.dashboard.liabilities") %></span>
-      </li>
-    </ul>
+    <h2 class="chart-title"><%= t("views.dashboard.assets_breakdown") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.assets_breakdown_hint") %></p>
+    <% if @assets_breakdown.any? %>
+      <%= stacked_area_chart(@dates, @assets_breakdown) %>
+      <%= stacked_area_legend(@assets_breakdown) %>
+    <% else %>
+      <p class="empty-state"><%= t("views.dashboard.no_assets") %></p>
+    <% end %>
   </section>
 
   <section class="chart-card">
-    <h2 class="chart-title"><%= t("views.dashboard.allocation_chart") %></h2>
-    <p class="chart-hint"><%= t("views.dashboard.allocation_chart_hint", date: l(@current.closing_date, format: :long)) %></p>
-    <%= donut_chart(Asset.asset_types.keys.map { |type|
-          { label: asset_type_label(type), amount: @assets_by_type.fetch(type, []).sum(&:owned_value) }
-        }) || tag.p(t("views.dashboard.no_assets"), class: "empty-state") %>
+    <h2 class="chart-title"><%= t("views.dashboard.liabilities_breakdown") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.liabilities_breakdown_hint") %></p>
+    <% if @liabilities_breakdown.any? %>
+      <%= stacked_area_chart(@dates, @liabilities_breakdown) %>
+      <%= stacked_area_legend(@liabilities_breakdown) %>
+    <% else %>
+      <p class="empty-state"><%= t("views.dashboard.no_liabilities") %></p>
+    <% end %>
   </section>
 <% end %>

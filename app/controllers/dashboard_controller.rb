@@ -19,7 +19,13 @@ class DashboardController < ApplicationController
     # La LTV globale du dernier bilan, lue exactement comme l'onglet Immobilier la lit :
     # même positions filtrées, mêmes totaux, donc jamais deux chiffres pour un même bilan.
     @real_estate_total = sheet.real_estate_totals_by_usage(sheet.real_estate_positions)[:total]
-    @assets_by_type = sheet.assets_by_type
+
+    # Les deux aires empilées. Elles portent le même axe que la courbe des fonds propres, et
+    # coûtent une requête agrégée chacune : le nombre de bilans ne change pas la charge.
+    sheets = @timeline.map(&:balance_sheet)
+    @dates = @timeline.map(&:closing_date)
+    @assets_breakdown = BalanceSheet.assets_breakdown_for(sheets)
+    @liabilities_breakdown = BalanceSheet.liabilities_breakdown_for(sheets)
   end
 
   private

@@ -332,6 +332,30 @@ RSpec.describe "BalanceSheets", type: :request do
           expect(amounts).to eq([currency(200_000), currency(150_000), currency(50_000)])
         end
 
+        # Les parts de l'anneau sont des cercles en pointillés : sans le trait d'union dans
+        # les noms d'attributs, le navigateur les ignore en silence et les parts se
+        # superposent en un unique cercle fin. Rien dans le HTML ne le trahirait sans cela.
+        it "gives each slice of the ring its own arc" do
+          bs = create(:balance_sheet, user: user)
+          create(:balance_sheet_asset, balance_sheet: bs,
+                                       asset: create(:asset, user: user, asset_type: :savings_account),
+                                       value: 30_000)
+          create(:balance_sheet_asset, balance_sheet: bs,
+                                       asset: create(:asset, user: user, asset_type: :financial_investment),
+                                       value: 10_000)
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          slices = Nokogiri::HTML(response.body).css(".chart-donut-ring .chart-slice")
+          expect(slices.size).to eq(2)
+          expect(slices.map { |slice| slice["stroke-width"] }).to all(be_present)
+          # Trois quarts du tour pour la part de 75 %, et un décalage nul pour la première.
+          expect(slices.first["stroke-dasharray"].split.first.to_f)
+            .to be_within(0.5).of(2 * Math::PI * 75 * 0.75)
+          expect(slices.first["stroke-dashoffset"].to_f).to eq(0)
+          expect(slices.last["stroke-dashoffset"].to_f).to be < 0
+        end
+
         it "draws one bar per bien, read on its valeur nette" do
           bs = build_property_sheet
 

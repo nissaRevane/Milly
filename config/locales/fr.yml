@@ -336,16 +336,14 @@ fr:
       no_year_ago: "Moins d'un an d'historique"
       real_estate_ltv: LTV immobilière
       real_estate_net: "Valeur nette : %{amount}"
-      assets: Actifs
-      liabilities: Dette
-      equity: Fonds propres
       equity_chart: Évolution du patrimoine net
       equity_chart_hint: Un point par bilan. L'échelle suit les montants et ne part pas de zéro.
-      composition_chart: Actifs et dette
-      composition_chart_hint: Ce qui dépasse au-dessus de la dette, ce sont les fonds propres.
-      allocation_chart: Répartition des actifs
-      allocation_chart_hint: "Répartition par type d'actif au %{date}"
-      no_assets: Aucun actif sur le dernier bilan.
+      assets_breakdown: Évolution des actifs
+      assets_breakdown_hint: Par catégorie, l'immobilier détaillé par usage du bien.
+      liabilities_breakdown: Évolution de la dette
+      liabilities_breakdown_hint: Par catégorie, les crédits immobiliers détaillés par usage du bien.
+      no_assets: Aucun actif dans l'historique.
+      no_liabilities: Aucune dette dans l'historique.
     pages:
       home:
         title: Bienvenue sur Milly

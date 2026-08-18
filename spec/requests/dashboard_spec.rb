@@ -104,45 +104,104 @@ RSpec.describe "Dashboard", type: :request do
       end
     end
 
-    it "breaks the last balance sheet down by asset type" do
-      sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
-      create(:balance_sheet_asset, balance_sheet: sheet,
-                                   asset: create(:asset, user: user, asset_type: :savings_account),
-                                   value: 30_000)
-      create(:balance_sheet_asset, balance_sheet: sheet,
-                                   asset: create(:asset, user: user, asset_type: :financial_investment),
-                                   value: 10_000)
+    describe "the assets area chart" do
+      it "stacks one band per category, in a stable order" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :savings_account),
+                                     value: 30_000)
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :financial_investment),
+                                     value: 10_000)
 
-      get root_path
+        get root_path
 
-      legend = Nokogiri::HTML(response.body).css(".chart-donut .chart-legend-item")
-      expect(legend.map { |item| item.at_css(".chart-legend-label").text }).to eq(
-        [Asset.asset_type_label_for("savings_account"), Asset.asset_type_label_for("financial_investment")]
-      )
-      expect(legend.first.at_css(".chart-legend-share").text).to include("75")
+        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").first.css(".chart-series-area")
+        expect(bands.map { |band| band["class"] }).to eq([
+          "chart-series-area chart-series-savings-account",
+          "chart-series-area chart-series-financial-investment"
+        ])
+      end
+
+      # La demande derrière ces courbes : l'immobilier d'un seul tenant ne dit pas ce qui
+      # bouge. Chaque usage porte sa propre bande, donc sa propre nuance.
+      it "splits the immobilier by usage of the bien" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        %i[primary_residence rental secondary_residence].each_with_index do |usage, index|
+          property = create(:property, user: user, name: "Bien #{index}", usage: usage)
+          create(:balance_sheet_asset, balance_sheet: sheet,
+                                       asset: property.real_estate_asset,
+                                       value: 100_000 + index * 1_000)
+        end
+
+        get root_path
+
+        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").first.css(".chart-series-area")
+        expect(bands.map { |band| band["class"].split.last }).to eq(%w[
+          chart-series-real-estate-primary-residence
+          chart-series-real-estate-rental
+          chart-series-real-estate-secondary-residence
+        ])
+      end
+
+      it "carries the immobilier lines without a bien in a band of their own" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
+        create(:balance_sheet_asset, balance_sheet: sheet, asset: orphan, value: 40_000)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css(".chart-series-real-estate-unassigned")).not_to be_nil
+        expect(doc.css(".chart-legend-label").map(&:text)).to include("Immobilier · Non rattaché")
+      end
+
+      # Une catégorie qui n'existe que sur les bilans anciens garde sa bande : sans la valeur
+      # zéro sur les bilans récents, la série se décalerait d'un cran sur l'axe.
+      it "carries a zero for the balance sheets a category is absent from" do
+        livret = create(:asset, user: user, asset_type: :savings_account)
+        pea = create(:asset, user: user, asset_type: :financial_investment)
+        first = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
+        second = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: first, asset: livret, value: 10_000)
+        create(:balance_sheet_asset, balance_sheet: second, asset: livret, value: 12_000)
+        create(:balance_sheet_asset, balance_sheet: second, asset: pea, value: 8_000)
+
+        get root_path
+
+        expect(BalanceSheet.assets_breakdown_for([first, second]).map(&:values))
+          .to eq([[10_000, 12_000], [0, 8_000]])
+        expect(response.body).to include("chart-series-financial-investment")
+      end
     end
 
-    # Les parts de l'anneau sont des cercles en pointillés : sans le trait d'union dans les
-    # noms d'attributs, le navigateur les ignore en silence et les trois parts se superposent
-    # en un unique cercle fin. Rien dans le HTML ne le trahirait sans cette lecture.
-    it "gives each slice of the ring its own arc" do
-      sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
-      create(:balance_sheet_asset, balance_sheet: sheet,
-                                   asset: create(:asset, user: user, asset_type: :savings_account),
-                                   value: 30_000)
-      create(:balance_sheet_asset, balance_sheet: sheet,
-                                   asset: create(:asset, user: user, asset_type: :financial_investment),
-                                   value: 10_000)
+    describe "the dette area chart" do
+      it "splits the crédits immobiliers by usage and keeps the other passifs whole" do
+        property = create(:property, user: user, name: "Locatif Lyon", usage: :rental)
+        loan = create(:liability, user: user, liability_type: :real_estate_loan, property: property)
+        deposit = create(:liability, user: user, liability_type: :security_deposit)
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_liability, balance_sheet: sheet, liability: loan, remaining_capital: 150_000)
+        create(:balance_sheet_liability, balance_sheet: sheet, liability: deposit, remaining_capital: 1_200)
 
-      get root_path
+        get root_path
 
-      slices = Nokogiri::HTML(response.body).css(".chart-donut-ring .chart-slice")
-      expect(slices.size).to eq(2)
-      expect(slices.map { |slice| slice["stroke-width"] }).to all(be_present)
-      # Trois quarts du tour pour la part de 75 %, et un décalage nul pour la première.
-      expect(slices.first["stroke-dasharray"].split.first.to_f).to be_within(0.5).of(2 * Math::PI * 75 * 0.75)
-      expect(slices.first["stroke-dashoffset"].to_f).to eq(0)
-      expect(slices.last["stroke-dashoffset"].to_f).to be < 0
+        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").last
+                  .css(".chart-series-area").map { |band| band["class"].split.last }
+        expect(bands).to eq(%w[chart-series-real-estate-loan-rental chart-series-security-deposit])
+      end
+
+      it "says so plainly when the history carries no dette at all" do
+        balance_sheet_worth(Date.new(2025, 12, 31), value: 50_000)
+
+        get root_path
+
+        dette = Nokogiri::HTML(response.body).css(".chart-card").find { |card|
+          card.at_css(".chart-title")&.text == I18n.t("views.dashboard.liabilities_breakdown")
+        }
+        expect(dette.at_css(".empty-state").text).to eq(I18n.t("views.dashboard.no_liabilities"))
+        expect(dette.at_css(".chart-area-stack")).to be_nil
+      end
     end
 
     # La quote-part est déjà appliquée par les totaux du bilan ; le tableau de bord les lit
