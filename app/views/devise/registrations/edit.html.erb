@@ -1,0 +1,63 @@
+<div class="page-header">
+  <h1><%= t("views.account.show.title") %></h1>
+</div>
+
+<div class="account">
+  <section class="section account-panel">
+    <div class="section-header">
+      <h2><%= t("views.account.show.identity") %></h2>
+    </div>
+
+    <dl class="account-identity">
+      <div>
+        <dt><%= User.human_attribute_name(:full_name) %></dt>
+        <dd><%= resource.full_name %></dd>
+      </div>
+      <div>
+        <dt><%= User.human_attribute_name(:email) %></dt>
+        <dd><%= resource.email %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="section account-panel">
+    <div class="section-header">
+      <h2><%= t("views.account.show.security") %></h2>
+    </div>
+
+    <%= render "shared/errors", resource: resource %>
+
+    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "form" }) do |f| %>
+      <div class="form-group">
+        <%= f.label :current_password %>
+        <%= f.password_field :current_password, autocomplete: "current-password", required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password, t("views.account.show.new_password") %>
+        <%= f.password_field :password, autocomplete: "new-password", required: true, class: "form-control" %>
+        <p class="form-hint"><%= t("views.account.show.password_hint", count: @minimum_password_length) if @minimum_password_length %></p>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :password_confirmation %>
+        <%= f.password_field :password_confirmation, autocomplete: "new-password", required: true, class: "form-control" %>
+      </div>
+
+      <div class="form-actions">
+        <%= f.submit t("views.account.show.update_password"), class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="section account-panel">
+    <div class="section-header">
+      <h2><%= t("views.account.show.data") %></h2>
+    </div>
+
+    <p class="section-hint"><%= t("views.account.show.export_hint") %></p>
+
+    <%# Turbo Drive would swallow the file response, so let the browser handle it %>
+    <%= link_to t("views.account.show.export"), export_path, class: "btn btn-outline", data: { turbo: false } %>
+  </section>
+</div>

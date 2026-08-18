@@ -45,14 +45,14 @@ RSpec.describe "Exports", type: :request do
     end
   end
 
-  describe "the navbar" do
+  describe "the account page" do
     it "offers the export link to signed-in users" do
       sign_in user
 
-      get balance_sheets_path
+      get account_path
 
       expect(response.body).to include(export_path)
-      expect(response.body).to include("Exporter")
+      expect(response.body).to include("Exporter mes données")
     end
   end
 end

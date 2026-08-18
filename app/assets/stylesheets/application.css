@@ -79,6 +79,11 @@ body {
 .nav-user-name {
   color: var(--color-text-muted);
   font-size: 0.875rem;
+  text-decoration: none;
+}
+
+a.nav-user-name:hover {
+  color: var(--color-primary);
 }
 
 /* Container */
@@ -872,6 +877,34 @@ a.summary-nav-arrow:hover {
   font-size: 1.25rem;
   color: var(--color-text-muted);
   margin-bottom: 2rem;
+}
+
+/* Account */
+.account {
+  max-width: 640px;
+}
+
+.account-panel {
+  background: var(--color-surface);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.account-identity {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-identity dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.account-identity dd {
+  font-weight: 500;
 }
 
 /* Auth */

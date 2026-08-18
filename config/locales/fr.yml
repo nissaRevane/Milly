@@ -21,9 +21,11 @@ fr:
       user:
         firstname: Prénom
         lastname: Nom
+        full_name: Nom
         email: Email
         password: Mot de passe
         password_confirmation: Confirmation du mot de passe
+        current_password: Mot de passe actuel
         remember_me: Se souvenir de moi
       property:
         name: Nom
@@ -99,6 +101,7 @@ fr:
       new:
         sign_up: Créer un compte
       signed_up: Inscription réussie.
+      updated: Votre mot de passe a été mis à jour.
     failure:
       already_authenticated: Vous êtes déjà connecté(e).
       invalid: Email ou mot de passe invalide.
@@ -115,10 +118,20 @@ fr:
       assets: Actifs
       liabilities: Passifs
       balance_sheets: Bilans
-      export: Exporter
       sign_out: Déconnexion
       sign_in: Connexion
       sign_up: Inscription
+    account:
+      show:
+        title: Mon compte
+        identity: Identité
+        security: Sécurité
+        new_password: Nouveau mot de passe
+        password_hint: "%{count} caractères minimum"
+        update_password: Changer mon mot de passe
+        data: Mes données
+        export_hint: Téléchargez l'intégralité de votre compte (biens, actifs, passifs et bilans) dans un fichier JSON réutilisable pour ré-alimenter Milly.
+        export: Exporter mes données
     properties:
       index:
         title: Mes Biens immobiliers
