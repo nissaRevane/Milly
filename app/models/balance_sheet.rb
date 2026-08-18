@@ -50,6 +50,19 @@ class BalanceSheet < ApplicationRecord
     end
   end
 
+  # Un bilan réduit à ses trois totaux, pour le tableau de bord : la courbe n'a besoin de
+  # rien d'autre, et les recharger ligne à ligne pour tracer soixante points serait absurde.
+  # Voir .timeline_for, qui les construit.
+  TimelinePoint = Struct.new(:balance_sheet, :total_assets, :total_liabilities, keyword_init: true) do
+    def closing_date
+      balance_sheet.closing_date
+    end
+
+    def equity
+      total_assets - total_liabilities
+    end
+  end
+
   # Liability types that belong to a property even when none is linked yet.
   UNASSIGNED_LIABILITY_TYPES = %w[real_estate_loan security_deposit].freeze
 
@@ -81,6 +94,35 @@ class BalanceSheet < ApplicationRecord
     Variation.new(amount: amount, rate: before.zero? ? nil : (amount.to_d / before.abs * 100).round(1))
   end
 
+  # Les trois totaux de chaque bilan de +sheets+, dans l'ordre où +sheets+ arrive.
+  #
+  # Deux requêtes agrégées pour toute la série, là où lire #total_assets / #total_liabilities
+  # bilan par bilan en ferait deux PAR bilan : le tableau de bord trace l'historique complet,
+  # et un utilisateur qui tient un bilan par mois depuis cinq ans en compte déjà soixante.
+  #
+  # Les expressions SQL sont celles des lignes elles-mêmes (BalanceSheetAsset::OWNED_VALUE_SQL),
+  # pas une copie : la courbe du tableau de bord et la synthèse d'un même bilan ne peuvent donc
+  # pas afficher deux montants différents. Un bilan sans aucune ligne n'a pas de groupe dans le
+  # résultat du GROUP BY et retombe sur 0 — le même 0 que renvoient les totaux d'un bilan vide.
+  def self.timeline_for(sheets)
+    sheets = sheets.to_a
+    return [] if sheets.empty?
+
+    ids = sheets.map(&:id)
+    assets = BalanceSheetAsset.joins(:asset).where(balance_sheet_id: ids)
+      .group(:balance_sheet_id).sum(BalanceSheetAsset::OWNED_VALUE_SQL)
+    liabilities = BalanceSheetLiability.joins(:liability).where(balance_sheet_id: ids)
+      .group(:balance_sheet_id).sum(BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL)
+
+    sheets.map do |sheet|
+      TimelinePoint.new(
+        balance_sheet: sheet,
+        total_assets: assets.fetch(sheet.id, 0),
+        total_liabilities: liabilities.fetch(sheet.id, 0)
+      )
+    end
+  end
+
   def copy_lines_from(source)
     transaction do
       source.balance_sheet_assets.each do |line|
@@ -104,15 +146,11 @@ class BalanceSheet < ApplicationRecord
   end
 
   def total_assets
-    balance_sheet_assets
-      .joins(:asset)
-      .sum("ROUND(balance_sheet_assets.value * ROUND(assets.ownership_share / 100, 4), 2)")
+    balance_sheet_assets.joins(:asset).sum(BalanceSheetAsset::OWNED_VALUE_SQL)
   end
 
   def total_liabilities
-    balance_sheet_liabilities
-      .joins(:liability)
-      .sum("ROUND(balance_sheet_liabilities.remaining_capital * ROUND(liabilities.ownership_share / 100, 4), 2)")
+    balance_sheet_liabilities.joins(:liability).sum(BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL)
   end
 
   def equity

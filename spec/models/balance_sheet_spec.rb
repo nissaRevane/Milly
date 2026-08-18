@@ -512,4 +512,60 @@ RSpec.describe BalanceSheet, type: :model do
       expect(bs.real_estate_variation_against(previous)).to have_attributes(amount: 50_000, rate: 12.5)
     end
   end
+
+  describe ".timeline_for" do
+    let(:user) { create(:user) }
+
+    it "gives each balance sheet the very totals it reports itself" do
+      first = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
+      second = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      create(:balance_sheet_asset, balance_sheet: first, asset: create(:asset, user: user), value: 100_000)
+      create(:balance_sheet_asset, balance_sheet: second, asset: create(:asset, user: user, ownership_share: 50), value: 200_000)
+      create(:balance_sheet_liability, balance_sheet: second, liability: create(:liability, user: user), remaining_capital: 40_000)
+
+      timeline = BalanceSheet.timeline_for([first, second])
+
+      expect(timeline.map(&:total_assets)).to eq([first.total_assets, second.total_assets])
+      expect(timeline.map(&:total_liabilities)).to eq([first.total_liabilities, second.total_liabilities])
+      expect(timeline.map(&:equity)).to eq([first.equity, second.equity])
+      expect(timeline.map(&:closing_date)).to eq([first.closing_date, second.closing_date])
+    end
+
+    # Un bilan sans ligne n'a pas de groupe dans le GROUP BY : il doit retomber sur zéro,
+    # pas disparaître de la série ni faire échouer la lecture.
+    it "reports zero for a balance sheet holding no line" do
+      empty = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+      point = BalanceSheet.timeline_for([empty]).first
+
+      expect(point.total_assets).to eq(0)
+      expect(point.total_liabilities).to eq(0)
+      expect(point.equity).to eq(0)
+    end
+
+    it "returns nothing for an empty set, without querying" do
+      expect(BalanceSheet.timeline_for([])).to eq([])
+    end
+
+    # La raison d'être de la méthode : deux requêtes agrégées pour toute la série, et non
+    # deux par bilan. Sans cette garantie le tableau de bord ferait grossir sa charge à
+    # chaque nouvelle clôture.
+    it "reads the whole series in two aggregate queries" do
+      sheets = 3.times.map do |index|
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 1, 1) + index.months)
+        create(:balance_sheet_asset, balance_sheet: sheet, asset: create(:asset, user: user), value: 1_000)
+        sheet
+      end
+
+      queries = 0
+      subscription = ActiveSupport::Notifications.subscribe("sql.active_record") do |_, _, _, _, payload|
+        queries += 1 unless payload[:name].in?(["SCHEMA", "TRANSACTION"]) || payload[:sql].start_with?("BEGIN", "COMMIT")
+      end
+      BalanceSheet.timeline_for(sheets)
+      ActiveSupport::Notifications.unsubscribe(subscription)
+
+      expect(queries).to eq(2)
+    end
+  end
+
 end
