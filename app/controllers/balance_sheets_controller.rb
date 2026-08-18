@@ -10,6 +10,11 @@ class BalanceSheetsController < ApplicationController
   def show
     @assets_by_type = @balance_sheet.assets_by_type
     @liabilities_by_type = @balance_sheet.liabilities_by_type
+
+    # Navigation only: the header steps to the neighbouring bilans. Either is nil at the
+    # ends of the série, and the arrow on that side renders disabled.
+    @previous = @balance_sheet.previous
+    @following = @balance_sheet.following
   end
 
   def new

@@ -245,6 +245,10 @@ fr:
         title: Modifier le bilan
       show:
         title: "Bilan au %{date}"
+        previous_sheet: "Bilan précédent, au %{date}"
+        next_sheet: "Bilan suivant, au %{date}"
+        no_previous_sheet: "Aucun bilan antérieur"
+        no_next_sheet: "Aucun bilan postérieur"
         assets: Actifs
         liabilities: Passifs
         add_asset: Ajouter un actif

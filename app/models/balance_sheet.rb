@@ -207,7 +207,7 @@ class BalanceSheet < ApplicationRecord
   end
 
   # The user's balance sheet immediately after this one, nil for the latest one. Only the
-  # synthèse navigation reads it — no variation is ever measured against it — but it is
+  # header navigation reads it — no variation is ever measured against it — but it is
   # memoized like #previous so a page asking twice queries once.
   def following
     return @following if defined?(@following)

@@ -1,44 +1,20 @@
-<%# Steps to the neighbouring bilans keeping the tab the user is reading. Absent neighbours
-    stay in the DOM as disabled spans so the title never shifts sideways between bilans. %>
+<%# The arrows keep the tab the user is reading. %>
 <% tab_param = (@tab unless @tab == "general") %>
 <div class="page-header">
-  <div class="summary-nav">
+  <%= render layout: "balance_sheets/sheet_nav",
+             locals: { previous: @previous,
+                       following: @following,
+                       previous_path: (summary_balance_sheet_path(@previous, tab: tab_param) if @previous),
+                       following_path: (summary_balance_sheet_path(@following, tab: tab_param) if @following),
+                       scope: "views.balance_sheets.summary" } do %>
+    <h1><%= t("views.balance_sheets.summary.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+    <%# Names the bilan every variation on the page is read against; absent on the first one. %>
     <% if @previous %>
-      <%= link_to "‹",
-                  summary_balance_sheet_path(@previous, tab: tab_param),
-                  class: "summary-nav-arrow",
-                  rel: "prev",
-                  title: t("views.balance_sheets.summary.previous_sheet", date: l(@previous.closing_date, format: :long)),
-                  "aria-label" => t("views.balance_sheets.summary.previous_sheet", date: l(@previous.closing_date, format: :long)) %>
-    <% else %>
-      <span class="summary-nav-arrow summary-nav-arrow-disabled"
-            aria-hidden="true"
-            title="<%= t("views.balance_sheets.summary.no_previous_sheet") %>">‹</span>
+      <p class="page-header-hint">
+        <%= t("views.balance_sheets.summary.compared_to", date: l(@previous.closing_date, format: :long)) %>
+      </p>
     <% end %>
-
-    <div class="summary-nav-title">
-      <h1><%= t("views.balance_sheets.summary.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
-      <%# Names the bilan every variation on the page is read against; absent on the first one. %>
-      <% if @previous %>
-        <p class="page-header-hint">
-          <%= t("views.balance_sheets.summary.compared_to", date: l(@previous.closing_date, format: :long)) %>
-        </p>
-      <% end %>
-    </div>
-
-    <% if @following %>
-      <%= link_to "›",
-                  summary_balance_sheet_path(@following, tab: tab_param),
-                  class: "summary-nav-arrow",
-                  rel: "next",
-                  title: t("views.balance_sheets.summary.next_sheet", date: l(@following.closing_date, format: :long)),
-                  "aria-label" => t("views.balance_sheets.summary.next_sheet", date: l(@following.closing_date, format: :long)) %>
-    <% else %>
-      <span class="summary-nav-arrow summary-nav-arrow-disabled"
-            aria-hidden="true"
-            title="<%= t("views.balance_sheets.summary.no_next_sheet") %>">›</span>
-    <% end %>
-  </div>
+  <% end %>
 </div>
 
 <%# Server-rendered tabs: plain links carrying a ?tab= param, Turbo Drive does the rest %>

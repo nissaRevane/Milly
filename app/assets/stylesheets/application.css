@@ -453,7 +453,7 @@ a.nav-user-name:hover {
   font-size: 0.875rem;
 }
 
-/* Steps between bilans, on each side of the synthèse title */
+/* Steps between bilans, on each side of the page title (synthèse and détail) */
 .summary-nav {
   display: flex;
   align-items: center;

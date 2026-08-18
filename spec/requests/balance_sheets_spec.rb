@@ -53,6 +53,40 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
+    describe "stepping between bilans" do
+      it "links each arrow to the neighbouring bilan" do
+        older = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+        newer = create(:balance_sheet, user: user, closing_date: Date.new(2026, 12, 31))
+
+        get balance_sheet_path(current)
+
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css(".summary-nav a[rel=prev]")["href"]).to eq(balance_sheet_path(older))
+        expect(doc.at_css(".summary-nav a[rel=next]")["href"]).to eq(balance_sheet_path(newer))
+      end
+
+      it "disables the arrow that has no bilan on its side" do
+        only = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+
+        get balance_sheet_path(only)
+
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.css(".summary-nav a")).to be_empty
+        expect(doc.css(".summary-nav .summary-nav-arrow-disabled").size).to eq(2)
+      end
+
+      it "ignores the bilans of another user" do
+        current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+        other = create(:user)
+        create(:balance_sheet, user: other, closing_date: Date.new(2026, 12, 31))
+
+        get balance_sheet_path(current)
+
+        expect(Nokogiri::HTML(response.body).css(".summary-nav a")).to be_empty
+      end
+    end
+
     it "renders the owned amount, the share and the full amount in a single cell" do
       bs = create(:balance_sheet, user: user)
       half = create(:asset, user: user, name: "Maison", asset_type: :real_estate, ownership_share: 50)

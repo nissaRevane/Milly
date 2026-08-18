@@ -1,0 +1,33 @@
+<%# Steps to the neighbouring bilans, on each side of the page title. The caller supplies
+    the hrefs because each page steps within itself — the synthèse to synthèses, le détail
+    to détails — and the i18n scope its arrow labels are read from. Absent neighbours stay
+    in the DOM as disabled spans so the title never shifts sideways between bilans. %>
+<div class="summary-nav">
+  <% if previous %>
+    <%= link_to "‹",
+                previous_path,
+                class: "summary-nav-arrow",
+                rel: "prev",
+                title: t("#{scope}.previous_sheet", date: l(previous.closing_date, format: :long)),
+                "aria-label" => t("#{scope}.previous_sheet", date: l(previous.closing_date, format: :long)) %>
+  <% else %>
+    <span class="summary-nav-arrow summary-nav-arrow-disabled"
+          aria-hidden="true"
+          title="<%= t("#{scope}.no_previous_sheet") %>">‹</span>
+  <% end %>
+
+  <div class="summary-nav-title"><%= yield %></div>
+
+  <% if following %>
+    <%= link_to "›",
+                following_path,
+                class: "summary-nav-arrow",
+                rel: "next",
+                title: t("#{scope}.next_sheet", date: l(following.closing_date, format: :long)),
+                "aria-label" => t("#{scope}.next_sheet", date: l(following.closing_date, format: :long)) %>
+  <% else %>
+    <span class="summary-nav-arrow summary-nav-arrow-disabled"
+          aria-hidden="true"
+          title="<%= t("#{scope}.no_next_sheet") %>">›</span>
+  <% end %>
+</div>

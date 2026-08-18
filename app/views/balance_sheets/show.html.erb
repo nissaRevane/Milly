@@ -1,5 +1,12 @@
 <div class="page-header">
-  <h1><%= t("views.balance_sheets.show.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+  <%= render layout: "balance_sheets/sheet_nav",
+             locals: { previous: @previous,
+                       following: @following,
+                       previous_path: (balance_sheet_path(@previous) if @previous),
+                       following_path: (balance_sheet_path(@following) if @following),
+                       scope: "views.balance_sheets.show" } do %>
+    <h1><%= t("views.balance_sheets.show.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+  <% end %>
   <div class="page-header-actions">
     <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(@balance_sheet), class: "btn btn-primary" %>
     <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
