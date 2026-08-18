@@ -64,25 +64,35 @@
     <%= line_chart(@timeline.map { |point| [point.closing_date, point.equity] }) %>
   </section>
 
-  <section class="chart-card">
-    <h2 class="chart-title"><%= t("views.dashboard.assets_breakdown") %></h2>
-    <p class="chart-hint"><%= t("views.dashboard.assets_breakdown_hint") %></p>
-    <% if @assets_breakdown.any? %>
-      <%= stacked_area_chart(@dates, @assets_breakdown) %>
-      <%= stacked_area_legend(@assets_breakdown) %>
-    <% else %>
-      <p class="empty-state"><%= t("views.dashboard.no_assets") %></p>
-    <% end %>
-  </section>
+  <%#
+    Actifs et dette sur un seul graphique, de part et d'autre de l'axe. Les deux légendes
+    sont séparées parce que leurs pourcentages ne se comparent pas : chacun se lit sur le
+    total de son propre côté. Une catégorie absente de l'historique n'a pas de légende — le
+    graphique, lui, se dessine dès qu'un des deux côtés porte un montant.
 
+    La légende est confiée au helper : sur un écran large elle se pose à DROITE du graphique,
+    de part et d'autre de l'axe, ce qui suppose de savoir où l'axe tombe — un chiffre que
+    seul mirrored_area_chart connaît.
+  %>
   <section class="chart-card">
-    <h2 class="chart-title"><%= t("views.dashboard.liabilities_breakdown") %></h2>
-    <p class="chart-hint"><%= t("views.dashboard.liabilities_breakdown_hint") %></p>
-    <% if @liabilities_breakdown.any? %>
-      <%= stacked_area_chart(@dates, @liabilities_breakdown) %>
-      <%= stacked_area_legend(@liabilities_breakdown) %>
-    <% else %>
-      <p class="empty-state"><%= t("views.dashboard.no_liabilities") %></p>
+    <h2 class="chart-title"><%= t("views.dashboard.breakdown") %></h2>
+    <p class="chart-hint"><%= t("views.dashboard.breakdown_hint") %></p>
+    <%
+      legend = capture do
+    %>
+      <div class="chart-legend-column chart-legend-column-assets">
+        <h3 class="chart-legend-title"><%= t("views.dashboard.assets_breakdown") %></h3>
+        <%# La pile des actifs monte depuis l'axe : lue de haut en bas, elle s'inverse. %>
+        <%= stacked_area_legend(@assets_breakdown, reverse: true) ||
+              tag.p(t("views.dashboard.no_assets"), class: "empty-state") %>
+      </div>
+      <div class="chart-legend-column chart-legend-column-debt">
+        <h3 class="chart-legend-title"><%= t("views.dashboard.liabilities_breakdown") %></h3>
+        <%= stacked_area_legend(@liabilities_breakdown) ||
+              tag.p(t("views.dashboard.no_liabilities"), class: "empty-state") %>
+      </div>
     <% end %>
+    <%= mirrored_area_chart(@dates, @assets_breakdown, @liabilities_breakdown, legend: legend) ||
+          tag.p(t("views.dashboard.no_breakdown"), class: "empty-state") %>
   </section>
 <% end %>

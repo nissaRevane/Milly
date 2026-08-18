@@ -23,24 +23,23 @@
   --chart-4: #16a34a;
   --chart-5: #d97706;
   --chart-6: #db2777;
-  /* Les aires empilées. Chaque catégorie a sa teinte propre, SAUF l'immobilier : ses
-     sous-catégories partagent une même famille (indigo à l'actif, rouge au passif) et ne se
-     distinguent que par la nuance — assez pour les lire, pas assez pour les dissocier. */
-  --chart-cash: #d97706;
-  --chart-checking: #0891b2;
-  --chart-savings: #16a34a;
-  --chart-investment: #db2777;
-  --chart-receivable: #64748b;
-  --chart-re-1: #312e81;
-  --chart-re-2: #4f46e5;
-  --chart-re-3: #818cf8;
-  --chart-re-4: #c7d2fe;
-  --chart-short-term: #ea580c;
-  --chart-deposit: #7c3aed;
-  --chart-debt-re-1: #7f1d1d;
-  --chart-debt-re-2: #dc2626;
-  --chart-debt-re-3: #f87171;
-  --chart-debt-re-4: #fecaca;
+  /* Le graphique miroir. Le côté se lit avant la légende : l'actif dans les couleurs vives,
+     du vert des liquidités à l'orangé des placements en passant par le jaune-vert puis le
+     jaune de l'immobilier ; la dette entièrement en gris, du presque-noir du fourre-tout au
+     gris clair des crédits. Les sous-catégories de l'immobilier ne se distinguent que par la
+     nuance — assez pour les lire, pas assez pour les dissocier de leur famille. */
+  --chart-liquidity: #15803d;
+  --chart-re-1: #84cc16;
+  --chart-re-2: #b8c916;
+  --chart-re-3: #eab308;
+  --chart-re-4: #fde68a;
+  --chart-investment: #f97316;
+  --chart-short-term: #111827;
+  --chart-deposit: #374151;
+  --chart-debt-re-1: #6b7280;
+  --chart-debt-re-2: #9ca3af;
+  --chart-debt-re-3: #cbd5e1;
+  --chart-debt-re-4: #e2e8f0;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1196,6 +1195,14 @@ a.summary-nav-arrow:hover {
   stroke-width: 1;
 }
 
+/* La ligne du zéro n'est pas une graduation parmi d'autres : c'est l'axe dont la dette
+   descend, et l'œil doit la trouver sans la chercher — d'où le trait plein, par-dessus
+   les bandes. */
+.chart-axis-rule {
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+}
+
 .chart-axis-label {
   fill: var(--color-text-muted);
   font-size: 11px;
@@ -1251,18 +1258,122 @@ a.summary-nav-arrow:hover {
   min-width: 0;
 }
 
-/* Sous une aire empilée, la légende n'est plus à côté d'un anneau : elle prend toute la
-   largeur, en colonnes, plutôt que de s'étirer sur quinze lignes. */
-.chart-area-stack + .chart-legend {
+/* Les deux légendes du miroir : une par côté de l'axe. Elles ne fusionnent pas, leurs
+   pourcentages se lisant chacun sur le total de son propre côté.
+
+   Sous le graphique — écran étroit — elles se posent côte à côte, ou l'une sous l'autre
+   quand même cela ne tient plus, l'actif d'abord, dans l'ordre du graphique. */
+.chart-legend-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0.375rem 1.5rem;
-  margin-top: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
 }
 
+.chart-with-legend-plot {
+  min-width: 0;
+}
+
+/* À partir d'ici, la place ne manque plus en largeur : la légende passe à DROITE et rend au
+   graphique toute la hauteur de la carte — c'est la hauteur, pas la largeur, qui fait lire
+   une variation sur une pile qui pèse un million.
+
+   Les deux légendes se calent alors sur l'axe lui-même : --axis-share, posé par
+   ChartsHelper#mirrored_area_chart, dit à quelle fraction de la hauteur du SVG l'axe tombe.
+   L'actif se colle au bas de la première rangée, la dette en haut de la seconde : chaque
+   liste se retrouve en face des bandes qu'elle nomme.
+
+   La légende est sortie du flux (position: absolute) et non posée à côté en flex : en flex
+   elle compterait dans la hauteur de la ligne, la ligne vaudrait la plus haute des deux, et
+   le partage tomberait à côté de l'axe dès que la légende dépasse le graphique. Hors du flux,
+   la hauteur de la ligne est celle du SVG, et --axis-share vise juste. */
+@media (min-width: 64rem) {
+  .chart-with-legend {
+    position: relative;
+  }
+
+  .chart-with-legend-plot {
+    margin-right: calc(19rem + 1.5rem);
+  }
+
+  .chart-with-legend .chart-legend-columns {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 19rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(min-content, var(--axis-share)) minmax(min-content, 1fr);
+    /* Aucune gouttière entre les deux rangées : la gouttière se prendrait sur la part de
+       l'actif et décalerait sa dernière ligne au-dessus de l'axe. Les deux légendes se
+       touchent donc exactement là où le graphique change de côté. */
+    gap: 0;
+    margin-top: 0;
+  }
+
+  /* L'actif se pose en HAUT de sa rangée : collé à l'axe, il semblait commencer au milieu de
+     nulle part. La dette, elle, garde le haut de la sienne — c'est-à-dire l'axe lui-même. */
+  .chart-with-legend .chart-legend-column-assets {
+    align-self: start;
+  }
+
+  .chart-with-legend .chart-legend-column-debt {
+    align-self: start;
+  }
+
+  /* En colonne étroite, un libellé long passe à la ligne plutôt que d'être coupé : « Crédit
+     immobilier · Résidence secondaire » tronqué ne dit plus de quel bien il parle. Le montant
+     reste aligné sur sa première ligne.
+
+     Tout y est resserré — interligne, gouttières — parce que chaque légende doit tenir dans
+     sa moitié d'axe : trop haute, elle repousse le partage loin de l'axe qu'il doit suivre. */
+  .chart-with-legend .chart-legend,
+  .chart-with-legend .chart-legend-group,
+  .chart-with-legend .chart-legend-sublist {
+    gap: 0.25rem;
+  }
+
+  .chart-with-legend .chart-legend-group-title {
+    font-size: 0.8125rem;
+  }
+
+  .chart-with-legend .chart-legend-item {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+
+  .chart-with-legend .chart-legend-title {
+    margin-bottom: 0.35rem;
+  }
+
+  .chart-with-legend .chart-legend-column-debt .chart-legend-title {
+    padding-top: 0.5rem;
+  }
+
+  .chart-with-legend .chart-legend-label {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .chart-with-legend .chart-legend-share {
+    min-width: 2.5rem;
+  }
+}
+
+.chart-legend-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Alignement en tête de ligne, et non au centre : un libellé sur deux lignes garde alors
+   son montant en face de la famille qu'il chiffre. */
 .chart-legend-item {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: 0.5rem;
   font-size: 0.875rem;
 }
@@ -1271,6 +1382,7 @@ a.summary-nav-arrow:hover {
   flex: 0 0 auto;
   width: 0.75rem;
   height: 0.75rem;
+  margin-top: 0.2rem;
   border-radius: 3px;
   background: var(--color-border);
 }
@@ -1283,9 +1395,41 @@ a.summary-nav-arrow:hover {
   white-space: nowrap;
 }
 
+/* La sous-catégorie sous sa famille, et non à sa suite : deux lignes courtes passent là où
+   « Crédit immobilier · Résidence principale » d'un seul tenant se faisait couper. */
+.chart-legend-sublabel {
+  display: block;
+  color: var(--color-text-muted);
+}
+
+/* Une famille qui montre plusieurs usages les prend sous son nom : le nom s'écrit une fois,
+   en titre, et les usages se listent en retrait. Le retrait vaut la largeur d'une pastille
+   plus sa gouttière — les libellés se décalent, les pastilles restent en colonne. */
+.chart-legend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.chart-legend-group-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.chart-legend-sublist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-left: 0.75rem;
+}
+
+/* Un montant ne se coupe jamais en deux : c'est le libellé qui passe à la ligne quand la
+   colonne se resserre, pas le chiffre. */
 .chart-legend-amount {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .chart-legend-share {
@@ -1293,54 +1437,51 @@ a.summary-nav-arrow:hover {
   color: var(--color-text-muted);
   min-width: 3.5rem;
   text-align: right;
+  white-space: nowrap;
 }
 
-/* Aires empilées : la bande sous le graphique, la pastille dans la légende. Une catégorie
-   tient sa couleur de sa clé (ChartsHelper#series_tone) et non de son rang, pour qu'elle la
-   garde quand une autre disparaît du bilan. */
+/* Le miroir : la bande dans le graphique, la pastille dans la légende. Une catégorie tient
+   sa couleur de sa clé (ChartsHelper#series_tone) et non de son rang, pour qu'elle la garde
+   quand une autre disparaît du bilan. */
 .chart-series-area {
   stroke: var(--color-surface);
   stroke-width: 0.75;
 }
 
-.chart-series-cash,
-.chart-series-checking-account,
-.chart-series-savings-account,
+.chart-series-liquidity,
 .chart-series-financial-investment,
-.chart-series-receivable,
 .chart-series-short-term-debt,
 .chart-series-security-deposit,
 .chart-series-real-estate-primary-residence,
-.chart-series-real-estate-rental,
 .chart-series-real-estate-secondary-residence,
+.chart-series-real-estate-rental,
 .chart-series-real-estate-unassigned,
 .chart-series-real-estate-loan-primary-residence,
-.chart-series-real-estate-loan-rental,
 .chart-series-real-estate-loan-secondary-residence,
+.chart-series-real-estate-loan-rental,
 .chart-series-real-estate-loan-unassigned {
   fill: var(--series-color);
   background: var(--series-color);
 }
 
-.chart-series-cash { --series-color: var(--chart-cash); }
-.chart-series-checking-account { --series-color: var(--chart-checking); }
-.chart-series-savings-account { --series-color: var(--chart-savings); }
+/* Au-dessus de l'axe : les liquidités, puis l'immobilier, puis les placements */
+.chart-series-liquidity { --series-color: var(--chart-liquidity); }
 .chart-series-financial-investment { --series-color: var(--chart-investment); }
-.chart-series-receivable { --series-color: var(--chart-receivable); }
 
-/* L'immobilier de l'actif : une seule teinte, quatre nuances, dans l'ordre d'empilement */
+/* L'immobilier de l'actif : quatre nuances du jaune-vert au jaune, dans l'ordre d'empilement */
 .chart-series-real-estate-primary-residence { --series-color: var(--chart-re-1); }
-.chart-series-real-estate-rental { --series-color: var(--chart-re-2); }
-.chart-series-real-estate-secondary-residence { --series-color: var(--chart-re-3); }
+.chart-series-real-estate-secondary-residence { --series-color: var(--chart-re-2); }
+.chart-series-real-estate-rental { --series-color: var(--chart-re-3); }
 .chart-series-real-estate-unassigned { --series-color: var(--chart-re-4); }
 
+/* Sous l'axe : le fourre-tout du passif, puis les dépôts de garantie */
 .chart-series-short-term-debt { --series-color: var(--chart-short-term); }
 .chart-series-security-deposit { --series-color: var(--chart-deposit); }
 
-/* Les crédits immobiliers, même découpage dans la famille du passif */
+/* Les crédits immobiliers, du gris moyen de la résidence principale au gris clair du locatif */
 .chart-series-real-estate-loan-primary-residence { --series-color: var(--chart-debt-re-1); }
-.chart-series-real-estate-loan-rental { --series-color: var(--chart-debt-re-2); }
-.chart-series-real-estate-loan-secondary-residence { --series-color: var(--chart-debt-re-3); }
+.chart-series-real-estate-loan-secondary-residence { --series-color: var(--chart-debt-re-2); }
+.chart-series-real-estate-loan-rental { --series-color: var(--chart-debt-re-3); }
 .chart-series-real-estate-loan-unassigned { --series-color: var(--chart-debt-re-4); }
 
 /* La palette : une part de l'anneau la porte en stroke, une pastille de légende en fond */

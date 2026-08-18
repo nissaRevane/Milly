@@ -572,44 +572,73 @@ RSpec.describe BalanceSheet, type: :model do
   describe ".assets_breakdown_for" do
     let(:user) { create(:user) }
 
-    it "gives one series per type, in the enum order, with a value per balance sheet" do
+    it "gives one series per grande famille, in a stable order, with a value per balance sheet" do
       livret = create(:asset, user: user, asset_type: :savings_account)
       cash = create(:asset, user: user, asset_type: :cash)
+      pea = create(:asset, user: user, asset_type: :financial_investment)
       first = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
       second = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
       create(:balance_sheet_asset, balance_sheet: first, asset: livret, value: 10_000)
       create(:balance_sheet_asset, balance_sheet: first, asset: cash, value: 500)
       create(:balance_sheet_asset, balance_sheet: second, asset: livret, value: 12_000)
+      create(:balance_sheet_asset, balance_sheet: second, asset: pea, value: 8_000)
 
       series = BalanceSheet.assets_breakdown_for([first, second])
 
-      expect(series.map(&:key)).to eq(%w[cash savings_account])
-      expect(series.map(&:values)).to eq([[500, 0], [10_000, 12_000]])
+      expect(series.map(&:key)).to eq(%w[liquidity financial_investment])
+      expect(series.map(&:values)).to eq([[10_500, 12_000], [0, 8_000]])
+    end
+
+    # Les types qui répondent tous à la même question — de quoi dispose-t-on tout de suite —
+    # tiennent dans une seule bande. Le graphique en compte trois du côté de l'actif, pas six.
+    it "gathers the cash, the comptes, the livrets and the créances into one liquidity series" do
+      sheet = create(:balance_sheet, user: user)
+      %i[cash checking_account savings_account receivable].each_with_index do |type, index|
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: type),
+                                     value: 1_000 * (index + 1))
+      end
+
+      series = BalanceSheet.assets_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to eq(["liquidity"])
+      expect(series.first.label).to eq("Liquidités")
+      expect(series.first.values).to eq([10_000])
     end
 
     # L'éclatement par usage est la raison d'être de la méthode : un patrimoine immobilier
     # lu d'un seul tenant ne dit pas lequel des biens a bougé.
+    # L'ordre des usages est celui du dégradé qui les colore — résidence principale, puis
+    # secondaire, puis locatif — et non celui de l'enum : la nuance ne peut dire de quel usage
+    # il s'agit que si le rang, lui, ne bouge jamais.
     it "splits the immobilier by usage of the bien, unassigned last" do
       sheet = create(:balance_sheet, user: user)
       rental = create(:property, user: user, name: "Locatif", usage: :rental)
       home = create(:property, user: user, name: "Maison", usage: :primary_residence)
+      cabin = create(:property, user: user, name: "Chalet", usage: :secondary_residence)
       orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
       create(:balance_sheet_asset, balance_sheet: sheet, asset: rental.real_estate_asset, value: 200_000)
       create(:balance_sheet_asset, balance_sheet: sheet, asset: home.real_estate_asset, value: 300_000)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: cabin.real_estate_asset, value: 150_000)
       create(:balance_sheet_asset, balance_sheet: sheet, asset: orphan, value: 40_000)
 
       series = BalanceSheet.assets_breakdown_for([sheet])
 
       expect(series.map(&:key)).to eq(%w[
-        real_estate:primary_residence real_estate:rental real_estate:unassigned
+        real_estate:primary_residence real_estate:secondary_residence
+        real_estate:rental real_estate:unassigned
       ])
-      expect(series.map(&:values).flatten).to eq([300_000, 200_000, 40_000])
-      expect(series.first.label).to eq("Immobilier · Résidence principale")
+      expect(series.map(&:values).flatten).to eq([300_000, 150_000, 200_000, 40_000])
+      # Famille et usage restent séparés — la légende les met sur deux lignes — et se
+      # recomposent pour l'infobulle de la bande.
+      expect(series.first.label).to eq("Immobilier")
+      expect(series.first.sublabel).to eq("Résidence principale")
+      expect(series.first.full_label).to eq("Immobilier · Résidence principale")
     end
 
     # Seul l'immobilier est éclaté : regrouper toutes les lignes d'un bien est le travail de
     # l'onglet Immobilier, pas celui d'une ventilation par catégorie.
-    it "leaves a non-immobilier line attached to a bien under its own type" do
+    it "leaves a non-immobilier line attached to a bien under its own category" do
       sheet = create(:balance_sheet, user: user)
       property = create(:property, user: user, name: "Maison", usage: :primary_residence)
       account = create(:asset, user: user, asset_type: :checking_account, property: property)
@@ -617,8 +646,8 @@ RSpec.describe BalanceSheet, type: :model do
 
       series = BalanceSheet.assets_breakdown_for([sheet])
 
-      expect(series.map(&:key)).to include("checking_account")
-      expect(series.map(&:key)).not_to include("checking_account:primary_residence")
+      expect(series.map(&:key)).to eq(["liquidity"])
+      expect(series.map(&:key)).not_to include("liquidity:primary_residence")
     end
 
     it "sums two biens of the same usage into a single series" do
@@ -675,8 +704,10 @@ RSpec.describe BalanceSheet, type: :model do
 
       series = BalanceSheet.liabilities_breakdown_for([sheet])
 
-      expect(series.map(&:key)).to eq(%w[real_estate_loan:rental security_deposit])
-      expect(series.first.label).to eq("Crédit immobilier · Locatif")
+      # L'ordre part de l'axe : le fourre-tout d'abord, les crédits immobiliers en dernier.
+      expect(series.map(&:key)).to eq(%w[security_deposit real_estate_loan:rental])
+      expect(series.last.full_label).to eq("Crédit immobilier · Locatif")
+      expect(series.first.sublabel).to be_nil
     end
 
     it "adds up to the total the balance sheet reports" do

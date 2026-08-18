@@ -64,24 +64,61 @@ class BalanceSheet < ApplicationRecord
   end
 
   # Une catégorie de la ventilation dans le temps : un montant par bilan, dans l'ordre où
-  # les bilans ont été fournis. +key+ est stable et nomme la teinte que le CSS lui donne ;
-  # +label+ est ce que la légende affiche. Voir .assets_breakdown_for.
-  BreakdownSeries = Struct.new(:key, :label, :values, keyword_init: true) do
+  # les bilans ont été fournis. +key+ est stable et nomme la teinte que le CSS lui donne.
+  #
+  # Le libellé arrive en deux morceaux : +label+ nomme la grande famille, +sublabel+ l'usage
+  # du bien quand la catégorie est éclatée, nil sinon. Les deux restent séparés jusqu'au bout
+  # parce que la légende les met sur deux lignes — recomposer puis recouper une chaîne
+  # traduite ferait dépendre la mise en page d'un séparateur. Voir .assets_breakdown_for.
+  BreakdownSeries = Struct.new(:key, :label, :sublabel, :values, keyword_init: true) do
     def blank_everywhere?
       values.all?(&:zero?)
     end
+
+    # Le libellé d'un seul tenant, là où il n'y a qu'une ligne à donner : l'infobulle d'une
+    # bande du graphique.
+    def full_label
+      return label if sublabel.nil?
+
+      I18n.t("views.shared.breakdown_split", type: label, usage: sublabel)
+    end
   end
 
-  # Le type d'actif et le type de passif dont la ventilation est éclatée par usage du bien.
-  # Un patrimoine immobilier lu d'un seul tenant ne dit pas ce qui bouge : une résidence
-  # principale, un locatif et une résidence secondaire ne se pilotent pas de la même façon,
-  # et la courbe doit pouvoir les séparer — discrètement, par des nuances d'une même teinte.
+  # Les catégories de la ventilation dans le temps, dans l'ordre où elles s'empilent en
+  # partant de l'axe. Trois familles à l'actif, et non une bande par type d'enum : un compte
+  # courant, un livret et une créance répondent tous à la même question — de quoi dispose-t-on
+  # tout de suite — et six bandes fines encombraient la courbe plus qu'elles ne la disaient.
   #
-  # Seul ce type-là est éclaté. Un compte courant rattaché à un bien reste un compte courant :
-  # regrouper toutes les lignes d'un bien est le travail de l'onglet Immobilier
+  # +split+ marque la seule catégorie qui garde son détail : l'immobilier, éclaté par usage du
+  # bien, parce qu'une résidence principale, une secondaire et un locatif ne se pilotent pas
+  # de la même façon. Le détail s'y lit à la nuance, jamais à la teinte.
+  #
+  # Seule cette catégorie-là est éclatée. Un compte courant rattaché à un bien reste une
+  # liquidité : regrouper toutes les lignes d'un bien est le travail de l'onglet Immobilier
   # (voir #property_positions), pas celui d'une ventilation par catégorie.
-  SPLIT_ASSET_TYPE = "real_estate".freeze
-  SPLIT_LIABILITY_TYPE = "real_estate_loan".freeze
+  ASSET_CATEGORIES = [
+    { key: "liquidity", types: %w[cash checking_account savings_account receivable] },
+    { key: "real_estate", types: %w[real_estate], split: true },
+    { key: "financial_investment", types: %w[financial_investment] }
+  ].freeze
+
+  # Le passif garde ses catégories d'origine, ordonnées en partant de l'axe : le fourre-tout
+  # d'abord — ce qui n'est adossé à aucun bien — puis les dépôts de garantie, puis les crédits
+  # immobiliers et leur détail par usage.
+  LIABILITY_CATEGORIES = [
+    { key: "short_term_debt", types: %w[short_term_debt] },
+    { key: "security_deposit", types: %w[security_deposit] },
+    { key: "real_estate_loan", types: %w[real_estate_loan], split: true }
+  ].freeze
+
+  # L'ordre des usages à l'intérieur de l'immobilier. Il ne suit pas celui de l'enum mais celui
+  # du dégradé qui les colore, de la résidence principale au locatif : la nuance ne peut dire
+  # de quel usage il s'agit que si le rang, lui, ne bouge jamais.
+  #
+  # La liste ordonne, elle ne filtre pas (voir .breakdown_labels) : un usage ajouté à l'enum
+  # sans passer par ici se range en queue, sans teinte attitrée, plutôt que de disparaître en
+  # silence d'une courbe qui prétend montrer tout le patrimoine.
+  BREAKDOWN_USAGE_ORDER = %w[primary_residence secondary_residence rental].freeze
 
   # La sous-catégorie des lignes immobilières qu'aucun bien ne porte encore.
   UNASSIGNED_USAGE = "unassigned".freeze
@@ -158,8 +195,7 @@ class BalanceSheet < ApplicationRecord
       type_column: "assets.asset_type",
       amount_sql: BalanceSheetAsset::OWNED_VALUE_SQL,
       types: Asset.asset_types,
-      split_type: SPLIT_ASSET_TYPE,
-      label: Asset.method(:asset_type_label_for)
+      categories: ASSET_CATEGORIES
     )
   end
 
@@ -171,8 +207,7 @@ class BalanceSheet < ApplicationRecord
       type_column: "liabilities.liability_type",
       amount_sql: BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL,
       types: Liability.liability_types,
-      split_type: SPLIT_LIABILITY_TYPE,
-      label: Liability.method(:liability_type_label_for)
+      categories: LIABILITY_CATEGORIES
     )
   end
 
@@ -373,10 +408,14 @@ class BalanceSheet < ApplicationRecord
   #
   # Les enums sont regroupés sur une colonne SQL qualifiée : selon la jointure, ActiveRecord
   # rend le nom déserialisé ou l'entier brut, d'où le passage par .enum_name.
-  def self.breakdown_for(sheets, scope:, type_column:, amount_sql:, types:, split_type:, label:)
+  def self.breakdown_for(sheets, scope:, type_column:, amount_sql:, types:, categories:)
     sheets = sheets.to_a
     return [] if sheets.empty?
 
+    # Chaque type d'enum tombe dans une catégorie et une seule. Le .fetch plus bas n'a pas de
+    # repli : un type ajouté à l'enum sans être rangé ici doit casser la suite de tests, pas
+    # disparaître en silence d'une courbe qui prétend montrer tout le patrimoine.
+    category_of = categories.flat_map { |category| category[:types].map { |type| [type, category] } }.to_h
     index_of = sheets.each_with_index.to_h { |sheet, index| [sheet.id, index] }
     amounts = Hash.new { |hash, key| hash[key] = Array.new(sheets.size, 0) }
 
@@ -384,21 +423,22 @@ class BalanceSheet < ApplicationRecord
       .group(:balance_sheet_id, type_column, "properties.usage")
       .sum(amount_sql)
       .each do |(sheet_id, type_value, usage_value), amount|
-        key = breakdown_key(enum_name(types, type_value), enum_name(Property.usages, usage_value), split_type)
+        category = category_of.fetch(enum_name(types, type_value))
+        key = breakdown_key(category, enum_name(Property.usages, usage_value))
         amounts[key][index_of.fetch(sheet_id)] += amount
       end
 
-    breakdown_categories(types, split_type, label)
+    breakdown_labels(categories)
       .select { |key, _| amounts.key?(key) }
-      .map { |key, name| BreakdownSeries.new(key: key, label: name, values: amounts[key]) }
+      .map { |key, name, usage| BreakdownSeries.new(key: key, label: name, sublabel: usage, values: amounts[key]) }
       .reject(&:blank_everywhere?)
   end
   private_class_method :breakdown_for
 
-  def self.breakdown_key(type, usage, split_type)
-    return type unless type == split_type
+  def self.breakdown_key(category, usage)
+    return category[:key] unless category[:split]
 
-    "#{type}:#{usage || UNASSIGNED_USAGE}"
+    "#{category[:key]}:#{usage || UNASSIGNED_USAGE}"
   end
   private_class_method :breakdown_key
 
@@ -413,22 +453,23 @@ class BalanceSheet < ApplicationRecord
   end
   private_class_method :enum_name
 
-  # Les catégories dans l'ordre où elles s'empilent, de bas en haut : celui des enums, le
-  # type éclaté laissant place à ses usages puis au bucket non rattaché. Un ordre figé, et
-  # surtout pas déduit des montants : une catégorie qui changerait de rang — donc de
-  # couleur — d'un bilan à l'autre rendrait la courbe illisible.
-  def self.breakdown_categories(types, split_type, label)
-    types.keys.flat_map do |type|
-      next [[type, label.call(type)]] unless type == split_type
+  # Les [clé, famille, usage] de chaque bande, dans l'ordre où elles s'empilent en partant de
+  # l'axe : celui des catégories, la catégorie éclatée laissant place à ses usages puis au
+  # bucket non rattaché. Un ordre figé, et surtout pas déduit des montants : une catégorie qui
+  # changerait de rang — donc de couleur — d'un bilan à l'autre rendrait la courbe illisible.
+  def self.breakdown_labels(categories)
+    categories.flat_map do |category|
+      label = I18n.t("views.shared.breakdown_categories.#{category[:key]}")
+      next [[category[:key], label, nil]] unless category[:split]
 
-      usages = Property.usages.keys.map { |usage| [usage, Property.usage_label_for(usage)] }
+      usages = (BREAKDOWN_USAGE_ORDER | Property.usages.keys).map { |usage| [usage, Property.usage_label_for(usage)] }
       usages << [UNASSIGNED_USAGE, I18n.t("views.shared.unassigned_property")]
       usages.map do |usage, usage_label|
-        ["#{type}:#{usage}", I18n.t("views.shared.breakdown_split", type: label.call(type), usage: usage_label)]
+        ["#{category[:key]}:#{usage}", label, usage_label]
       end
     end
   end
-  private_class_method :breakdown_categories
+  private_class_method :breakdown_labels
 
   def usage_total(positions)
     gross = positions.sum(&:gross)

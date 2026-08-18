@@ -338,10 +338,11 @@ fr:
       real_estate_net: "Valeur nette : %{amount}"
       equity_chart: Évolution du patrimoine net
       equity_chart_hint: Un point par bilan. L'échelle suit les montants et ne part pas de zéro.
-      assets_breakdown: Évolution des actifs
-      assets_breakdown_hint: Par catégorie, l'immobilier détaillé par usage du bien.
-      liabilities_breakdown: Évolution de la dette
-      liabilities_breakdown_hint: Par catégorie, les crédits immobiliers détaillés par usage du bien.
+      breakdown: Évolution des actifs et de la dette
+      breakdown_hint: "Les actifs au-dessus de l'axe, la dette en dessous, à la même échelle : l'écart entre les deux fronts est le patrimoine net. L'immobilier est détaillé par usage du bien."
+      assets_breakdown: Actifs
+      liabilities_breakdown: Dette
+      no_breakdown: Aucun actif ni dette dans l'historique.
       no_assets: Aucun actif dans l'historique.
       no_liabilities: Aucune dette dans l'historique.
     pages:
@@ -354,6 +355,16 @@ fr:
       # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
       breakdown_split: "%{type} · %{usage}"
       unassigned_property: Non rattaché
+      # Les grandes familles du graphique miroir du tableau de bord. Elles regroupent
+      # plusieurs types d'enum et portent donc leur propre vocabulaire — voir
+      # BalanceSheet::ASSET_CATEGORIES et ::LIABILITY_CATEGORIES.
+      breakdown_categories:
+        liquidity: Liquidités
+        real_estate: Immobilier
+        financial_investment: Placements financiers
+        short_term_debt: Dettes diverses
+        security_deposit: Dépôts de garantie
+        real_estate_loan: Crédit immobilier
       # Scope name pinned by Property.usage_label_for → EnumLabel.for("property_usages", …)
       property_usages:
         primary_residence: Résidence principale

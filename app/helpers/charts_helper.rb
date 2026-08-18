@@ -16,6 +16,12 @@ module ChartsHelper
   CHART_HEIGHT = 240
   CHART_PADDING = { top: 14, right: 16, bottom: 26, left: 78 }.freeze
 
+  # Le miroir est plus haut que les autres : il empile deux piles de part et d'autre de son
+  # axe, et c'est la hauteur — pas la largeur — qui laisse lire une variation de quelques
+  # milliers d'euros sur une pile qui en pèse un million. Le SVG gardant le rapport de son
+  # viewBox, une hauteur ne s'obtient pas en CSS : elle se prend ici, dans le repère.
+  MIRROR_HEIGHT = 500
+
   # Le nombre de lignes horizontales, graduations comprises : 4 lignes, donc 3 intervalles.
   GRID_LINE_COUNT = 4
 
@@ -54,39 +60,55 @@ module ChartsHelper
     end
   end
 
-  # Une aire empilée : une bande par catégorie, du bas vers le haut, dont la somme dessine
-  # le total. +dates+ donne l'axe, +series+ est une liste de BalanceSheet::BreakdownSeries.
+  # Le miroir du tableau de bord : les actifs empilés au-dessus de l'axe des abscisses, la
+  # dette empilée en dessous, tête en bas. +dates+ donne l'axe, +up_series+ et +down_series+
+  # sont des listes de BalanceSheet::BreakdownSeries.
   #
-  # L'ordre de +series+ est celui de l'empilement et vient du modèle, où il est figé : une
-  # catégorie qui changerait de rang d'un bilan à l'autre ferait onduler la courbe pour une
-  # raison qui n'est pas dans les chiffres. L'échelle part de zéro — contrairement à la
-  # courbe du patrimoine net, une aire empilée n'a de sens que posée sur son socle.
-  def stacked_area_chart(dates, series)
-    return if dates.empty? || series.empty?
+  # Deux graphiques côte à côte laissaient le rapprochement à l'œil du lecteur, chacun avec
+  # sa propre échelle. Ici les deux côtés partagent une seule échelle — sans quoi une bande
+  # deux fois plus haute ne vaudrait pas deux fois plus d'argent — et l'écart entre les deux
+  # fronts se lit directement : c'est le patrimoine net.
+  #
+  # L'ordre de chaque liste est celui de l'empilement en partant de l'axe, et vient du modèle
+  # où il est figé : une catégorie qui changerait de rang d'un bilan à l'autre ferait onduler
+  # la courbe pour une raison qui n'est pas dans les chiffres.
+  #
+  # +legend+ est rendu À CÔTÉ du graphique, dans le même bloc, parce que sa mise en page
+  # dépend d'un chiffre que seul ce helper connaît : la hauteur à laquelle tombe l'axe. Elle
+  # sort en --axis-share, et le CSS s'en sert pour poser la légende des actifs au-dessus de
+  # l'axe et celle de la dette en dessous, chacune en face de ses bandes.
+  def mirrored_area_chart(dates, up_series, down_series, legend: nil)
+    return if dates.empty?
 
-    high = dates.each_index.map { |index| series.sum { |serie| serie.values[index].to_f } }.max
-    return if high <= 0
+    peak = stack_peak(dates, up_series)
+    depth = stack_peak(dates, down_series)
+    return if peak <= 0 && depth <= 0
 
+    low, high, step = mirrored_scale(-depth, peak)
+    height = MIRROR_HEIGHT
     # Un seul bilan ne dessine pas d'aire : sa valeur est reportée aux deux bords du cadre,
     # ce qui donne une bande à plat — la composition du jour, sans histoire à raconter.
     single = dates.size == 1
     xs = single ? [CHART_PADDING[:left], CHART_WIDTH - CHART_PADDING[:right]] : dates.each_index.map { |index| chart_x(index, dates.size) }
-    lower = Array.new(xs.size, 0.0)
 
-    areas = series.map do |serie|
-      values = single ? Array.new(2, serie.values.first.to_f) : serie.values.map(&:to_f)
-      upper = values.each_with_index.map { |value, index| lower[index] + value }
-      band = tag.path(class: "chart-series-area #{series_tone(serie.key)}",
-                      d: band_path(xs, lower, upper, high)) { tag.title(serie.label) }
-      lower = upper
-      band
-    end
-
-    chart_svg(class: "chart chart-area-stack") do
+    chart = chart_svg(class: "chart chart-area-mirror", height: height) do
       safe_join([
-        chart_grid(0, high),
-        safe_join(areas),
-        chart_x_labels(dates, single ? [CHART_PADDING[:left] + plot_width / 2.0] : xs)
+        chart_grid_at(grid_values(low, high, step), low, high, height),
+        safe_join(stacked_bands(up_series, xs, low, high, height: height, single: single, sign: 1)),
+        safe_join(stacked_bands(down_series, xs, low, high, height: height, single: single, sign: -1)),
+        # L'axe passe APRÈS les bandes : tracé avec la grille, il disparaîtrait sous la
+        # première d'entre elles, et c'est précisément la ligne que l'œil doit trouver.
+        chart_axis_rule(low, high, height),
+        chart_x_labels(dates, single ? [CHART_PADDING[:left] + plot_width / 2.0] : xs, height)
+      ])
+    end
+    return chart if legend.nil?
+
+    tag.div(class: "chart-with-legend") do
+      safe_join([
+        tag.div(chart, class: "chart-with-legend-plot"),
+        tag.div(legend, class: "chart-legend-columns",
+                        style: "--axis-share: #{coord(chart_y(0, low, high, height) / height * 100)}%")
       ])
     end
   end
@@ -95,12 +117,17 @@ module ChartsHelper
   # où l'on en est, la courbe raconte comment on y est arrivé. Une catégorie retombée à zéro
   # y reste listée — sa bande est encore visible à gauche du graphique, et sa couleur doit
   # pouvoir se lire quelque part.
-  def stacked_area_legend(series)
+  #
+  # +series+ arrive dans l'ordre d'empilement, en partant de l'axe ; la légende, elle, se lit
+  # de haut en bas. Les deux coïncident sous l'axe et s'inversent au-dessus — d'où +reverse+,
+  # que la pile des actifs active pour que chaque ligne tombe en face de sa bande.
+  def stacked_area_legend(series, reverse: false)
     total = series.sum { |serie| serie.values.last.to_f }
     return if total <= 0
 
-    chart_legend(series.map { |serie|
-      { label: serie.label, amount: serie.values.last, tone: series_tone(serie.key) }
+    ordered = reverse ? series.reverse : series
+    chart_legend(ordered.map { |serie|
+      { label: serie.label, sublabel: serie.sublabel, amount: serie.values.last, tone: series_tone(serie.key) }
     }, total)
   end
 
@@ -190,16 +217,18 @@ module ChartsHelper
 
   private
 
-  def chart_svg(options, &block)
-    tag.svg(**options, "viewBox" => "0 0 #{CHART_WIDTH} #{CHART_HEIGHT}", role: "img", &block)
+  # +height+ est un mot-clé nommé parmi les autres attributs, d'où le **options : un
+  # chart_svg(class: "…") sans accolades doit continuer à passer par là intact.
+  def chart_svg(height: CHART_HEIGHT, **options, &block)
+    tag.svg(**options, "viewBox" => "0 0 #{CHART_WIDTH} #{height}", role: "img", &block)
   end
 
   def plot_width
     CHART_WIDTH - CHART_PADDING[:left] - CHART_PADDING[:right]
   end
 
-  def plot_height
-    CHART_HEIGHT - CHART_PADDING[:top] - CHART_PADDING[:bottom]
+  def plot_height(height = CHART_HEIGHT)
+    height - CHART_PADDING[:top] - CHART_PADDING[:bottom]
   end
 
   # Les bornes verticales : les données, élargies de 8 % pour que la courbe ne touche pas
@@ -219,17 +248,24 @@ module ChartsHelper
     CHART_PADDING[:left] + index * plot_width / (count - 1).to_f
   end
 
-  def chart_y(value, low, high)
+  def chart_y(value, low, high, height = CHART_HEIGHT)
     span = (high - low).to_f
-    return CHART_HEIGHT - CHART_PADDING[:bottom] if span.zero?
+    return height - CHART_PADDING[:bottom] if span.zero?
 
-    CHART_HEIGHT - CHART_PADDING[:bottom] - (value - low) / span * plot_height
+    height - CHART_PADDING[:bottom] - (value - low) / span * plot_height(height)
   end
 
   def chart_grid(low, high)
-    lines = (0...GRID_LINE_COUNT).map do |index|
-      value = low + (high - low) * index / (GRID_LINE_COUNT - 1).to_f
-      y = chart_y(value, low, high)
+    values = (0...GRID_LINE_COUNT).map { |index| low + (high - low) * index / (GRID_LINE_COUNT - 1).to_f }
+
+    chart_grid_at(values, low, high)
+  end
+
+  # La grille tracée à des montants choisis plutôt qu'à intervalles réguliers entre les
+  # bornes.
+  def chart_grid_at(values, low, high, height = CHART_HEIGHT)
+    safe_join(values.map { |value|
+      y = chart_y(value, low, high, height)
 
       safe_join([
         tag.line(class: "chart-grid-line",
@@ -240,20 +276,74 @@ module ChartsHelper
                  x: CHART_PADDING[:left] - 8, y: coord(y + 4),
                  "text-anchor" => "end")
       ])
-    end
+    })
+  end
 
-    safe_join(lines)
+  # La ligne de flottaison du miroir : ce qu'on possède au-dessus, ce qu'on doit en dessous.
+  # Elle n'est pas une graduation parmi d'autres, et se dessine donc à part de la grille.
+  def chart_axis_rule(low, high, height)
+    y = coord(chart_y(0, low, high, height))
+
+    tag.line(class: "chart-axis-rule",
+             x1: CHART_PADDING[:left], y1: y,
+             x2: CHART_WIDTH - CHART_PADDING[:right], y2: y)
+  end
+
+  # Le sommet d'une pile : le plus grand total sur l'ensemble des bilans, et non la plus
+  # grande bande — c'est la somme empilée qui doit tenir dans le cadre.
+  def stack_peak(dates, series)
+    return 0.0 if series.empty?
+
+    dates.each_index.map { |index| series.sum { |serie| serie.values[index].to_f } }.max
+  end
+
+  # Les bandes d'une pile, de l'axe vers l'extérieur. +sign+ vaut 1 pour l'actif et -1 pour
+  # la dette, qui s'empile donc vers le bas : c'est la seule différence entre les deux côtés.
+  def stacked_bands(series, xs, low, high, height:, single:, sign:)
+    edge = Array.new(xs.size, 0.0)
+
+    series.map do |serie|
+      values = single ? Array.new(xs.size, serie.values.first.to_f) : serie.values.map(&:to_f)
+      far = values.each_with_index.map { |value, index| edge[index] + sign * value }
+      band = tag.path(class: "chart-series-area #{series_tone(serie.key)}",
+                      d: band_path(xs, edge, far, low, high, height)) { tag.title(serie.full_label) }
+      edge = far
+      band
+    end
+  end
+
+  # Les bornes du miroir, arrondies au multiple de graduation qui les englobe, et le pas
+  # retenu. Zéro est forcément un multiple du pas : l'axe des abscisses tombe donc exactement
+  # sur une ligne de la grille, et non entre deux — ce qui est tout l'intérêt du miroir.
+  def mirrored_scale(low, high)
+    step = grid_step(high - low)
+
+    [(low / step).floor * step, (high / step).ceil * step, step]
+  end
+
+  # Un pas « rond » — 1, 2, 2,5 ou 5 fois une puissance de dix — assez grand pour que la
+  # grille ne dépasse pas les GRID_LINE_COUNT intervalles visés.
+  def grid_step(span)
+    raw = span / (GRID_LINE_COUNT - 1).to_f
+    return 1.0 if raw <= 0
+
+    magnitude = 10**Math.log10(raw).floor
+    [1, 2, 2.5, 5, 10].map { |factor| factor * magnitude }.find { |step| step >= raw }
+  end
+
+  def grid_values(low, high, step)
+    ((low / step).round..(high / step).round).map { |multiple| multiple * step }
   end
 
   # Trois dates suffisent à situer l'axe : la première, la dernière et celle du milieu. Une
   # étiquette par bilan se chevaucherait dès la dixième clôture.
-  def chart_x_labels(dates, xs)
+  def chart_x_labels(dates, xs, height = CHART_HEIGHT)
     indexes = [0, dates.size / 2, dates.size - 1].uniq
 
     safe_join(indexes.map { |index|
       tag.text(l(dates[index], format: :chart_axis),
                class: "chart-axis-label",
-               x: coord(xs[index]), y: CHART_HEIGHT - 8,
+               x: coord(xs[index]), y: height - 8,
                "text-anchor" => anchor_for(index, dates.size))
     })
   end
@@ -284,33 +374,78 @@ module ChartsHelper
   # La légende partagée par l'anneau et l'aire empilée : une pastille, un libellé, un
   # montant, la part qu'il représente. +total+ est passé plutôt que redérivé, les deux
   # graphiques ne le lisant pas sur le même ensemble de montants.
+  # Les montants y sont arrondis à l'euro et les parts à l'unité : une légende dit un ordre
+  # de grandeur, la précision au centime se lit dans les tableaux du bilan. Les centimes
+  # coûtaient ici une largeur que la colonne n'a pas.
+  #
+  # Une famille qui montre PLUSIEURS de ses usages passe en titre de section, ses usages
+  # listés dessous : « Immobilier » écrit une fois plutôt que trois. Seule reste à part la
+  # famille qui n'en montre qu'un — un titre pour une seule ligne n'apprendrait rien, et son
+  # usage se met alors sous elle (voir #legend_item).
   def chart_legend(items, total)
     tag.ul(class: "chart-legend") do
-      safe_join(items.map { |item|
-        tag.li(class: "chart-legend-item") do
+      safe_join(legend_groups(items).map { |group|
+        next legend_item(group.first, total) if group.one?
+
+        tag.li(class: "chart-legend-group") do
           safe_join([
-            tag.span(class: "chart-legend-swatch #{item[:tone]}"),
-            tag.span(item[:label], class: "chart-legend-label"),
-            tag.span(number_to_currency(item[:amount]), class: "chart-legend-amount"),
-            tag.span(number_to_percentage(item[:amount].to_f / total * 100, precision: 1),
-                     class: "chart-legend-share")
+            tag.span(group.first[:label], class: "chart-legend-group-title"),
+            tag.ul(class: "chart-legend-sublist") do
+              safe_join(group.map { |item| legend_item(item, total, under_title: true) })
+            end
           ])
         end
       })
     end
   end
 
-  # Le contour d'une bande : le bord haut de gauche à droite, puis le bord bas en sens
-  # inverse pour refermer le polygone.
-  def band_path(xs, lower, upper, high)
-    top = xs.each_with_index.map { |x, index|
-      "#{index.zero? ? 'M' : 'L'} #{coord(x)} #{coord(chart_y(upper[index], 0, high))}"
+  # Les entrées regroupées par famille. Le découpage se fait sur des voisins — jamais sur un
+  # tri — parce que l'ordre de la légende est celui des bandes : regrouper deux usages séparés
+  # par une autre catégorie les décrocherait de la pile qu'ils nomment. Le modèle range déjà
+  # les usages d'une même famille côte à côte, dans les deux sens de lecture.
+  def legend_groups(items)
+    items.chunk_while { |before, after|
+      before[:sublabel] && after[:sublabel] && before[:label] == after[:label]
     }
-    bottom = xs.each_with_index.reverse_each.map { |x, index|
-      "L #{coord(x)} #{coord(chart_y(lower[index], 0, high))}"
+  end
+
+  def legend_item(item, total, under_title: false)
+    tag.li(class: "chart-legend-item") do
+      safe_join([
+        tag.span(class: "chart-legend-swatch #{item[:tone]}"),
+        tag.span(legend_label(item, under_title), class: "chart-legend-label"),
+        tag.span(number_to_currency(item[:amount], precision: 0), class: "chart-legend-amount"),
+        tag.span(number_to_percentage(item[:amount].to_f / total * 100, precision: 0),
+                 class: "chart-legend-share")
+      ])
+    end
+  end
+
+  # Sous un titre de section, la famille est déjà écrite : il ne reste que l'usage. Hors
+  # section, les deux tiennent sur deux lignes courtes — l'espace n'y est pas décoratif, la
+  # sous-catégorie est un bloc donc invisible à l'écran, mais sans lui le texte accessible
+  # dirait « ImmobilierLocatif ».
+  def legend_label(item, under_title)
+    return item[:sublabel] if under_title
+
+    safe_join([
+      item[:label],
+      item[:sublabel] && tag.span(item[:sublabel], class: "chart-legend-sublabel")
+    ].compact, " ")
+  end
+
+  # Le contour d'une bande : le bord extérieur de gauche à droite, puis le bord intérieur en
+  # sens inverse pour refermer le polygone. Les deux bords sont des montants quelconques,
+  # +low+ et +high+ étant les bornes de l'échelle — sous l'axe, +far+ est plus bas que +near+.
+  def band_path(xs, near, far, low, high, height)
+    outer = xs.each_with_index.map { |x, index|
+      "#{index.zero? ? 'M' : 'L'} #{coord(x)} #{coord(chart_y(far[index], low, high, height))}"
+    }
+    inner = xs.each_with_index.reverse_each.map { |x, index|
+      "L #{coord(x)} #{coord(chart_y(near[index], low, high, height))}"
     }
 
-    (top + bottom + ["Z"]).join(" ")
+    (outer + inner + ["Z"]).join(" ")
   end
 
   # La classe qui porte la couleur d'une catégorie. Elle se déduit de la clé et non d'un

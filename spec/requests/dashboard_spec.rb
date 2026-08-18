@@ -5,8 +5,20 @@ RSpec.describe "Dashboard", type: :request do
 
   before { sign_in user }
 
-  def currency(amount)
-    ActionController::Base.helpers.number_to_currency(amount)
+  def currency(amount, **options)
+    ActionController::Base.helpers.number_to_currency(amount, **options)
+  end
+
+  # Les libellés d'une des deux légendes, dans l'ordre où ils se lisent. Famille et usage
+  # étant sur deux lignes, le texte les recolle : on le normalise pour le comparer.
+  def legend_labels(doc, selector)
+    doc.at_css(selector).css(".chart-legend-label").map { |label| label.text.squish }
+  end
+
+  # Les ordonnées d'une bande du graphique, lues dans son attribut d. En SVG l'axe des
+  # ordonnées croît vers le BAS : au-dessus de l'axe des abscisses, c'est y plus petit.
+  def band_ys(doc, tone)
+    doc.at_css(".chart-series-area.#{tone}")["d"].scan(/[ML] [\d.-]+ ([\d.-]+)/).flatten.map(&:to_f)
   end
 
   # Un bilan doté d'un actif et d'une dette, pour que ses totaux ne soient pas nuls.
@@ -104,8 +116,8 @@ RSpec.describe "Dashboard", type: :request do
       end
     end
 
-    describe "the assets area chart" do
-      it "stacks one band per category, in a stable order" do
+    describe "the mirrored area chart" do
+      it "stacks one band per grande famille, in a stable order" do
         sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
         create(:balance_sheet_asset, balance_sheet: sheet,
                                      asset: create(:asset, user: user, asset_type: :savings_account),
@@ -116,11 +128,147 @@ RSpec.describe "Dashboard", type: :request do
 
         get root_path
 
-        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").first.css(".chart-series-area")
+        bands = Nokogiri::HTML(response.body).css(".chart-area-mirror .chart-series-area")
         expect(bands.map { |band| band["class"] }).to eq([
-          "chart-series-area chart-series-savings-account",
+          "chart-series-area chart-series-liquidity",
           "chart-series-area chart-series-financial-investment"
         ])
+      end
+
+      # La demande derrière ce graphique : lire d'un coup ce que l'on possède et ce que l'on
+      # doit. Deux courbes côte à côte laissaient le rapprochement à l'œil du lecteur.
+      it "draws the actifs above the axis and the dette below it, on one chart" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :savings_account),
+                                     value: 100_000)
+        create(:balance_sheet_liability, balance_sheet: sheet,
+                                         liability: create(:liability, user: user, liability_type: :short_term_debt),
+                                         remaining_capital: 40_000)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.css(".chart-area-mirror").size).to eq(1)
+        axis = doc.at_css(".chart-axis-rule")["y1"].to_f
+        expect(band_ys(doc, "chart-series-liquidity").max).to be <= axis
+        expect(band_ys(doc, "chart-series-short-term-debt").min).to be >= axis
+      end
+
+      # Une légende se lit de haut en bas ; la pile des actifs, elle, monte depuis l'axe. Les
+      # deux ne coïncident qu'une fois l'actif inversé — sans quoi chaque ligne nommerait la
+      # bande d'en face.
+      it "lists the actifs legend from the top band down and the dette legend from the axis down" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :savings_account),
+                                     value: 30_000)
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :financial_investment),
+                                     value: 10_000)
+        create(:balance_sheet_liability, balance_sheet: sheet,
+                                         liability: create(:liability, user: user, liability_type: :short_term_debt),
+                                         remaining_capital: 5_000)
+        create(:balance_sheet_liability, balance_sheet: sheet,
+                                         liability: create(:liability, user: user, liability_type: :security_deposit),
+                                         remaining_capital: 2_000)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        expect(legend_labels(doc, ".chart-legend-column-assets")).to eq(["Placements financiers", "Liquidités"])
+        expect(legend_labels(doc, ".chart-legend-column-debt")).to eq(["Dettes diverses", "Dépôts de garantie"])
+      end
+
+      # « Immobilier » écrit une fois plutôt que trois : dès que deux usages d'une même famille
+      # sont à l'écran, la famille passe en titre et ses usages se listent dessous.
+      it "gathers the usages of a family under one section title" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        %i[primary_residence secondary_residence rental].each_with_index do |usage, index|
+          property = create(:property, user: user, name: "Bien #{index}", usage: usage)
+          create(:balance_sheet_asset, balance_sheet: sheet,
+                                       asset: property.real_estate_asset,
+                                       value: 100_000 + index * 1_000)
+        end
+
+        get root_path
+
+        column = Nokogiri::HTML(response.body).at_css(".chart-legend-column-assets")
+        expect(column.css(".chart-legend-group-title").map(&:text)).to eq(["Immobilier"])
+        expect(column.css(".chart-legend-sublist .chart-legend-label").map(&:text))
+          .to eq(["Locatif", "Résidence secondaire", "Résidence principale"])
+      end
+
+      # Un titre pour une seule ligne n'apprendrait rien : la famille reste alors sur l'entrée,
+      # au-dessus de son usage.
+      it "leaves a family showing a single usage on one entry, without a section" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        property = create(:property, user: user, name: "Maison", usage: :primary_residence)
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: property.real_estate_asset, value: 300_000)
+
+        get root_path
+
+        column = Nokogiri::HTML(response.body).at_css(".chart-legend-column-assets")
+        expect(column.at_css(".chart-legend-group-title")).to be_nil
+        expect(column.at_css(".chart-legend-label").text.squish).to eq("Immobilier Résidence principale")
+      end
+
+      # Une légende dit un ordre de grandeur : la place manque dans la colonne, et le centime
+      # se lit dans les tableaux du bilan.
+      it "rounds the legend to the euro and its share to the unit" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :savings_account),
+                                     value: 123_456.78)
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :financial_investment),
+                                     value: 76_543.22)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        column = doc.at_css(".chart-legend-column-assets")
+        expect(column.css(".chart-legend-amount").map(&:text))
+          .to eq([currency(76_543, precision: 0), currency(123_457, precision: 0)])
+        expect(column.css(".chart-legend-share").map(&:text)).to eq(["38 %", "62 %"])
+      end
+
+      # La légende se pose à côté du graphique, de part et d'autre de l'axe : elle a donc
+      # besoin de savoir où l'axe tombe. Le helper le lui dit en --axis-share, et ce chiffre
+      # doit désigner la même hauteur que la ligne qu'il a tracée.
+      it "hands the legend the very height at which it drew the axis" do
+        balance_sheet_worth(Date.new(2025, 12, 31), value: 100_000, debt: 40_000)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css(".chart-with-legend .chart-legend-columns")).not_to be_nil
+        share = doc.at_css(".chart-legend-columns")["style"][/--axis-share: ([\d.]+)%/, 1].to_f
+        axis = doc.at_css(".chart-axis-rule")["y1"].to_f
+        # Nokogiri parse le HTML, qui n'a pas d'attribut sensible à la casse : viewBox y arrive
+        # en viewbox.
+        height = doc.at_css(".chart-area-mirror")["viewbox"].split.last.to_f
+        expect(share).to be_within(0.05).of(axis / height * 100)
+      end
+
+      # Les deux côtés partagent une seule échelle : sans quoi une bande deux fois plus haute
+      # ne vaudrait pas deux fois plus d'argent, et le miroir mentirait sur le patrimoine net.
+      it "puts the actifs and the dette on the same scale" do
+        sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+        create(:balance_sheet_asset, balance_sheet: sheet,
+                                     asset: create(:asset, user: user, asset_type: :savings_account),
+                                     value: 100_000)
+        create(:balance_sheet_liability, balance_sheet: sheet,
+                                         liability: create(:liability, user: user, liability_type: :short_term_debt),
+                                         remaining_capital: 40_000)
+
+        get root_path
+
+        doc = Nokogiri::HTML(response.body)
+        assets = band_ys(doc, "chart-series-liquidity")
+        debt = band_ys(doc, "chart-series-short-term-debt")
+        expect(assets.max - assets.min).to be_within(0.05).of((debt.max - debt.min) * 2.5)
       end
 
       # La demande derrière ces courbes : l'immobilier d'un seul tenant ne dit pas ce qui
@@ -136,11 +284,11 @@ RSpec.describe "Dashboard", type: :request do
 
         get root_path
 
-        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").first.css(".chart-series-area")
+        bands = Nokogiri::HTML(response.body).css(".chart-area-mirror .chart-series-area")
         expect(bands.map { |band| band["class"].split.last }).to eq(%w[
           chart-series-real-estate-primary-residence
-          chart-series-real-estate-rental
           chart-series-real-estate-secondary-residence
+          chart-series-real-estate-rental
         ])
       end
 
@@ -153,7 +301,9 @@ RSpec.describe "Dashboard", type: :request do
 
         doc = Nokogiri::HTML(response.body)
         expect(doc.at_css(".chart-series-real-estate-unassigned")).not_to be_nil
-        expect(doc.css(".chart-legend-label").map(&:text)).to include("Immobilier · Non rattaché")
+        # La bande porte le libellé d'un seul tenant, la légende le coupe en deux lignes.
+        expect(doc.css(".chart-series-area title").map(&:text)).to include("Immobilier · Non rattaché")
+        expect(doc.css(".chart-legend-sublabel").map(&:text)).to include("Non rattaché")
       end
 
       # Une catégorie qui n'existe que sur les bilans anciens garde sa bande : sans la valeur
@@ -173,9 +323,9 @@ RSpec.describe "Dashboard", type: :request do
           .to eq([[10_000, 12_000], [0, 8_000]])
         expect(response.body).to include("chart-series-financial-investment")
       end
-    end
 
-    describe "the dette area chart" do
+      # Sous l'axe, les bandes s'empilent en s'éloignant de lui : le fourre-tout d'abord, les
+      # crédits immobiliers en dernier, chacun avec son usage.
       it "splits the crédits immobiliers by usage and keeps the other passifs whole" do
         property = create(:property, user: user, name: "Locatif Lyon", usage: :rental)
         loan = create(:liability, user: user, liability_type: :real_estate_loan, property: property)
@@ -186,21 +336,37 @@ RSpec.describe "Dashboard", type: :request do
 
         get root_path
 
-        bands = Nokogiri::HTML(response.body).css(".chart-area-stack").last
-                  .css(".chart-series-area").map { |band| band["class"].split.last }
-        expect(bands).to eq(%w[chart-series-real-estate-loan-rental chart-series-security-deposit])
+        bands = Nokogiri::HTML(response.body).css(".chart-area-mirror .chart-series-area")
+                  .map { |band| band["class"].split.last }
+        expect(bands).to eq(%w[chart-series-security-deposit chart-series-real-estate-loan-rental])
       end
 
-      it "says so plainly when the history carries no dette at all" do
+      # Une légende par côté de l'axe : leurs pourcentages se lisent chacun sur le total de
+      # leur propre côté et ne se compareraient pas dans une liste commune.
+      it "says so plainly when the history carries no dette at all, and still draws the actifs" do
         balance_sheet_worth(Date.new(2025, 12, 31), value: 50_000)
 
         get root_path
 
-        dette = Nokogiri::HTML(response.body).css(".chart-card").find { |card|
-          card.at_css(".chart-title")&.text == I18n.t("views.dashboard.liabilities_breakdown")
+        doc = Nokogiri::HTML(response.body)
+        column = doc.css(".chart-legend-column").find { |c|
+          c.at_css(".chart-legend-title")&.text == I18n.t("views.dashboard.liabilities_breakdown")
         }
-        expect(dette.at_css(".empty-state").text).to eq(I18n.t("views.dashboard.no_liabilities"))
-        expect(dette.at_css(".chart-area-stack")).to be_nil
+        expect(column.at_css(".empty-state").text).to eq(I18n.t("views.dashboard.no_liabilities"))
+        expect(column.at_css(".chart-legend")).to be_nil
+        expect(doc.at_css(".chart-area-mirror")).not_to be_nil
+      end
+
+      it "says so plainly when the history carries neither actif nor dette" do
+        create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+        get root_path
+
+        card = Nokogiri::HTML(response.body).css(".chart-card").find { |c|
+          c.at_css(".chart-title")&.text == I18n.t("views.dashboard.breakdown")
+        }
+        expect(card.at_css(".empty-state").text).to eq(I18n.t("views.dashboard.no_breakdown"))
+        expect(card.at_css(".chart-area-mirror")).to be_nil
       end
     end
 
