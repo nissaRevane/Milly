@@ -9,6 +9,10 @@
 
   +totals+ always carries its :total row, even on a sheet without a single real
   estate line, so emptiness is decided on +positions+ instead (in summary.html.erb).
+
+  +variation+ qualifies the overall valeur nette and it alone — the tab reports the move
+  of the patrimoine immobilier as a whole, not of each usage or of each bien. It is nil on
+  the very first bilan of the user, which has nothing to be compared to.
 %>
 <div class="table-scroll real-estate-table">
   <table class="table table-compact">
@@ -48,7 +52,12 @@
         <td><%= t("views.balance_sheets.properties.total") %></td>
         <td class="text-right"><%= number_to_currency(totals[:total].gross) %></td>
         <td class="text-right"><%= number_to_currency(totals[:total].debt) %></td>
-        <td class="text-right"><%= number_to_currency(totals[:total].net) %></td>
+        <td class="text-right">
+          <span class="amount-with-variation">
+            <%= number_to_currency(totals[:total].net) %>
+            <%= variation_note(variation) %>
+          </span>
+        </td>
         <td class="text-right"><%= ltv_label(totals[:total].ltv) %></td>
       </tr>
     </tbody>

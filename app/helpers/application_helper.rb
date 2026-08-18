@@ -54,6 +54,19 @@ module ApplicationHelper
     number_to_percentage(ltv, precision: 1)
   end
 
+  # The gain/perte of an amount against the previous balance sheet, as a small note to hang
+  # under (or next to) the amount it qualifies. Renders nothing at all when +variation+ is
+  # nil — the very first balance sheet has no predecessor to read an evolution against.
+  #
+  # +favorable+ says which direction reads as good news, because the sign alone does not:
+  # the passifs column passes :down, a dette going down being the favourable move there.
+  # The colour follows that reading, the sign always follows the actual amount.
+  def variation_note(variation, favorable: :up)
+    return nil if variation.nil?
+
+    tag.span(variation_label(variation), class: "variation variation-#{variation_tone(variation, favorable)}")
+  end
+
   def ownership_share_label(share)
     precision = (share.to_d % 1).zero? ? 0 : 2
     number_to_percentage(share, precision: precision)
@@ -80,5 +93,24 @@ module ApplicationHelper
         class: "owned-value-detail"
       )
     ])
+  end
+
+  private
+
+  # Amounts and rates are formatted from their absolute value with an explicit sign, so a
+  # gain reads "+12 000 €" where number_to_currency alone would only ever mark the losses.
+  # The rate is dropped when there is none: nothing to divide by (see BalanceSheet::Variation).
+  def variation_label(variation)
+    sign = variation.flat? ? "" : (variation.gain? ? "+" : "-")
+    label = "#{sign}#{number_to_currency(variation.amount.abs)}"
+    return label if variation.rate.nil?
+
+    "#{label} (#{sign}#{number_to_percentage(variation.rate.abs, precision: 1)})"
+  end
+
+  def variation_tone(variation, favorable)
+    return "flat" if variation.flat?
+
+    (favorable == :down ? variation.loss? : variation.gain?) ? "gain" : "loss"
   end
 end

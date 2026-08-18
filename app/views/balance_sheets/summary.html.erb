@@ -1,5 +1,13 @@
 <div class="page-header">
-  <h1><%= t("views.balance_sheets.summary.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+  <div>
+    <h1><%= t("views.balance_sheets.summary.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+    <%# Names the bilan every variation on the page is read against; absent on the first one. %>
+    <% if @previous %>
+      <p class="page-header-hint">
+        <%= t("views.balance_sheets.summary.compared_to", date: l(@previous.closing_date, format: :long)) %>
+      </p>
+    <% end %>
+  </div>
 </div>
 
 <%# Server-rendered tabs: plain links carrying a ?tab= param, Turbo Drive does the rest %>
@@ -16,7 +24,10 @@
 
 <% if @tab == "real_estate" %>
   <% if @property_positions.any? %>
-    <%= render "real_estate_table", positions: @property_positions, totals: @real_estate_usage_totals %>
+    <%= render "real_estate_table",
+                positions: @property_positions,
+                totals: @real_estate_usage_totals,
+                variation: @real_estate_variation %>
   <% else %>
     <p class="empty-state"><%= t("views.balance_sheets.properties.empty") %></p>
   <% end %>

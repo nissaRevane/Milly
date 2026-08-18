@@ -3,116 +3,171 @@
     "email": "seed@example.com",
     "firstname": "Quentin",
     "lastname": "GIRARD",
-    "password": "password123"
+    "password": "p2KVbeP_o4m3zzSrUWyLQH9s"
   },
+  "properties": [
+    {
+      "name": "Sapeg",
+      "usage": "primary_residence",
+      "address": "14 rue de Cassel, 59200 Tourcoing",
+      "purchase_price": 125250,
+      "acquired_on": "2024-12-26"
+    },
+    {
+      "name": "Beau Laurier",
+      "usage": "rental",
+      "address": "14 rue du Beau Laurier, 59200 Tourcoing",
+      "purchase_price": 87300,
+      "acquired_on": "2025-07-31"
+    },
+    {
+      "name": "Epideme",
+      "usage": "rental",
+      "address": "7 rue des Peigneurs, 59200 Tourcoing",
+      "purchase_price": 75000,
+      "acquired_on": "2026-07-19"
+    },
+    {
+      "name": "Fleury",
+      "usage": "rental",
+      "address": "1 rue René Ferragu, 45400 Fleury-les-Aubrais",
+      "purchase_price": 77000,
+      "acquired_on": "2021-02-01"
+    },
+    {
+      "name": "Roubaix",
+      "usage": "rental",
+      "address": "32 Grande rue, 59100 Roubaix",
+      "purchase_price": 80300,
+      "acquired_on": "2025-06-30"
+    }
+  ],
   "assets": [
     {
       "name": "Cash",
       "risk_level": "low",
       "asset_type": "cash",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Boursobank",
       "risk_level": "low",
       "asset_type": "checking_account",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "CA IDF Perso",
       "risk_level": "low",
       "asset_type": "checking_account",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "CA IDF Famille",
       "risk_level": "low",
       "asset_type": "checking_account",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": null
     },
     {
       "name": "LCL Commun",
       "risk_level": "low",
       "asset_type": "checking_account",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": null
     },
     {
       "name": "CCF",
       "risk_level": "low",
       "asset_type": "checking_account",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Livret A",
       "risk_level": "low",
       "asset_type": "savings_account",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Splitwise Eunieu",
       "risk_level": "high",
       "asset_type": "receivable",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Enerfip",
       "risk_level": "high",
       "asset_type": "financial_investment",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "PEA Liquidité",
       "risk_level": "low",
       "asset_type": "financial_investment",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "PEA Actions",
       "risk_level": "high",
       "asset_type": "financial_investment",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Sapeg",
       "risk_level": "medium",
       "asset_type": "real_estate",
-      "ownership_share": 50
-    },
-    {
-      "name": "Fleury",
-      "risk_level": "medium",
-      "asset_type": "real_estate",
-      "ownership_share": 100
-    },
-    {
-      "name": "Roubaix",
-      "risk_level": "medium",
-      "asset_type": "real_estate",
-      "ownership_share": 100
+      "ownership_share": 50,
+      "property": "Sapeg"
     },
     {
       "name": "Beau Laurier",
       "risk_level": "medium",
       "asset_type": "real_estate",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": "Beau Laurier"
     },
     {
       "name": "Epideme",
       "risk_level": "medium",
       "asset_type": "real_estate",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": "Epideme"
     },
     {
       "name": "Splitwise Famille",
       "risk_level": "high",
       "asset_type": "receivable",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "PEA-PME liquidité",
       "risk_level": "low",
       "asset_type": "financial_investment",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
+    },
+    {
+      "name": "Fleury",
+      "risk_level": "medium",
+      "asset_type": "real_estate",
+      "ownership_share": 100,
+      "property": "Fleury"
+    },
+    {
+      "name": "Roubaix",
+      "risk_level": "medium",
+      "asset_type": "real_estate",
+      "ownership_share": 100,
+      "property": "Roubaix"
     }
   ],
   "liabilities": [
@@ -120,82 +175,207 @@
       "name": "Prêt LCL 356",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": "Sapeg",
+      "borrowed_capital": 100375,
+      "annual_rate": 3.56,
+      "duration_months": 300,
+      "monthly_payment": 505.74,
+      "first_payment_on": "2025-01-23",
+      "first_payment_principal": 207.96,
+      "first_payment_interest": 303.49
     },
     {
       "name": "Prêt LCL Zéro",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": "Sapeg",
+      "borrowed_capital": 11097,
+      "annual_rate": 0,
+      "duration_months": 300,
+      "monthly_payment": 36.99,
+      "first_payment_on": "2025-01-23",
+      "first_payment_principal": 36.99,
+      "first_payment_interest": 0
     },
     {
       "name": "Splitwise Eunieu",
       "risk_level": "high",
       "liability_type": "short_term_debt",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Prêt Crédit Mutuel Fleury",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": "Fleury",
+      "borrowed_capital": 77895,
+      "annual_rate": 1.2,
+      "duration_months": 240,
+      "monthly_payment": 365.23,
+      "first_payment_on": "2021-02-05",
+      "first_payment_principal": 287.32,
+      "first_payment_interest": 22.8
     },
     {
       "name": "Prêt CA IDF Roubaix",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": "Roubaix",
+      "borrowed_capital": 78619,
+      "annual_rate": 3.1,
+      "duration_months": 300,
+      "monthly_payment": 376.92,
+      "first_payment_on": "2025-08-05",
+      "first_payment_principal": 173.82,
+      "first_payment_interest": 275.17
     },
     {
       "name": "Prêt CA IDF Beau Laurier Appartement",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": "Beau Laurier",
+      "borrowed_capital": 93000,
+      "annual_rate": 3.1,
+      "duration_months": 276,
+      "monthly_payment": 471.65,
+      "first_payment_on": "2025-09-10",
+      "first_payment_principal": 231.4,
+      "first_payment_interest": 209.25
     },
     {
       "name": "Prêt CA IDF Beau Laurier Travaux",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": "Beau Laurier",
+      "borrowed_capital": 2584,
+      "annual_rate": 3.1,
+      "duration_months": 276,
+      "monthly_payment": 13.1,
+      "first_payment_on": "2025-09-10",
+      "first_payment_principal": 6.42,
+      "first_payment_interest": 5.81
     },
     {
       "name": "Prêt CCF Epideme",
       "risk_level": "medium",
       "liability_type": "real_estate_loan",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": "Epideme",
+      "borrowed_capital": 75725,
+      "annual_rate": 3.35,
+      "duration_months": 240,
+      "monthly_payment": 433.36,
+      "first_payment_on": "2026-08-05",
+      "first_payment_principal": 221.96,
+      "first_payment_interest": 180.7
     },
     {
       "name": "Splitwise Famille",
       "risk_level": "high",
       "liability_type": "short_term_debt",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Caution Fleury",
       "risk_level": "high",
       "liability_type": "security_deposit",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Caution Roubaix",
       "risk_level": "high",
       "liability_type": "security_deposit",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     },
     {
       "name": "Caution Beau Laurier",
       "risk_level": "high",
       "liability_type": "security_deposit",
-      "ownership_share": 50
+      "ownership_share": 50,
+      "property": null
     },
     {
       "name": "Caution Epideme",
       "risk_level": "high",
       "liability_type": "security_deposit",
-      "ownership_share": 100
+      "ownership_share": 100,
+      "property": null
     }
   ],
   "balance_sheets": [
+    {
+      "closing_date": "2026-05-18",
+      "assets": {
+        "Cash": 175,
+        "Boursobank": 2557.83,
+        "CA IDF Perso": 385.21,
+        "CA IDF Famille": 1984.46,
+        "LCL Commun": 574.18,
+        "CCF": 11668.78,
+        "Livret A": 10000,
+        "Splitwise Eunieu": 722.65,
+        "Enerfip": 6741.3,
+        "PEA Liquidité": 45633.69,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300
+      },
+      "liabilities": {
+        "Prêt LCL 356": 96972.54,
+        "Prêt LCL Zéro": 10505.16,
+        "Prêt Crédit Mutuel Fleury": 58914.18,
+        "Prêt CA IDF Roubaix": 76860.45,
+        "Prêt CA IDF Beau Laurier Appartement": 90895.74,
+        "Prêt CA IDF Beau Laurier Travaux": 2525.59,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-06-18",
+      "assets": {
+        "Cash": 155,
+        "Boursobank": 1903.48,
+        "CA IDF Perso": 402.19,
+        "CA IDF Famille": 1980.82,
+        "LCL Commun": 461.76,
+        "CCF": 13735,
+        "Livret A": 10000,
+        "Splitwise Eunieu": 719.32,
+        "Enerfip": 6754.93,
+        "PEA Liquidité": 45633.69,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300
+      },
+      "liabilities": {
+        "Prêt LCL 356": 96535.8,
+        "Prêt LCL Zéro": 10431.18,
+        "Splitwise Eunieu": 13.49,
+        "Prêt Crédit Mutuel Fleury": 58607.84,
+        "Prêt CA IDF Roubaix": 76682.08,
+        "Prêt CA IDF Beau Laurier Appartement": 90658.91,
+        "Prêt CA IDF Beau Laurier Travaux": 2519,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
     {
       "closing_date": "2026-07-18",
       "assets": {
@@ -208,12 +388,12 @@
         "Livret A": 10000,
         "Enerfip": 6762.89,
         "PEA Liquidité": 45633.69,
-        "Sapeg": 125000,
-        "Fleury": 77000,
-        "Roubaix": 80000,
-        "Beau Laurier": 93000,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
         "Epideme": 75000,
-        "PEA-PME liquidité": 10
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300
       },
       "liabilities": {
         "Prêt LCL 356": 96316.45,

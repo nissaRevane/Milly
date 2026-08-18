@@ -1,3 +1,10 @@
+<%#
+  The synthèse tab. @variations is nil on the very first bilan of the user: each total
+  then renders alone, without the gain/perte note that qualifies it.
+
+  The passifs total reads its variation with favorable: :down — there, a dette qui baisse
+  is the good news, and the colour must not say the opposite of what the figure means.
+%>
 <div class="summary-grid">
   <!-- Assets Column -->
   <div class="summary-column summary-column-assets">
@@ -58,7 +65,10 @@
 
     <div class="summary-total summary-total-assets">
       <span><%= t("views.balance_sheets.summary.total_assets") %></span>
-      <span><%= number_to_currency(@balance_sheet.total_assets) %></span>
+      <span class="amount-with-variation">
+        <%= number_to_currency(@balance_sheet.total_assets) %>
+        <%= variation_note(@variations[:assets]) if @variations %>
+      </span>
     </div>
   </div>
 
@@ -121,7 +131,10 @@
 
     <div class="summary-total summary-total-liabilities">
       <span><%= t("views.balance_sheets.summary.total_liabilities") %></span>
-      <span><%= number_to_currency(@balance_sheet.total_liabilities) %></span>
+      <span class="amount-with-variation">
+        <%= number_to_currency(@balance_sheet.total_liabilities) %>
+        <%= variation_note(@variations[:liabilities], favorable: :down) if @variations %>
+      </span>
     </div>
   </div>
 </div>
@@ -129,5 +142,8 @@
 <!-- Equity Summary -->
 <div class="equity-box <%= @balance_sheet.equity >= 0 ? 'equity-positive' : 'equity-negative' %>">
   <span class="equity-label"><%= t("views.balance_sheets.summary.equity") %></span>
-  <span class="equity-value"><%= number_to_currency(@balance_sheet.equity) %></span>
+  <span class="equity-value amount-with-variation">
+    <%= number_to_currency(@balance_sheet.equity) %>
+    <%= variation_note(@variations[:equity]) if @variations %>
+  </span>
 </div>

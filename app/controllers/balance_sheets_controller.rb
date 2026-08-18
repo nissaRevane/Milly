@@ -47,17 +47,21 @@ class BalanceSheetsController < ApplicationController
   def summary
     @tab = SUMMARY_TABS.include?(params[:tab]) ? params[:tab] : "general"
 
+    # Nil on the very first balance sheet: there is nothing to compare it to, and every
+    # variation below stays nil so the views drop their evolution column outright.
+    @previous = @balance_sheet.previous
+
     # Each tab is a full server-rendered page: only compute what the active tab shows.
     if @tab == "real_estate"
-      # The unassigned bucket is deliberately excluded from this tab: it shows only the
-      # biens, and the totals are computed from these same positions to stay consistent.
-      @property_positions = @balance_sheet.property_positions.reject(&:unassigned?)
+      @property_positions = @balance_sheet.real_estate_positions
       @real_estate_usage_totals = @balance_sheet.real_estate_totals_by_usage(@property_positions)
+      @real_estate_variation = @previous && @balance_sheet.real_estate_variation_against(@previous, @property_positions)
     else
       @assets_by_risk = @balance_sheet.assets_by_risk_level
       @assets_by_type = @balance_sheet.assets_by_type
       @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
       @liabilities_by_type = @balance_sheet.liabilities_by_type
+      @variations = @previous && @balance_sheet.variations_against(@previous)
     end
   end
 

@@ -441,6 +441,13 @@ body {
   gap: 0.5rem;
 }
 
+/* Which bilan the variations of the page are read against, under the title */
+.page-header-hint {
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
 /* Sections */
 .section {
   margin-bottom: 2rem;
@@ -775,6 +782,38 @@ body {
 .summary-total-assets {
   background: #f0fdf4;
   color: var(--color-success);
+}
+
+/*
+ * Gain/perte vs the previous balance sheet (summary tabs)
+ *
+ * The note hangs under the amount it qualifies, right-aligned with it. Its colour says
+ * whether the move is good news, not whether it is positive: see #variation_note, the
+ * passifs column reads a dette qui baisse as a gain.
+ */
+.amount-with-variation {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.variation {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.variation-gain {
+  color: var(--color-success);
+}
+
+.variation-loss {
+  color: var(--color-danger);
+}
+
+.variation-flat {
+  color: var(--color-text-muted);
 }
 
 .summary-total-liabilities {

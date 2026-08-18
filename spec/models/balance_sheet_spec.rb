@@ -385,4 +385,131 @@ RSpec.describe BalanceSheet, type: :model do
       expect(totals[:total]).to have_attributes(gross: 0, debt: 0, net: 0, ltv: nil)
     end
   end
+
+  describe "#previous" do
+    it "returns the closest earlier balance sheet of the user" do
+      user = create(:user)
+      create(:balance_sheet, user: user, closing_date: Date.new(2023, 12, 31))
+      last_year = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+      expect(bs.previous).to eq(last_year)
+    end
+
+    it "returns nil on the user's very first balance sheet" do
+      user = create(:user)
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      create(:balance_sheet, user: user, closing_date: Date.new(2026, 12, 31))
+
+      expect(bs.previous).to be_nil
+    end
+
+    it "ignores the balance sheets of another user" do
+      bs = create(:balance_sheet, closing_date: Date.new(2025, 12, 31))
+      create(:balance_sheet, closing_date: Date.new(2024, 12, 31))
+
+      expect(bs.previous).to be_nil
+    end
+  end
+
+  describe ".variation_between" do
+    it "carries the gain and the rate it represents" do
+      variation = BalanceSheet.variation_between(200_000, 250_000)
+
+      expect(variation).to have_attributes(amount: 50_000, rate: 25.0)
+      expect(variation.gain?).to be(true)
+    end
+
+    it "carries a loss as a negative amount and a negative rate" do
+      variation = BalanceSheet.variation_between(200_000, 150_000)
+
+      expect(variation).to have_attributes(amount: -50_000, rate: -25.0)
+      expect(variation.loss?).to be(true)
+    end
+
+    it "has no rate to give when the previous amount was zero" do
+      variation = BalanceSheet.variation_between(0, 50_000)
+
+      expect(variation).to have_attributes(amount: 50_000, rate: nil)
+    end
+
+    it "reads the rate against the magnitude of a negative starting point" do
+      variation = BalanceSheet.variation_between(-10_000, -5_000)
+
+      expect(variation).to have_attributes(amount: 5_000, rate: 50.0)
+    end
+
+    it "reports an unchanged amount as flat" do
+      variation = BalanceSheet.variation_between(200_000, 200_000)
+
+      expect(variation.flat?).to be(true)
+      expect(variation.rate).to eq(0)
+    end
+  end
+
+  describe "#variations_against" do
+    it "reads the three totals of the synthèse against the previous balance sheet" do
+      user = create(:user)
+      previous = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      asset = create(:asset, user: user)
+      loan = create(:liability, user: user)
+      create(:balance_sheet_asset, balance_sheet: previous, asset: asset, value: 100_000)
+      create(:balance_sheet_liability, balance_sheet: previous, liability: loan, remaining_capital: 60_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 120_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 50_000)
+
+      variations = bs.variations_against(previous)
+
+      expect(variations[:assets]).to have_attributes(amount: 20_000, rate: 20.0)
+      expect(variations[:liabilities]).to have_attributes(amount: -10_000, rate: -16.7)
+      expect(variations[:equity]).to have_attributes(amount: 30_000, rate: 75.0)
+    end
+  end
+
+  describe "#real_estate_variation_against" do
+    def build_property(bs, name:, usage:, value:, debt: 0, property: nil)
+      user = bs.user
+      property ||= create(:property, user: user, name: name, usage: usage)
+      asset = create(:asset, user: user, property: property, asset_type: :real_estate)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: value)
+      return property if debt.zero?
+
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: debt)
+      property
+    end
+
+    it "reads the overall valeur nette against the previous balance sheet" do
+      user = create(:user)
+      previous = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      home = build_property(previous, name: "Maison", usage: :primary_residence, value: 400_000, debt: 300_000)
+      build_property(bs, name: "Maison", usage: :primary_residence, value: 420_000, debt: 280_000, property: home)
+
+      expect(bs.real_estate_variation_against(previous)).to have_attributes(amount: 40_000, rate: 40.0)
+    end
+
+    it "counts a patrimoine immobilier built since the previous sheet as a full gain, with no rate" do
+      user = create(:user)
+      previous = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      build_property(bs, name: "Studio", usage: :rental, value: 100_000, debt: 80_000)
+
+      expect(bs.real_estate_variation_against(previous)).to have_attributes(amount: 20_000, rate: nil)
+    end
+
+    it "leaves the unassigned lines out of both sides, as the tab leaves them out of the rows" do
+      user = create(:user)
+      previous = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      home = build_property(previous, name: "Maison", usage: :primary_residence, value: 400_000)
+      build_property(bs, name: "Maison", usage: :primary_residence, value: 450_000, property: home)
+      orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
+      create(:balance_sheet_asset, balance_sheet: previous, asset: orphan, value: 30_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: orphan, value: 80_000)
+
+      expect(bs.real_estate_variation_against(previous)).to have_attributes(amount: 50_000, rate: 12.5)
+    end
+  end
 end

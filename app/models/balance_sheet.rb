@@ -32,6 +32,24 @@ class BalanceSheet < ApplicationRecord
   # +ltv+ is derived once at build time (see #usage_total) rather than lazily.
   UsageTotal = Struct.new(:gross, :debt, :net, :ltv, keyword_init: true)
 
+  # How one amount moved from the previous balance sheet to this one: the gain or loss in
+  # euros, and the rate it represents. +rate+ is nil when the previous amount was zero —
+  # there is no percentage to read on a move away from nothing, and the view renders the
+  # euros alone rather than an infinite progression.
+  Variation = Struct.new(:amount, :rate, keyword_init: true) do
+    def gain?
+      amount.positive?
+    end
+
+    def loss?
+      amount.negative?
+    end
+
+    def flat?
+      amount.zero?
+    end
+  end
+
   # Liability types that belong to a property even when none is linked yet.
   UNASSIGNED_LIABILITY_TYPES = %w[real_estate_loan security_deposit].freeze
 
@@ -52,6 +70,15 @@ class BalanceSheet < ApplicationRecord
     return nil if gross.zero?
 
     (debt / gross * 100).round(1)
+  end
+
+  # Single definition of a gain/perte between two amounts, shared by every variation the
+  # synthèse displays. +to_d+ is not decorative: total_assets & co. return a plain Integer
+  # when a sheet sums to zero, and an Integer division would silently floor the rate to 0.
+  def self.variation_between(before, after)
+    amount = after - before
+
+    Variation.new(amount: amount, rate: before.zero? ? nil : (amount.to_d / before.abs * 100).round(1))
   end
 
   def copy_lines_from(source)
@@ -168,6 +195,50 @@ class BalanceSheet < ApplicationRecord
     totals = ordered_keys.index_with { |usage| usage_total(grouped.fetch(usage)) }
     totals[:total] = usage_total(positions)
     totals
+  end
+
+  # The user's balance sheet immediately before this one, nil for the very first one.
+  # Memoized through defined? because nil is a meaningful answer here: without it the very
+  # first sheet would re-run the query on every variation the page asks for.
+  def previous
+    return @previous if defined?(@previous)
+
+    @previous = user.balance_sheets.where("closing_date < ?", closing_date).order(closing_date: :desc).first
+  end
+
+  # The biens of this balance sheet, the "non rattaché" bucket left out: the immobilier tab
+  # shows only the biens, and its totals — like its variations — are computed from these
+  # very same positions so the rows and the totals can never disagree.
+  def real_estate_positions
+    property_positions.reject(&:unassigned?)
+  end
+
+  # The three headline figures of the synthèse tab read against +previous+.
+  def variations_against(previous)
+    {
+      assets: self.class.variation_between(previous.total_assets, total_assets),
+      liabilities: self.class.variation_between(previous.total_liabilities, total_liabilities),
+      equity: self.class.variation_between(previous.equity, equity)
+    }
+  end
+
+  # The whole patrimoine immobilier read against +previous+, on the valeur nette — the one
+  # figure that says what it actually gained or lost, the brut and the dette moving for
+  # reasons (revalorisation, amortissement) that only their difference summarises. The
+  # per-usage and per-bien rows deliberately carry no variation: the tab reports the move
+  # of the ensemble, not of each ligne.
+  #
+  # Both sides are read from #real_estate_positions, so the unassigned bucket is out of the
+  # former total exactly as it is out of the current one — comparing a filtered total to an
+  # unfiltered one would invent a gain or a perte out of the filtering alone.
+  #
+  # +positions+ is a parameter for the same reason as in #real_estate_totals_by_usage: the
+  # controller hands in the very positions the table renders, so the amount and the
+  # variation on the total row can never come from two different reads.
+  def real_estate_variation_against(previous, positions = real_estate_positions)
+    former = previous.real_estate_totals_by_usage(previous.real_estate_positions)
+
+    self.class.variation_between(former[:total].net, real_estate_totals_by_usage(positions)[:total].net)
   end
 
   private

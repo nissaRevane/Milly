@@ -252,6 +252,7 @@ fr:
         back: Retour aux bilans
       summary:
         title: "Synthèse du bilan au %{date}"
+        compared_to: "Évolution mesurée par rapport au bilan au %{date}"
         assets_column: Actifs
         liabilities_column: Passifs
         risk_breakdown: Répartition par risque
