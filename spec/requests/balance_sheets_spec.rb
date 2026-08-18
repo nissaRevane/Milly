@@ -307,6 +307,53 @@ RSpec.describe "BalanceSheets", type: :request do
         expect(response.body).not_to include("real-estate-table")
       end
 
+      describe "on the graphiques tab" do
+        it "renders the bilan as charts instead of tables" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          expect(response).to have_http_status(:success)
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".tab-link-active").text.strip).to eq("Graphiques")
+          expect(doc.at_css(".summary-column-assets")).to be_nil
+          expect(doc.at_css(".real-estate-table")).to be_nil
+          expect(doc.css(".chart-donut").size).to eq(2)
+        end
+
+        # L'onglet ne recalcule rien : il doit dire exactement ce que la synthèse dit.
+        it "headlines the same three totals as the synthèse" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          amounts = doc.css(".stat-grid .stat-value").map { |value| value.text.strip }
+          expect(amounts).to eq([currency(200_000), currency(150_000), currency(50_000)])
+        end
+
+        it "draws one bar per bien, read on its valeur nette" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          row = Nokogiri::HTML(response.body).css(".bar-breakdown").last.at_css(".bar-breakdown-row")
+          expect(row.at_css(".bar-breakdown-label").text.strip).to eq("Appartement Lyon")
+          expect(row.at_css(".bar-breakdown-amount").text.strip).to eq(currency(50_000))
+        end
+
+        it "keeps the tab when stepping to a neighbouring bilan" do
+          older = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+          get summary_balance_sheet_path(current, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".summary-nav a[rel=prev]")["href"])
+            .to eq(summary_balance_sheet_path(older, tab: "dashboard"))
+        end
+      end
+
       describe "on the immobilier tab" do
         it "shows the immobilier table instead of the actifs/passifs columns" do
           bs = build_property_sheet

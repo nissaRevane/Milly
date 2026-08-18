@@ -35,9 +35,14 @@
               summary_balance_sheet_path(@balance_sheet, tab: "real_estate"),
               class: "tab-link#{" tab-link-active" if @tab == "real_estate"}",
               "aria-current" => ("page" if @tab == "real_estate") %>
+  <%= link_to t("views.balance_sheets.summary.tabs.dashboard"),
+              summary_balance_sheet_path(@balance_sheet, tab: "dashboard"),
+              class: "tab-link#{" tab-link-active" if @tab == "dashboard"}",
+              "aria-current" => ("page" if @tab == "dashboard") %>
 </nav>
 
-<% if @tab == "real_estate" %>
+<% case @tab %>
+<% when "real_estate" %>
   <% if @property_positions.any? %>
     <%= render "real_estate_table",
                 positions: @property_positions,
@@ -46,6 +51,8 @@
   <% else %>
     <p class="empty-state"><%= t("views.balance_sheets.properties.empty") %></p>
   <% end %>
+<% when "dashboard" %>
+  <%= render "summary_dashboard" %>
 <% else %>
   <%= render "summary_general" %>
 <% end %>

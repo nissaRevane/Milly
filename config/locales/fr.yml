@@ -117,6 +117,7 @@ fr:
       submit: Enregistrer
   views:
     nav:
+      dashboard: Tableau de bord
       properties: Biens
       assets: Actifs
       liabilities: Passifs
@@ -287,6 +288,15 @@ fr:
         tabs:
           general: Synthèse
           real_estate: Immobilier
+          dashboard: Graphiques
+        charts:
+          assets_by_type: "Répartition des actifs"
+          liabilities_by_type: "Répartition de la dette"
+          assets_by_risk: Actifs par niveau de risque
+          real_estate: Patrimoine immobilier
+          real_estate_hint: Valeur nette de chaque bien, dette déduite.
+          no_assets: Aucun actif sur ce bilan.
+          no_liabilities: Aucun passif sur ce bilan.
       properties:
         usage: Usage
         net: Valeur nette
@@ -313,6 +323,29 @@ fr:
         title: Ajouter un passif au bilan
       edit:
         title: Modifier la ligne de passif
+    dashboard:
+      title: Tableau de bord
+      empty: Aucun bilan pour l'instant. Le tableau de bord se remplira dès le premier.
+      create_first: Créer mon premier bilan
+      open_latest: Voir le dernier bilan
+      net_worth: Patrimoine net
+      as_of: "au %{date}"
+      since_previous: Depuis le bilan précédent
+      no_previous: Premier bilan de l'historique
+      over_a_year: Sur un an
+      no_year_ago: "Moins d'un an d'historique"
+      real_estate_ltv: LTV immobilière
+      real_estate_net: "Valeur nette : %{amount}"
+      assets: Actifs
+      liabilities: Dette
+      equity: Fonds propres
+      equity_chart: Évolution du patrimoine net
+      equity_chart_hint: Un point par bilan. L'échelle suit les montants et ne part pas de zéro.
+      composition_chart: Actifs et dette
+      composition_chart_hint: Ce qui dépasse au-dessus de la dette, ce sont les fonds propres.
+      allocation_chart: Répartition des actifs
+      allocation_chart_hint: "Répartition par type d'actif au %{date}"
+      no_assets: Aucun actif sur le dernier bilan.
     pages:
       home:
         title: Bienvenue sur Milly
