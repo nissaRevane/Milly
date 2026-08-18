@@ -3,7 +3,7 @@
     "email": "seed@example.com",
     "firstname": "Quentin",
     "lastname": "GIRARD",
-    "password": "p2KVbeP_o4m3zzSrUWyLQH9s"
+    "password": "p5iyxHxYGbyWXkPpZU9xdwvx"
   },
   "properties": [
     {
@@ -25,7 +25,7 @@
       "usage": "rental",
       "address": "7 rue des Peigneurs, 59200 Tourcoing",
       "purchase_price": 75000,
-      "acquired_on": "2026-07-19"
+      "acquired_on": "2026-07-16"
     },
     {
       "name": "Fleury",
@@ -37,7 +37,7 @@
     {
       "name": "Roubaix",
       "usage": "rental",
-      "address": "32 Grande rue, 59100 Roubaix",
+      "address": "32 grande rue, 59100 Roubaix",
       "purchase_price": 80300,
       "acquired_on": "2025-06-30"
     }
@@ -168,6 +168,13 @@
       "asset_type": "real_estate",
       "ownership_share": 100,
       "property": "Roubaix"
+    },
+    {
+      "name": "LDDS",
+      "risk_level": "low",
+      "asset_type": "savings_account",
+      "ownership_share": 100,
+      "property": null
     }
   ],
   "liabilities": [
@@ -314,6 +321,439 @@
   ],
   "balance_sheets": [
     {
+      "closing_date": "2025-01-18",
+      "assets": {
+        "Cash": 15,
+        "Boursobank": 512.48,
+        "Livret A": 8000,
+        "Splitwise Eunieu": 1366.86,
+        "Enerfip": 14630.28,
+        "PEA Actions": 40946.25,
+        "Sapeg": 125250,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 100375,
+        "Prêt LCL Zéro": 11097,
+        "Prêt Crédit Mutuel Fleury": 63773.82,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-02-18",
+      "assets": {
+        "Cash": 15,
+        "Boursobank": 764.02,
+        "Livret A": 10000,
+        "Splitwise Eunieu": 574.65,
+        "Enerfip": 14630.28,
+        "PEA Actions": 39561.23,
+        "Sapeg": 125250,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 100167.04,
+        "Prêt LCL Zéro": 11060.01,
+        "Prêt Crédit Mutuel Fleury": 63472.36,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-03-18",
+      "assets": {
+        "Cash": 0,
+        "Boursobank": 724.41,
+        "Livret A": 8500,
+        "Enerfip": 14609.37,
+        "PEA Actions": 37701.56,
+        "Sapeg": 125250,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 99958.46,
+        "Prêt LCL Zéro": 11023.02,
+        "Splitwise Eunieu": 25.76,
+        "Prêt Crédit Mutuel Fleury": 63170.6,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-04-18",
+      "assets": {
+        "Cash": 50,
+        "Boursobank": 412.32,
+        "Livret A": 10500,
+        "Splitwise Eunieu": 16.19,
+        "Enerfip": 14242.88,
+        "PEA Actions": 35119.28,
+        "Sapeg": 125250,
+        "Splitwise Famille": 100,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 99749.26,
+        "Prêt LCL Zéro": 10986.03,
+        "Prêt Crédit Mutuel Fleury": 62868.54,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-05-18",
+      "assets": {
+        "Cash": 50,
+        "Boursobank": 2229.7,
+        "Livret A": 13000,
+        "Enerfip": 13156.16,
+        "PEA Actions": 38238.57,
+        "Sapeg": 125250,
+        "Splitwise Famille": 100,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 99539.44,
+        "Prêt LCL Zéro": 10949.04,
+        "Splitwise Eunieu": 175.17,
+        "Prêt Crédit Mutuel Fleury": 62566.18,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-06-18",
+      "assets": {
+        "Cash": 55,
+        "Boursobank": 1201.48,
+        "CA IDF Perso": 3000,
+        "Livret A": 13000,
+        "Enerfip": 12269.29,
+        "PEA Actions": 37847.5,
+        "Sapeg": 125250,
+        "Splitwise Famille": 100,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 99329,
+        "Prêt LCL Zéro": 10912.05,
+        "Splitwise Eunieu": 2454.11,
+        "Prêt Crédit Mutuel Fleury": 62263.52,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-07-18",
+      "assets": {
+        "Cash": 55,
+        "Boursobank": 944.08,
+        "CA IDF Perso": 1091.23,
+        "Livret A": 4000,
+        "Enerfip": 11391.09,
+        "PEA Actions": 39012.02,
+        "Sapeg": 125250,
+        "Splitwise Famille": 56.65,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 12000
+      },
+      "liabilities": {
+        "Prêt LCL 356": 99117.94,
+        "Prêt LCL Zéro": 10875.06,
+        "Splitwise Eunieu": 2631.85,
+        "Prêt Crédit Mutuel Fleury": 61960.55,
+        "Prêt CA IDF Roubaix": 78619,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2025-08-18",
+      "assets": {
+        "Cash": 35,
+        "Boursobank": 1653.95,
+        "CA IDF Perso": 634.89,
+        "CA IDF Famille": 760.66,
+        "Livret A": 10,
+        "Splitwise Eunieu": 234.99,
+        "Enerfip": 11424.01,
+        "PEA Actions": 39399.81,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 3500
+      },
+      "liabilities": {
+        "Prêt LCL 356": 98906.25,
+        "Prêt LCL Zéro": 10838.07,
+        "Prêt Crédit Mutuel Fleury": 61657.28,
+        "Prêt CA IDF Roubaix": 78445.18,
+        "Prêt CA IDF Beau Laurier Appartement": 93000,
+        "Prêt CA IDF Beau Laurier Travaux": 2584,
+        "Splitwise Famille": 170.87,
+        "Caution Fleury": 620,
+        "Caution Roubaix": 1300
+      }
+    },
+    {
+      "closing_date": "2025-09-18",
+      "assets": {
+        "Cash": 20,
+        "Boursobank": 2655.43,
+        "CA IDF Perso": 250.62,
+        "CA IDF Famille": 2296.14,
+        "Livret A": 10,
+        "Enerfip": 10750.65,
+        "PEA Actions": 40582.34,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 4500
+      },
+      "liabilities": {
+        "Prêt LCL 356": 98693.93,
+        "Prêt LCL Zéro": 10801.08,
+        "Splitwise Eunieu": 104.77,
+        "Prêt Crédit Mutuel Fleury": 61353.71,
+        "Prêt CA IDF Roubaix": 78270.91,
+        "Prêt CA IDF Beau Laurier Appartement": 92768.6,
+        "Prêt CA IDF Beau Laurier Travaux": 2577.58,
+        "Splitwise Famille": 180.37,
+        "Caution Fleury": 620,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2025-10-18",
+      "assets": {
+        "Cash": 120,
+        "Boursobank": 1751.92,
+        "CA IDF Perso": 266.35,
+        "CA IDF Famille": 2692.75,
+        "Livret A": 10,
+        "Enerfip": 10539.31,
+        "PEA Actions": 41562.87,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 8868.55
+      },
+      "liabilities": {
+        "Prêt LCL 356": 98480.98,
+        "Prêt LCL Zéro": 10764.09,
+        "Splitwise Eunieu": 904.92,
+        "Prêt Crédit Mutuel Fleury": 61049.83,
+        "Prêt CA IDF Roubaix": 78096.19,
+        "Prêt CA IDF Beau Laurier Appartement": 92536.6,
+        "Prêt CA IDF Beau Laurier Travaux": 2571.14,
+        "Splitwise Famille": 156.07,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2025-11-18",
+      "assets": {
+        "Cash": 120,
+        "Boursobank": 1336.51,
+        "CA IDF Perso": 283.33,
+        "CA IDF Famille": 1989.36,
+        "Livret A": 10,
+        "Enerfip": 10451.1,
+        "PEA Actions": 41562.87,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 9826.56
+      },
+      "liabilities": {
+        "Prêt LCL 356": 98267.4,
+        "Prêt LCL Zéro": 10727.1,
+        "Splitwise Eunieu": 932.81,
+        "Prêt Crédit Mutuel Fleury": 60745.65,
+        "Prêt CA IDF Roubaix": 77921.02,
+        "Prêt CA IDF Beau Laurier Appartement": 92304,
+        "Prêt CA IDF Beau Laurier Travaux": 2564.68,
+        "Splitwise Famille": 156.07,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2025-12-18",
+      "assets": {
+        "Cash": 60,
+        "Boursobank": 1926.04,
+        "CA IDF Perso": 300.31,
+        "CA IDF Famille": 2005.97,
+        "Livret A": 10,
+        "Enerfip": 10345.29,
+        "PEA Actions": 40972.78,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 11990
+      },
+      "liabilities": {
+        "Prêt LCL 356": 98053.19,
+        "Prêt LCL Zéro": 10690.11,
+        "Splitwise Eunieu": 603.61,
+        "Prêt Crédit Mutuel Fleury": 60441.17,
+        "Prêt CA IDF Roubaix": 77745.4,
+        "Prêt CA IDF Beau Laurier Appartement": 92070.8,
+        "Prêt CA IDF Beau Laurier Travaux": 2558.21,
+        "Splitwise Famille": 156.07,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-01-18",
+      "assets": {
+        "Cash": 70,
+        "Boursobank": 1259.88,
+        "CA IDF Perso": 317.29,
+        "CA IDF Famille": 2002.58,
+        "LCL Commun": 1281.42,
+        "Livret A": 2000,
+        "Enerfip": 10367.21,
+        "PEA Actions": 43469.63,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 12218.5
+      },
+      "liabilities": {
+        "Prêt LCL 356": 97838.34,
+        "Prêt LCL Zéro": 10653.12,
+        "Splitwise Eunieu": 36.94,
+        "Prêt Crédit Mutuel Fleury": 60136.38,
+        "Prêt CA IDF Roubaix": 77569.32,
+        "Prêt CA IDF Beau Laurier Appartement": 91837,
+        "Prêt CA IDF Beau Laurier Travaux": 2551.72,
+        "Splitwise Famille": 151.83,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-02-18",
+      "assets": {
+        "Cash": 25,
+        "Boursobank": 1127.71,
+        "CA IDF Perso": 334.27,
+        "CA IDF Famille": 1895.13,
+        "LCL Commun": 1320.64,
+        "Livret A": 3000,
+        "Splitwise Eunieu": 10.7,
+        "Enerfip": 10351.97,
+        "PEA Actions": 43785.79,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 12218.5
+      },
+      "liabilities": {
+        "Prêt LCL 356": 97622.85,
+        "Prêt LCL Zéro": 10616.13,
+        "Prêt Crédit Mutuel Fleury": 59831.29,
+        "Prêt CA IDF Roubaix": 77392.79,
+        "Prêt CA IDF Beau Laurier Appartement": 91602.6,
+        "Prêt CA IDF Beau Laurier Travaux": 2545.21,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-03-18",
+      "assets": {
+        "Cash": 25,
+        "Boursobank": 261.05,
+        "CA IDF Perso": 351.25,
+        "CA IDF Famille": 1991.74,
+        "LCL Commun": 1320.64,
+        "Livret A": 4500,
+        "Enerfip": 10351.97,
+        "PEA Actions": 45400.56,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 12218.5
+      },
+      "liabilities": {
+        "Prêt LCL 356": 97406.72,
+        "Prêt LCL Zéro": 10579.14,
+        "Splitwise Eunieu": 195.91,
+        "Prêt Crédit Mutuel Fleury": 59525.89,
+        "Prêt CA IDF Roubaix": 77215.8,
+        "Prêt CA IDF Beau Laurier Appartement": 91367.59,
+        "Prêt CA IDF Beau Laurier Travaux": 2538.69,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-04-18",
+      "assets": {
+        "Cash": 175,
+        "Boursobank": 2214.96,
+        "CA IDF Perso": 368.23,
+        "CA IDF Famille": 1998.1,
+        "LCL Commun": 735.58,
+        "CCF": 976.01,
+        "Livret A": 6000,
+        "Enerfip": 7659.45,
+        "PEA Liquidité": 45633.69,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 12218.5
+      },
+      "liabilities": {
+        "Prêt LCL 356": 97189.95,
+        "Prêt LCL Zéro": 10542.15,
+        "Splitwise Eunieu": 443.66,
+        "Prêt Crédit Mutuel Fleury": 59220.19,
+        "Prêt CA IDF Roubaix": 77038.35,
+        "Prêt CA IDF Beau Laurier Appartement": 91131.97,
+        "Prêt CA IDF Beau Laurier Travaux": 2532.15,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850
+      }
+    },
+    {
       "closing_date": "2026-05-18",
       "assets": {
         "Cash": 175,
@@ -364,13 +804,13 @@
         "Roubaix": 80300
       },
       "liabilities": {
-        "Prêt LCL 356": 96535.8,
-        "Prêt LCL Zéro": 10431.18,
+        "Prêt LCL 356": 96754.49,
+        "Prêt LCL Zéro": 10468.17,
         "Splitwise Eunieu": 13.49,
-        "Prêt Crédit Mutuel Fleury": 58607.84,
-        "Prêt CA IDF Roubaix": 76682.08,
-        "Prêt CA IDF Beau Laurier Appartement": 90658.91,
-        "Prêt CA IDF Beau Laurier Travaux": 2519,
+        "Prêt Crédit Mutuel Fleury": 58607.86,
+        "Prêt CA IDF Roubaix": 76682.09,
+        "Prêt CA IDF Beau Laurier Appartement": 90658.9,
+        "Prêt CA IDF Beau Laurier Travaux": 2519.01,
         "Caution Fleury": 1240,
         "Caution Roubaix": 1300,
         "Caution Beau Laurier": 850
@@ -396,17 +836,52 @@
         "Roubaix": 80300
       },
       "liabilities": {
-        "Prêt LCL 356": 96316.45,
-        "Prêt LCL Zéro": 10394.19,
+        "Prêt LCL 356": 96535.79,
+        "Prêt LCL Zéro": 10431.18,
         "Splitwise Eunieu": 13.49,
-        "Prêt Crédit Mutuel Fleury": 58301.22,
-        "Prêt CA IDF Roubaix": 76503.26,
-        "Prêt CA IDF Beau Laurier Appartement": 90421.46,
+        "Prêt Crédit Mutuel Fleury": 58301.24,
+        "Prêt CA IDF Roubaix": 76503.27,
+        "Prêt CA IDF Beau Laurier Appartement": 90421.45,
         "Prêt CA IDF Beau Laurier Travaux": 2512.42,
         "Prêt CCF Epideme": 75725,
         "Caution Fleury": 1240,
         "Caution Roubaix": 1300,
         "Caution Beau Laurier": 850
+      }
+    },
+    {
+      "closing_date": "2026-08-18",
+      "assets": {
+        "Cash": 200,
+        "Boursobank": 2129,
+        "CA IDF Perso": 413.15,
+        "CA IDF Famille": 480.03,
+        "LCL Commun": 1236.96,
+        "CCF": 1946.95,
+        "Livret A": 17000,
+        "Splitwise Eunieu": 80.82,
+        "Enerfip": 6812.22,
+        "PEA Liquidité": 30371.41,
+        "PEA Actions": 15503.44,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "Epideme": 75000,
+        "PEA-PME liquidité": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300
+      },
+      "liabilities": {
+        "Prêt LCL 356": 96316.44,
+        "Prêt LCL Zéro": 10394.19,
+        "Prêt Crédit Mutuel Fleury": 57994.31,
+        "Prêt CA IDF Roubaix": 76323.98,
+        "Prêt CA IDF Beau Laurier Appartement": 90183.39,
+        "Prêt CA IDF Beau Laurier Travaux": 2505.81,
+        "Prêt CCF Epideme": 75503.04,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850,
+        "Caution Epideme": 1420
       }
     }
   ]

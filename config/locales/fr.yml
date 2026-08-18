@@ -354,6 +354,8 @@ fr:
       owned_value_detail: "%{share} de %{total}"
       # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
       breakdown_split: "%{type} · %{usage}"
+      # Le nom accessible de la pastille de légende du miroir, qui n'a aucun texte à elle.
+      toggle_series: Afficher ou masquer %{label}
       unassigned_property: Non rattaché
       # Les grandes familles du graphique miroir du tableau de bord. Elles regroupent
       # plusieurs types d'enum et portent donc leur propre vocabulaire — voir

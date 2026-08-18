@@ -21,6 +21,14 @@ RSpec.describe "Dashboard", type: :request do
     doc.at_css(".chart-series-area.#{tone}")["d"].scan(/[ML] [\d.-]+ ([\d.-]+)/).flatten.map(&:to_f)
   end
 
+  # Le montant d'une graduation, écrit à partir du SEUL format exposé au contrôleur Stimulus :
+  # c'est ainsi qu'il écrira les siennes quand masquer une catégorie changera l'échelle.
+  def exposed_currency(money, amount)
+    digits = amount.abs.round.to_s.reverse.scan(/\d{1,3}/).join(money["delimiter"]).reverse
+
+    money["format"].sub("%n", (amount.negative? ? "-" : "") + digits).sub("%u", money["unit"])
+  end
+
   # Un bilan doté d'un actif et d'une dette, pour que ses totaux ne soient pas nuls.
   def balance_sheet_worth(closing_date, value:, debt: 0)
     sheet = create(:balance_sheet, user: user, closing_date: closing_date)
@@ -367,6 +375,97 @@ RSpec.describe "Dashboard", type: :request do
         }
         expect(card.at_css(".empty-state").text).to eq(I18n.t("views.dashboard.no_breakdown"))
         expect(card.at_css(".chart-area-mirror")).to be_nil
+      end
+
+      # Masquer une catégorie au clic sur sa pastille est le seul geste que le serveur ne sait
+      # pas rendre : la pile doit se refaire sans elle, dans le navigateur. Ces trois épreuves
+      # gardent le contrat que le contrôleur Stimulus chart_series consomme.
+      describe "masquer une catégorie" do
+        it "makes the legend swatch a button that names the band it commands" do
+          property = create(:property, user: user, name: "Locatif Lyon", usage: :rental)
+          sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+          create(:balance_sheet_asset, balance_sheet: sheet, asset: property.real_estate_asset, value: 300_000)
+
+          get root_path
+
+          doc = Nokogiri::HTML(response.body)
+          item = doc.at_css(".chart-legend-item[data-series='real_estate:rental']")
+          swatch = item.at_css("button.chart-legend-swatch")
+          expect(swatch["aria-pressed"]).to eq("true")
+          expect(swatch["aria-label"]).to eq(I18n.t("views.shared.toggle_series", label: "Immobilier · Locatif"))
+          expect(swatch["data-action"]).to eq("chart-series#toggle")
+          # La pastille commande une bande, et c'est la clé qui les rapproche.
+          expect(doc.at_css(".chart-series-area[data-series='real_estate:rental']")).not_to be_nil
+        end
+
+        # Masquer une catégorie redéploie l'échelle sur ce qui reste, dans le navigateur : le
+        # contrôleur redessine la grille, l'axe et les bandes. Il ne connaît pour cela ni les
+        # marges du repère ni le pas de graduation — le serveur les lui passe. Relire les
+        # graduations RENDUES à partir de ces seules données prouve que ce qu'il reçoit est
+        # bien ce avec quoi le serveur a dessiné : un zoom repartira du même cadre.
+        it "hands the client the frame and the scale the server itself drew with" do
+          livret = create(:asset, user: user, asset_type: :savings_account)
+          property = create(:property, user: user, name: "Locatif Lyon", usage: :rental)
+          loan = create(:liability, user: user, liability_type: :real_estate_loan, property: property)
+          [Date.new(2025, 6, 30), Date.new(2025, 12, 31)].each_with_index do |date, index|
+            sheet = create(:balance_sheet, user: user, closing_date: date)
+            create(:balance_sheet_asset, balance_sheet: sheet, asset: livret, value: 10_000 + index * 2_000)
+            create(:balance_sheet_asset, balance_sheet: sheet, asset: property.real_estate_asset, value: 300_000)
+            create(:balance_sheet_liability, balance_sheet: sheet, liability: loan, remaining_capital: 200_000 - index * 5_000)
+          end
+
+          get root_path
+
+          doc = Nokogiri::HTML(response.body)
+          root = doc.at_css(".chart-with-legend")
+          frame = JSON.parse(root["data-chart-series-frame-value"])
+          scale = JSON.parse(root["data-chart-series-scale-value"])
+          money = JSON.parse(root["data-chart-series-currency-value"])
+          ordinate = ->(amount) {
+            span = (scale["high"] - scale["low"]).to_f
+            ((frame["bottom"] - (amount - scale["low"]) / span * (frame["bottom"] - frame["top"])) * 100).round / 100.0
+          }
+
+          multiples = (scale["low"] / scale["step"]).round..(scale["high"] / scale["step"]).round
+          rendered = doc.css("[data-chart-series-target='grid'] line").map { |line| line["y1"] }
+                        .zip(doc.css("[data-chart-series-target='grid'] text").map(&:text))
+          expect(rendered).to eq(multiples.map { |multiple|
+            amount = multiple * scale["step"]
+            [ordinate.call(amount).to_s, exposed_currency(money, amount)]
+          })
+          # L'axe, et la ligne de partage de la légende qui doit tomber avec lui.
+          expect(doc.at_css("[data-chart-series-target='axis']")["y1"]).to eq(ordinate.call(0).to_s)
+          expect(doc.at_css("[data-chart-series-target='legend']")["style"])
+            .to eq("--axis-share: #{(ordinate.call(0) / frame['height'] * 100).round(2)}%")
+        end
+
+        # Le format des montants vient d'I18n, par le serveur, et non d'un Intl.NumberFormat :
+        # un autre espace de milliers ou un autre arrondi et la grille changerait d'aspect au
+        # premier clic.
+        it "hands over a money format that writes what number_to_currency writes" do
+          balance_sheet_worth(Date.new(2025, 12, 31), value: 250_000, debt: 100_000)
+
+          get root_path
+
+          money = JSON.parse(Nokogiri::HTML(response.body)
+                               .at_css(".chart-with-legend")["data-chart-series-currency-value"])
+          [0, 2_500, 250_000, 1_234_567, -1_000, -1_234_567].each do |amount|
+            expect(exposed_currency(money, amount)).to eq(currency(amount, precision: 0))
+          end
+        end
+
+        # La légende de l'anneau ne commande rien : un bouton y promettrait une bascule qui
+        # n'arriverait jamais.
+        it "leaves the donut legend a plain swatch" do
+          sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+          create(:balance_sheet_asset, balance_sheet: sheet, asset: create(:asset, user: user), value: 50_000)
+
+          get summary_balance_sheet_path(sheet)
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.css(".chart-legend-swatch")).not_to be_empty
+          expect(doc.css("button.chart-legend-swatch")).to be_empty
+        end
       end
     end
 

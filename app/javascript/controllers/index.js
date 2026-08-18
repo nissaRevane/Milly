@@ -6,6 +6,9 @@ application.register("alert", AlertController)
 import AutoSubmitController from "controllers/auto_submit_controller"
 application.register("auto-submit", AutoSubmitController)
 
+import ChartSeriesController from "controllers/chart_series_controller"
+application.register("chart-series", ChartSeriesController)
+
 import ConditionalFieldsController from "controllers/conditional_fields_controller"
 application.register("conditional-fields", ConditionalFieldsController)
 

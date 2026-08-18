@@ -1387,6 +1387,49 @@ a.summary-nav-arrow:hover {
   background: var(--color-border);
 }
 
+/* Dans le miroir, la pastille est un bouton qui masque sa catégorie : elle garde l'aspect
+   du carré et n'emprunte au bouton que le curseur et le focus. Le survol l'entoure d'un
+   halo plutôt que de l'agrandir — un carré de 12 px qui grossit décalerait la ligne
+   entière, et c'est la colonne de pastilles qui aligne la légende. */
+button.chart-legend-swatch {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  outline-offset: 3px;
+  transition: box-shadow 0.15s ease;
+}
+
+button.chart-legend-swatch:hover {
+  box-shadow: 0 0 0 0.1875rem var(--color-border);
+}
+
+/* Une catégorie masquée : sa bande a disparu du graphique, sa ligne reste dans la légende —
+   c'est par elle qu'on la rappelle. Elle passe en gris, pastille comprise, et le barré dit
+   ce que la couleur seule laisserait deviner. */
+.chart-legend-item-off {
+  color: var(--color-text-muted);
+}
+
+/* La pastille éteinte se creuse — un contour vide, et non une teinte grise de plus, qui se
+   confondrait avec les nuances les plus claires du graphique. Le contour est une bordure
+   plutôt qu'une ombre intérieure : le halo de survol reste ainsi libre de s'afficher, et une
+   catégorie masquée répond au pointeur comme les autres. */
+.chart-legend-item-off .chart-legend-swatch {
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+.chart-legend-item-off .chart-legend-label,
+.chart-legend-item-off .chart-legend-amount {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-border);
+}
+
+.chart-legend-item-off .chart-legend-amount {
+  font-weight: 500;
+}
+
 .chart-legend-label {
   flex: 1 1 auto;
   min-width: 0;

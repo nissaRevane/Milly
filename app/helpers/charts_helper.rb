@@ -1,10 +1,16 @@
-# Les graphiques de Milly sont du SVG rendu par le serveur, sans une ligne de JavaScript.
+# Les graphiques de Milly sont du SVG rendu par le serveur.
 #
 # Ce n'est pas un choix par défaut : la CSP de l'application interdit les scripts inline
 # (voir config/initializers/content_security_policy.rb), les données sont déjà chargées au
 # moment du rendu, et une infobulle native <title> suffit à lire un point. Une bibliothèque
-# de graphiques imposerait un CDN, un contrôleur Stimulus et un re-rendu à gérer sur chaque
-# navigation Turbo, pour des courbes que le serveur sait dessiner lui-même.
+# de graphiques imposerait un CDN et un re-rendu à gérer sur chaque navigation Turbo, pour
+# des courbes que le serveur sait dessiner lui-même.
+#
+# Une seule chose échappe au serveur : masquer une catégorie du miroir à la demande. Le
+# contrôleur Stimulus chart_series refait alors la pile sans elle et redéploie l'échelle sur
+# ce qui reste — grille, axe et bandes (voir #chart_series_data). C'est le seul JavaScript
+# de tous ces graphiques, et il ne connaît aucune constante du repère : elles lui arrivent
+# du serveur, qui reste seul à les tenir.
 #
 # Les couleurs ne sont jamais écrites ici : chaque forme porte une classe (.chart-line-path,
 # .chart-slice-3…) que application.css raccorde aux variables --chart-*. Un helper qui
@@ -24,6 +30,10 @@ module ChartsHelper
 
   # Le nombre de lignes horizontales, graduations comprises : 4 lignes, donc 3 intervalles.
   GRID_LINE_COUNT = 4
+
+  # De combien l'étiquette d'une graduation descend sous son trait, pour tomber à hauteur
+  # de regard plutôt que sur la ligne.
+  GRID_LABEL_OFFSET = 4
 
   DONUT_SIZE = 180
   DONUT_THICKNESS = 30
@@ -77,6 +87,10 @@ module ChartsHelper
   # dépend d'un chiffre que seul ce helper connaît : la hauteur à laquelle tombe l'axe. Elle
   # sort en --axis-share, et le CSS s'en sert pour poser la légende des actifs au-dessus de
   # l'axe et celle de la dette en dessous, chacune en face de ses bandes.
+  #
+  # Ce même bloc porte le contrôleur Stimulus qui masque une catégorie au clic sur sa
+  # pastille : la légende commande les bandes, les deux doivent donc tenir sous une racine
+  # commune. Sans légende, il n'y a rien à cliquer et le graphique sort nu.
   def mirrored_area_chart(dates, up_series, down_series, legend: nil)
     return if dates.empty?
 
@@ -93,7 +107,11 @@ module ChartsHelper
 
     chart = chart_svg(class: "chart chart-area-mirror", height: height) do
       safe_join([
-        chart_grid_at(grid_values(low, high, step), low, high, height),
+        # La grille tient dans un groupe : masquer une catégorie redéploie l'échelle sur ce
+        # qui reste, donc change le NOMBRE de graduations, et le contrôleur remplace le
+        # contenu de ce groupe en bloc plutôt que d'y retoucher des lignes une à une.
+        tag.g(chart_grid_at(grid_values(low, high, step), low, high, height),
+              data: { chart_series_target: "grid" }),
         safe_join(stacked_bands(up_series, xs, low, high, height: height, single: single, sign: 1)),
         safe_join(stacked_bands(down_series, xs, low, high, height: height, single: single, sign: -1)),
         # L'axe passe APRÈS les bandes : tracé avec la grille, il disparaîtrait sous la
@@ -104,10 +122,11 @@ module ChartsHelper
     end
     return chart if legend.nil?
 
-    tag.div(class: "chart-with-legend") do
+    tag.div(class: "chart-with-legend", data: chart_series_data(xs, low, high, step, height)) do
       safe_join([
         tag.div(chart, class: "chart-with-legend-plot"),
         tag.div(legend, class: "chart-legend-columns",
+                        data: { chart_series_target: "legend" },
                         style: "--axis-share: #{coord(chart_y(0, low, high, height) / height * 100)}%")
       ])
     end
@@ -127,7 +146,8 @@ module ChartsHelper
 
     ordered = reverse ? series.reverse : series
     chart_legend(ordered.map { |serie|
-      { label: serie.label, sublabel: serie.sublabel, amount: serie.values.last, tone: series_tone(serie.key) }
+      { key: serie.key, label: serie.label, sublabel: serie.sublabel, full_label: serie.full_label,
+        amount: serie.values.last, tone: series_tone(serie.key) }
     }, total)
   end
 
@@ -273,7 +293,7 @@ module ChartsHelper
                  x2: CHART_WIDTH - CHART_PADDING[:right], y2: coord(y)),
         tag.text(number_to_currency(value, precision: 0),
                  class: "chart-axis-label",
-                 x: CHART_PADDING[:left] - 8, y: coord(y + 4),
+                 x: CHART_PADDING[:left] - 8, y: coord(y + GRID_LABEL_OFFSET),
                  "text-anchor" => "end")
       ])
     })
@@ -286,7 +306,8 @@ module ChartsHelper
 
     tag.line(class: "chart-axis-rule",
              x1: CHART_PADDING[:left], y1: y,
-             x2: CHART_WIDTH - CHART_PADDING[:right], y2: y)
+             x2: CHART_WIDTH - CHART_PADDING[:right], y2: y,
+             data: { chart_series_target: "axis" })
   end
 
   # Le sommet d'une pile : le plus grand total sur l'ensemble des bilans, et non la plus
@@ -299,6 +320,11 @@ module ChartsHelper
 
   # Les bandes d'une pile, de l'axe vers l'extérieur. +sign+ vaut 1 pour l'actif et -1 pour
   # la dette, qui s'empile donc vers le bas : c'est la seule différence entre les deux côtés.
+  # Chaque bande emporte ses montants et son côté : masquer une catégorie ne fait pas
+  # disparaître un trou dans la pile, il faut rapprocher de l'axe toutes celles qui étaient
+  # au-dessus d'elle — donc refaire ici, dans le navigateur, l'empilement de cette boucle.
+  # Les montants sont ceux du TRACÉ, déjà recopiés aux deux bords dans le cas +single+ : le
+  # contrôleur ignore ainsi tout du cas particulier.
   def stacked_bands(series, xs, low, high, height:, single:, sign:)
     edge = Array.new(xs.size, 0.0)
 
@@ -306,10 +332,45 @@ module ChartsHelper
       values = single ? Array.new(xs.size, serie.values.first.to_f) : serie.values.map(&:to_f)
       far = values.each_with_index.map { |value, index| edge[index] + sign * value }
       band = tag.path(class: "chart-series-area #{series_tone(serie.key)}",
-                      d: band_path(xs, edge, far, low, high, height)) { tag.title(serie.full_label) }
+                      d: band_path(xs, edge, far, low, high, height),
+                      data: { chart_series_target: "band", series: serie.key,
+                              sign: sign, values: values.to_json }) { tag.title(serie.full_label) }
       edge = far
       band
     end
+  end
+
+  # Ce qu'il faut au contrôleur pour refaire le graphique sans une de ses catégories.
+  #
+  # Masquer une bande REDÉPLOIE l'échelle sur ce qui reste : sans quoi retirer l'immobilier
+  # d'un patrimoine qu'il porte aux trois quarts laisserait les liquidités écrasées sur
+  # l'axe, et le geste n'apprendrait rien. Les graduations suivent donc, en nombre comme en
+  # montant — c'est tout l'intérêt du zoom.
+  #
+  # La légende, elle, ne bouge pas d'un chiffre : ses montants et ses parts sont ceux du
+  # dernier bilan, et ils ne dépendent pas de ce qu'on regarde. Seul son axe se recale, la
+  # ligne de partage de ses deux colonnes suivant celle du graphique.
+  #
+  # Aucune constante du repère ne part d'ici en dur : le cadre sort en ordonnées déjà
+  # calculées (+top+, +bottom+), la graduation en nombre d'intervalles, et le format des
+  # montants tel qu'I18n le donne au serveur. Le JavaScript n'a ainsi aucune valeur jumelle
+  # à tenir à jour, et écrit ses étiquettes comme number_to_currency les écrit.
+  def chart_series_data(xs, low, high, step, height)
+    {
+      controller: "chart-series",
+      chart_series_xs_value: xs.map { |x| coord(x) }.to_json,
+      chart_series_frame_value: {
+        top: CHART_PADDING[:top],
+        bottom: height - CHART_PADDING[:bottom],
+        height: height,
+        labelOffset: GRID_LABEL_OFFSET
+      }.to_json,
+      # L'échelle du rendu, à laquelle le cadre revient quand plus rien n'est affiché : il
+      # n'y a alors aucune donnée d'où déduire un zoom, et un cadre vide vaut mieux qu'un
+      # cadre faux.
+      chart_series_scale_value: { low: low, high: high, step: step, intervals: GRID_LINE_COUNT - 1 }.to_json,
+      chart_series_currency_value: t("number.currency.format").slice(:unit, :delimiter, :format).to_json
+    }
   end
 
   # Les bornes du miroir, arrondies au multiple de graduation qui les englobe, et le pas
@@ -409,16 +470,33 @@ module ChartsHelper
     }
   end
 
+  # +key+ marque une entrée qui commande une bande : elle seule se laisse basculer. La
+  # légende de l'anneau n'en a pas, et reste une simple liste.
   def legend_item(item, total, under_title: false)
-    tag.li(class: "chart-legend-item") do
+    tag.li(class: "chart-legend-item",
+           data: item[:key] && { chart_series_target: "item", series: item[:key] }) do
       safe_join([
-        tag.span(class: "chart-legend-swatch #{item[:tone]}"),
+        legend_swatch(item),
         tag.span(legend_label(item, under_title), class: "chart-legend-label"),
         tag.span(number_to_currency(item[:amount], precision: 0), class: "chart-legend-amount"),
         tag.span(number_to_percentage(item[:amount].to_f / total * 100, precision: 0),
                  class: "chart-legend-share")
       ])
     end
+  end
+
+  # La pastille de couleur devient un BOUTON dès qu'elle commande une bande : cliquer dessus
+  # retire la catégorie du graphique, recliquer la remet. Un bouton, et non un carré muni
+  # d'un écouteur : le clavier l'atteint, aria-pressed dit dans quel état il se trouve, et
+  # son nom accessible porte le libellé complet, la pastille n'ayant aucun texte à elle.
+  def legend_swatch(item)
+    classes = "chart-legend-swatch #{item[:tone]}"
+    return tag.span(class: classes) if item[:key].nil?
+
+    tag.button(type: "button", class: classes,
+               "aria-pressed" => "true",
+               "aria-label" => t("views.shared.toggle_series", label: item[:full_label] || item[:label]),
+               data: { action: "chart-series#toggle" })
   end
 
   # Sous un titre de section, la famille est déjà écrite : il ne reste que l'usage. Hors
