@@ -54,49 +54,54 @@ module ChartsHelper
     end
   end
 
-  # Actifs et dette côte à côte, un couple de barres par bilan. +series+ est une liste de
-  # [date, actifs, dette] triée par date croissante.
+  # Une aire empilée : une bande par catégorie, du bas vers le haut, dont la somme dessine
+  # le total. +dates+ donne l'axe, +series+ est une liste de BalanceSheet::BreakdownSeries.
   #
-  # La barre des actifs est pleine hauteur, celle de la dette part du même socle : ce qui
-  # dépasse au-dessus de la dette, c'est exactement les fonds propres, et l'œil lit d'où
-  # vient le mouvement de la courbe. Les deux barres partagent une échelle partie de zéro —
-  # ici, contrairement à la courbe, le zéro est le socle du raisonnement. Une dette qui
-  # dépasserait les actifs sortirait simplement du haut de sa barre, ce qui est la lecture
-  # juste et non un défaut de rendu.
-  def stacked_bars_chart(series)
-    return if series.empty?
+  # L'ordre de +series+ est celui de l'empilement et vient du modèle, où il est figé : une
+  # catégorie qui changerait de rang d'un bilan à l'autre ferait onduler la courbe pour une
+  # raison qui n'est pas dans les chiffres. L'échelle part de zéro — contrairement à la
+  # courbe du patrimoine net, une aire empilée n'a de sens que posée sur son socle.
+  def stacked_area_chart(dates, series)
+    return if dates.empty? || series.empty?
 
-    high = series.flat_map { |(_, assets, liabilities)| [assets.to_f, liabilities.to_f] }.max
+    high = dates.each_index.map { |index| series.sum { |serie| serie.values[index].to_f } }.max
     return if high <= 0
 
-    baseline = CHART_HEIGHT - CHART_PADDING[:bottom]
-    slot = plot_width / series.size.to_f
-    width = [slot * 0.66, 26].min
+    # Un seul bilan ne dessine pas d'aire : sa valeur est reportée aux deux bords du cadre,
+    # ce qui donne une bande à plat — la composition du jour, sans histoire à raconter.
+    single = dates.size == 1
+    xs = single ? [CHART_PADDING[:left], CHART_WIDTH - CHART_PADDING[:right]] : dates.each_index.map { |index| chart_x(index, dates.size) }
+    lower = Array.new(xs.size, 0.0)
 
-    chart_svg(class: "chart chart-bars") do
+    areas = series.map do |serie|
+      values = single ? Array.new(2, serie.values.first.to_f) : serie.values.map(&:to_f)
+      upper = values.each_with_index.map { |value, index| lower[index] + value }
+      band = tag.path(class: "chart-series-area #{series_tone(serie.key)}",
+                      d: band_path(xs, lower, upper, high)) { tag.title(serie.label) }
+      lower = upper
+      band
+    end
+
+    chart_svg(class: "chart chart-area-stack") do
       safe_join([
         chart_grid(0, high),
-        safe_join(series.each_with_index.map { |(date, assets, liabilities), index|
-          center = CHART_PADDING[:left] + slot * (index + 0.5)
-          equity = assets - liabilities
-          title = [
-            l(date, format: :long),
-            "#{t('views.dashboard.assets')} : #{number_to_currency(assets)}",
-            "#{t('views.dashboard.liabilities')} : #{number_to_currency(liabilities)}",
-            "#{t('views.dashboard.equity')} : #{number_to_currency(equity)}"
-          ].join("\n")
-
-          tag.g(class: "chart-bar-group") do
-            safe_join([
-              bar_rect(center, width, baseline, chart_y(assets.to_f, 0, high), "chart-bar-assets"),
-              bar_rect(center, width, baseline, chart_y(liabilities.to_f, 0, high), "chart-bar-liabilities"),
-              tag.title(title)
-            ])
-          end
-        }),
-        chart_x_labels(series.map(&:first), series.each_index.map { |index| CHART_PADDING[:left] + slot * (index + 0.5) })
+        safe_join(areas),
+        chart_x_labels(dates, single ? [CHART_PADDING[:left] + plot_width / 2.0] : xs)
       ])
     end
+  end
+
+  # La légende d'une aire empilée. Les montants sont ceux du DERNIER bilan : la légende dit
+  # où l'on en est, la courbe raconte comment on y est arrivé. Une catégorie retombée à zéro
+  # y reste listée — sa bande est encore visible à gauche du graphique, et sa couleur doit
+  # pouvoir se lire quelque part.
+  def stacked_area_legend(series)
+    total = series.sum { |serie| serie.values.last.to_f }
+    return if total <= 0
+
+    chart_legend(series.map { |serie|
+      { label: serie.label, amount: serie.values.last, tone: series_tone(serie.key) }
+    }, total)
   end
 
   # Un anneau et sa légende. +slices+ est une liste de { label:, amount: } déjà ordonnée ;
@@ -141,7 +146,9 @@ module ChartsHelper
           # de 3 h, où stroke-dashoffset la placerait.
           tag.g(transform: "rotate(-90 #{center} #{center})") { safe_join(ring) }
         end,
-        donut_legend(slices, total)
+        chart_legend(slices.each_with_index.map { |slice, index|
+          slice.merge(tone: palette_class(index))
+        }, total)
       ])
     end
   end
@@ -274,26 +281,43 @@ module ChartsHelper
     tag.circle(class: "chart-point", cx: coord(x), cy: coord(y), r: 3.5) { tag.title(title) }
   end
 
-  def bar_rect(center, width, baseline, top, css_class)
-    tag.rect(class: css_class,
-             x: coord(center - width / 2), y: coord(top),
-             width: coord(width), height: coord(baseline - top))
-  end
-
-  def donut_legend(slices, total)
+  # La légende partagée par l'anneau et l'aire empilée : une pastille, un libellé, un
+  # montant, la part qu'il représente. +total+ est passé plutôt que redérivé, les deux
+  # graphiques ne le lisant pas sur le même ensemble de montants.
+  def chart_legend(items, total)
     tag.ul(class: "chart-legend") do
-      safe_join(slices.each_with_index.map { |slice, index|
+      safe_join(items.map { |item|
         tag.li(class: "chart-legend-item") do
           safe_join([
-            tag.span(class: "chart-legend-swatch #{palette_class(index)}"),
-            tag.span(slice[:label], class: "chart-legend-label"),
-            tag.span(number_to_currency(slice[:amount]), class: "chart-legend-amount"),
-            tag.span(number_to_percentage(slice[:amount].to_f / total * 100, precision: 1),
+            tag.span(class: "chart-legend-swatch #{item[:tone]}"),
+            tag.span(item[:label], class: "chart-legend-label"),
+            tag.span(number_to_currency(item[:amount]), class: "chart-legend-amount"),
+            tag.span(number_to_percentage(item[:amount].to_f / total * 100, precision: 1),
                      class: "chart-legend-share")
           ])
         end
       })
     end
+  end
+
+  # Le contour d'une bande : le bord haut de gauche à droite, puis le bord bas en sens
+  # inverse pour refermer le polygone.
+  def band_path(xs, lower, upper, high)
+    top = xs.each_with_index.map { |x, index|
+      "#{index.zero? ? 'M' : 'L'} #{coord(x)} #{coord(chart_y(upper[index], 0, high))}"
+    }
+    bottom = xs.each_with_index.reverse_each.map { |x, index|
+      "L #{coord(x)} #{coord(chart_y(lower[index], 0, high))}"
+    }
+
+    (top + bottom + ["Z"]).join(" ")
+  end
+
+  # La classe qui porte la couleur d'une catégorie. Elle se déduit de la clé et non d'un
+  # index : une catégorie garde ainsi sa teinte quand une autre disparaît du bilan, et
+  # application.css dit noir sur blanc quelle couleur va à quel poste.
+  def series_tone(key)
+    "chart-series-#{key.tr('_:', '--')}"
   end
 
   def palette_class(index)
