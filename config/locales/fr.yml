@@ -4,6 +4,9 @@ fr:
       default: "%d/%m/%Y"
       long: "%d %B %Y"
       short: "%d %b"
+      # L'axe des graphiques : un mois et une année, la seule granularité qu'une étiquette
+      # tous les trente pixels puisse porter sans devenir illisible.
+      chart_axis: "%b %Y"
     day_names: [dimanche, lundi, mardi, mercredi, jeudi, vendredi, samedi]
     abbr_day_names: [dim, lun, mar, mer, jeu, ven, sam]
     month_names: [~, janvier, février, mars, avril, mai, juin, juillet, août, septembre, octobre, novembre, décembre]

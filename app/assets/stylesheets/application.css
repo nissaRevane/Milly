@@ -15,6 +15,16 @@
   --color-text: #1e293b;
   --color-text-muted: #64748b;
   --color-border: #e2e8f0;
+  /* La palette des graphiques. Les helpers de ChartsHelper ne posent que des classes
+     (.chart-palette-1 … -6) : les couleurs restent ici, dans un seul endroit. */
+  --chart-1: #2563eb;
+  --chart-2: #0891b2;
+  --chart-3: #7c3aed;
+  --chart-4: #16a34a;
+  --chart-5: #d97706;
+  --chart-6: #db2777;
+  --chart-assets: #bfdbfe;
+  --chart-liabilities: #f87171;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1065,5 +1075,313 @@ a.summary-nav-arrow:hover {
   .accordion-content {
     padding: 0 0.5rem 0.5rem;
     overflow-x: auto;
+  }
+}
+
+
+/* ==========================================================================
+   Tableau de bord et graphiques
+
+   Tout le SVG est rendu par le serveur (voir app/helpers/charts_helper.rb) : les formes
+   n'y portent qu'une classe, et c'est ici que la couleur leur est donnée.
+   ========================================================================== */
+
+/* Tuiles chiffrées, au-dessus des courbes */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+}
+
+.stat-card-highlight {
+  border-color: var(--color-primary);
+}
+
+.stat-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* La variation garde sa couleur de gain/perte mais prend la taille de la tuile */
+.stat-value .variation {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.stat-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  min-height: 1.25rem;
+}
+
+/* Cartes de graphique */
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.chart-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-grid .chart-card {
+  margin-bottom: 0;
+}
+
+/* Le viewBox donne le repère, le CSS donne la largeur réelle */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-grid-line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  fill: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.chart-line-path {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-area {
+  fill: rgba(37, 99, 235, 0.12);
+  stroke: none;
+}
+
+.chart-point {
+  fill: var(--color-surface);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+.chart-bar-assets {
+  fill: var(--chart-assets);
+}
+
+.chart-bar-liabilities {
+  fill: var(--chart-liabilities);
+}
+
+/* L'anneau et sa légende, côte à côte tant que la carte est assez large */
+.chart-donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.chart-donut-ring {
+  flex: 0 0 auto;
+  width: 180px;
+  height: 180px;
+}
+
+.chart-slice {
+  transition: opacity 0.15s ease;
+}
+
+.chart-slice:hover {
+  opacity: 0.8;
+}
+
+.chart-legend {
+  flex: 1 1 220px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.chart-legend-inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chart-legend-swatch {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--color-border);
+}
+
+.chart-legend-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-legend-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.chart-legend-share {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+.chart-swatch-assets {
+  background: var(--chart-assets);
+}
+
+.chart-swatch-liabilities {
+  background: var(--chart-liabilities);
+}
+
+/* La palette : une part de l'anneau la porte en stroke, une pastille de légende en fond */
+.chart-palette-1 { stroke: var(--chart-1); background: var(--chart-1); }
+.chart-palette-2 { stroke: var(--chart-2); background: var(--chart-2); }
+.chart-palette-3 { stroke: var(--chart-3); background: var(--chart-3); }
+.chart-palette-4 { stroke: var(--chart-4); background: var(--chart-4); }
+.chart-palette-5 { stroke: var(--chart-5); background: var(--chart-5); }
+.chart-palette-6 { stroke: var(--chart-6); background: var(--chart-6); }
+
+/* Barres horizontales en HTML, pour les répartitions courtes */
+.bar-breakdown {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bar-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 12rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.bar-breakdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-breakdown-track {
+  display: block;
+  background: var(--color-bg);
+  border-radius: 999px;
+  height: 0.75rem;
+  overflow: hidden;
+}
+
+.bar-breakdown-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--chart-1);
+}
+
+.bar-breakdown-fill-negative {
+  background: var(--color-danger);
+}
+
+.bar-breakdown-fill.chart-fill-risk-low {
+  background: var(--color-success);
+}
+
+.bar-breakdown-fill.chart-fill-risk-medium {
+  background: var(--color-warning);
+}
+
+.bar-breakdown-fill.chart-fill-risk-high {
+  background: var(--color-danger);
+}
+
+.bar-breakdown-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.empty-state-action {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  /* Sur mobile, l'anneau passe au-dessus de sa légende plutôt qu'à côté */
+  .chart-donut {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chart-donut-ring {
+    align-self: center;
+  }
+
+  .bar-breakdown-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  /* La piste passe sous son libellé : deux colonnes ne suffisent plus à trois cellules */
+  .bar-breakdown-track {
+    grid-column: 1 / -1;
+    order: 3;
   }
 }
