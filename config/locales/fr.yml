@@ -353,6 +353,9 @@ fr:
         cta: Commencer
     shared:
       owned_value_detail: "%{share} de %{total}"
+      # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
+      breakdown_split: "%{type} · %{usage}"
+      unassigned_property: Non rattaché
       # Scope name pinned by Property.usage_label_for → EnumLabel.for("property_usages", …)
       property_usages:
         primary_residence: Résidence principale

@@ -568,4 +568,126 @@ RSpec.describe BalanceSheet, type: :model do
     end
   end
 
+
+  describe ".assets_breakdown_for" do
+    let(:user) { create(:user) }
+
+    it "gives one series per type, in the enum order, with a value per balance sheet" do
+      livret = create(:asset, user: user, asset_type: :savings_account)
+      cash = create(:asset, user: user, asset_type: :cash)
+      first = create(:balance_sheet, user: user, closing_date: Date.new(2025, 6, 30))
+      second = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+      create(:balance_sheet_asset, balance_sheet: first, asset: livret, value: 10_000)
+      create(:balance_sheet_asset, balance_sheet: first, asset: cash, value: 500)
+      create(:balance_sheet_asset, balance_sheet: second, asset: livret, value: 12_000)
+
+      series = BalanceSheet.assets_breakdown_for([first, second])
+
+      expect(series.map(&:key)).to eq(%w[cash savings_account])
+      expect(series.map(&:values)).to eq([[500, 0], [10_000, 12_000]])
+    end
+
+    # L'éclatement par usage est la raison d'être de la méthode : un patrimoine immobilier
+    # lu d'un seul tenant ne dit pas lequel des biens a bougé.
+    it "splits the immobilier by usage of the bien, unassigned last" do
+      sheet = create(:balance_sheet, user: user)
+      rental = create(:property, user: user, name: "Locatif", usage: :rental)
+      home = create(:property, user: user, name: "Maison", usage: :primary_residence)
+      orphan = create(:asset, user: user, name: "Terrain", asset_type: :real_estate)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: rental.real_estate_asset, value: 200_000)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: home.real_estate_asset, value: 300_000)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: orphan, value: 40_000)
+
+      series = BalanceSheet.assets_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to eq(%w[
+        real_estate:primary_residence real_estate:rental real_estate:unassigned
+      ])
+      expect(series.map(&:values).flatten).to eq([300_000, 200_000, 40_000])
+      expect(series.first.label).to eq("Immobilier · Résidence principale")
+    end
+
+    # Seul l'immobilier est éclaté : regrouper toutes les lignes d'un bien est le travail de
+    # l'onglet Immobilier, pas celui d'une ventilation par catégorie.
+    it "leaves a non-immobilier line attached to a bien under its own type" do
+      sheet = create(:balance_sheet, user: user)
+      property = create(:property, user: user, name: "Maison", usage: :primary_residence)
+      account = create(:asset, user: user, asset_type: :checking_account, property: property)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: account, value: 5_000)
+
+      series = BalanceSheet.assets_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to include("checking_account")
+      expect(series.map(&:key)).not_to include("checking_account:primary_residence")
+    end
+
+    it "sums two biens of the same usage into a single series" do
+      sheet = create(:balance_sheet, user: user)
+      %w[Lyon Paris].each do |name|
+        property = create(:property, user: user, name: name, usage: :rental)
+        create(:balance_sheet_asset, balance_sheet: sheet, asset: property.real_estate_asset, value: 100_000)
+      end
+
+      series = BalanceSheet.assets_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to eq(["real_estate:rental"])
+      expect(series.first.values).to eq([200_000])
+    end
+
+    it "counts only the owned share of a line" do
+      sheet = create(:balance_sheet, user: user)
+      asset = create(:asset, user: user, asset_type: :savings_account, ownership_share: 50)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: asset, value: 20_000)
+
+      expect(BalanceSheet.assets_breakdown_for([sheet]).first.values).to eq([10_000])
+    end
+
+    # La somme des bandes est le haut de la pile : elle doit tomber sur le total du bilan,
+    # sinon la courbe des fonds propres et l'aire empilée ne raconteraient pas la même chose.
+    it "adds up to the total the balance sheet reports" do
+      sheet = create(:balance_sheet, user: user)
+      property = create(:property, user: user, name: "Maison", usage: :primary_residence)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: property.real_estate_asset, value: 300_000)
+      create(:balance_sheet_asset, balance_sheet: sheet,
+                                   asset: create(:asset, user: user, ownership_share: 30),
+                                   value: 12_345.67)
+
+      series = BalanceSheet.assets_breakdown_for([sheet])
+
+      expect(series.sum { |serie| serie.values.first }).to eq(sheet.total_assets)
+    end
+
+    it "returns nothing for an empty set" do
+      expect(BalanceSheet.assets_breakdown_for([])).to eq([])
+    end
+  end
+
+  describe ".liabilities_breakdown_for" do
+    let(:user) { create(:user) }
+
+    it "splits the crédits immobiliers by usage and leaves the other types whole" do
+      sheet = create(:balance_sheet, user: user)
+      property = create(:property, user: user, name: "Locatif", usage: :rental)
+      loan = create(:liability, user: user, liability_type: :real_estate_loan, property: property)
+      deposit = create(:liability, user: user, liability_type: :security_deposit)
+      create(:balance_sheet_liability, balance_sheet: sheet, liability: loan, remaining_capital: 150_000)
+      create(:balance_sheet_liability, balance_sheet: sheet, liability: deposit, remaining_capital: 1_200)
+
+      series = BalanceSheet.liabilities_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to eq(%w[real_estate_loan:rental security_deposit])
+      expect(series.first.label).to eq("Crédit immobilier · Locatif")
+    end
+
+    it "adds up to the total the balance sheet reports" do
+      sheet = create(:balance_sheet, user: user)
+      loan = create(:liability, user: user, liability_type: :real_estate_loan, ownership_share: 50)
+      create(:balance_sheet_liability, balance_sheet: sheet, liability: loan, remaining_capital: 99_999.99)
+
+      series = BalanceSheet.liabilities_breakdown_for([sheet])
+
+      expect(series.sum { |serie| serie.values.first }).to eq(sheet.total_liabilities)
+    end
+  end
+
 end
