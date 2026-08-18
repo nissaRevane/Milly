@@ -181,6 +181,24 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(liability_form["hidden"]).not_to be_nil
       expect(liability_form.at_css("input[name='balance_sheet_liability[remaining_capital]']")["value"]).to eq("150000")
     end
+
+    it "edits the closing date from the title instead of a separate edit page" do
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+
+      get balance_sheet_path(bs)
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.css("a[href='#{edit_balance_sheet_path(bs)}']")).to be_empty
+
+      form = doc.at_css(".page-header form[action='#{balance_sheet_path(bs)}'].inline-edit-form")
+      expect(form).not_to be_nil
+      expect(form["hidden"]).not_to be_nil
+      expect(form.at_css("input[name='_method']")["value"]).to eq("patch")
+
+      field = form.at_css("input[name='balance_sheet[closing_date]']")
+      expect(field["type"]).to eq("date")
+      expect(field["value"]).to eq("2026-06-30")
+    end
   end
 
   describe "the real estate band" do

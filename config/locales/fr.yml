@@ -262,10 +262,10 @@ fr:
         owned_value: Valeur détenue
         owned_remaining_capital: Capital détenu
         actions: Actions
-        edit: Modifier
         delete: Supprimer
         confirm_delete: Êtes-vous sûr ?
         click_to_edit: Cliquer pour modifier
+        click_to_edit_date: Cliquer pour modifier la date de clôture
         back: Retour aux bilans
       summary:
         title: "Synthèse du bilan au %{date}"
@@ -280,7 +280,7 @@ fr:
         total_assets: Total Actifs
         total_liabilities: Total Passifs
         equity: Fonds Propres
-        back: Retour au bilan
+        edit: Modifier le détail du bilan
         tabs:
           general: Synthèse
           real_estate: Immobilier

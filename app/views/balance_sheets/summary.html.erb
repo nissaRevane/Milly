@@ -15,6 +15,14 @@
       </p>
     <% end %>
   <% end %>
+  <div class="page-header-actions">
+    <%# La synthèse est le bilan tel qu'on le lit ; le détail est là où on le corrige. %>
+    <%= link_to "✎",
+                balance_sheet_path(@balance_sheet),
+                class: "icon-btn",
+                title: t("views.balance_sheets.summary.edit"),
+                "aria-label" => t("views.balance_sheets.summary.edit") %>
+  </div>
 </div>
 
 <%# Server-rendered tabs: plain links carrying a ?tab= param, Turbo Drive does the rest %>
@@ -41,7 +49,3 @@
 <% else %>
   <%= render "summary_general" %>
 <% end %>
-
-<div class="form-actions">
-  <%= link_to t("views.balance_sheets.summary.back"), balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
-</div>

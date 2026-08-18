@@ -5,11 +5,28 @@
                        previous_path: (balance_sheet_path(@previous) if @previous),
                        following_path: (balance_sheet_path(@following) if @following),
                        scope: "views.balance_sheets.show" } do %>
-    <h1><%= t("views.balance_sheets.show.title", date: l(@balance_sheet.closing_date, format: :long)) %></h1>
+    <%# Cette page EST l'édition du bilan : la date de clôture s'y corrige sur place,
+        au même geste que les montants des lignes, plutôt que sur un formulaire à part. %>
+    <div data-controller="inline-edit">
+      <h1 data-inline-edit-target="display">
+        <button type="button" class="inline-edit-trigger inline-edit-trigger-title"
+                data-action="inline-edit#edit"
+                title="<%= t("views.balance_sheets.show.click_to_edit_date") %>">
+          <%= t("views.balance_sheets.show.title", date: l(@balance_sheet.closing_date, format: :long)) %>
+        </button>
+      </h1>
+      <%= form_with model: @balance_sheet, class: "inline-edit-form",
+                    data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                    html: { hidden: true } do |f| %>
+        <%= f.date_field :closing_date, required: true,
+              class: "inline-edit-input inline-edit-input-date",
+              data: { inline_edit_target: "input",
+                      action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+      <% end %>
+    </div>
   <% end %>
   <div class="page-header-actions">
     <%= link_to t("views.balance_sheets.index.summary"), summary_balance_sheet_path(@balance_sheet), class: "btn btn-primary" %>
-    <%= link_to t("views.balance_sheets.show.edit"), edit_balance_sheet_path(@balance_sheet), class: "btn btn-outline" %>
   </div>
 </div>
 

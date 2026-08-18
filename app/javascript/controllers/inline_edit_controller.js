@@ -41,7 +41,14 @@ export default class extends Controller {
   // Comparaison numérique : « 1000.0 » et « 1000 » sont le même montant, inutile de
   // recharger pour ça. Une saisie vide ou invalide compte comme un changement, pour
   // que requestSubmit déclenche la validation required du champ.
+  //
+  // Les autres champs (la date de clôture) se comparent en texte : parseFloat lirait
+  // « 2026-08-18 » comme 2026 et confondrait deux dates de la même année.
   get unchanged() {
+    if (this.inputTarget.type !== "number") {
+      return this.inputTarget.value === this.inputTarget.defaultValue
+    }
+
     const current = parseFloat(this.inputTarget.value)
 
     return !Number.isNaN(current) && current === parseFloat(this.inputTarget.defaultValue)
