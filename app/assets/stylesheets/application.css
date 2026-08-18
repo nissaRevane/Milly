@@ -448,6 +448,41 @@ body {
   font-size: 0.875rem;
 }
 
+/* Steps between bilans, on each side of the synthèse title */
+.summary-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.summary-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  /* The chevron glyph is small and sits high in its em box: oversize it and nudge it down */
+  font-size: 1.5rem;
+  line-height: 1;
+  padding-bottom: 0.2rem;
+  text-decoration: none;
+}
+
+a.summary-nav-arrow:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Kept in the flow rather than hidden so the title holds its place across bilans */
+.summary-nav-arrow-disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* Sections */
 .section {
   margin-bottom: 2rem;

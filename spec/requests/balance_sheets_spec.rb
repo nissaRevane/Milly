@@ -196,6 +196,53 @@ RSpec.describe "BalanceSheets", type: :request do
         expect(response.body).not_to include("Total immobilier")
       end
 
+      describe "stepping between bilans" do
+        it "links each arrow to the neighbouring bilan" do
+          older = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+          newer = create(:balance_sheet, user: user, closing_date: Date.new(2026, 12, 31))
+
+          get summary_balance_sheet_path(current)
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".summary-nav a[rel=prev]")["href"]).to eq(summary_balance_sheet_path(older))
+          expect(doc.at_css(".summary-nav a[rel=next]")["href"]).to eq(summary_balance_sheet_path(newer))
+        end
+
+        it "keeps the active tab on both arrows" do
+          create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+          create(:balance_sheet, user: user, closing_date: Date.new(2026, 12, 31))
+
+          get summary_balance_sheet_path(current, tab: "real_estate")
+
+          doc = Nokogiri::HTML(response.body)
+          hrefs = doc.css(".summary-nav a").map { |link| link["href"] }
+          expect(hrefs.size).to eq(2)
+          expect(hrefs).to all(include("tab=real_estate"))
+        end
+
+        it "disables the arrow that has no bilan on its side" do
+          only = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+
+          get summary_balance_sheet_path(only)
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.css(".summary-nav a")).to be_empty
+          expect(doc.css(".summary-nav .summary-nav-arrow-disabled").size).to eq(2)
+        end
+
+        it "ignores the bilans of another user" do
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+          other = create(:user)
+          create(:balance_sheet, user: other, closing_date: Date.new(2026, 12, 31))
+
+          get summary_balance_sheet_path(current)
+
+          expect(Nokogiri::HTML(response.body).css(".summary-nav a")).to be_empty
+        end
+      end
+
       it "falls back to the synthèse tab on an unknown tab value" do
         bs = build_property_sheet
 

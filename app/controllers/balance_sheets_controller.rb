@@ -51,6 +51,10 @@ class BalanceSheetsController < ApplicationController
     # variation below stays nil so the views drop their evolution column outright.
     @previous = @balance_sheet.previous
 
+    # Navigation only: the header steps to the neighbouring bilans, nothing is measured
+    # against @following.
+    @following = @balance_sheet.following
+
     # Each tab is a full server-rendered page: only compute what the active tab shows.
     if @tab == "real_estate"
       @property_positions = @balance_sheet.real_estate_positions

@@ -206,6 +206,15 @@ class BalanceSheet < ApplicationRecord
     @previous = user.balance_sheets.where("closing_date < ?", closing_date).order(closing_date: :desc).first
   end
 
+  # The user's balance sheet immediately after this one, nil for the latest one. Only the
+  # synthèse navigation reads it — no variation is ever measured against it — but it is
+  # memoized like #previous so a page asking twice queries once.
+  def following
+    return @following if defined?(@following)
+
+    @following = user.balance_sheets.where("closing_date > ?", closing_date).order(closing_date: :asc).first
+  end
+
   # The biens of this balance sheet, the "non rattaché" bucket left out: the immobilier tab
   # shows only the biens, and its totals — like its variations — are computed from these
   # very same positions so the rows and the totals can never disagree.
