@@ -145,7 +145,10 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(cash_header.at_css(".table-group-amount").text.gsub(/\s+/, " ").strip).to eq(currency(1_500).gsub(/\s+/, " "))
     end
 
-    it "shows the risk level on each line instead of the type" do
+    # Le type est déjà écrit sur l'en-tête du groupe : la ligne n'a plus qu'un nom, et c'est
+    # la couleur de sa pastille qui porte le risque. Le libellé reste en infobulle, une
+    # couleur seule ne disant rien à qui ne la voit pas.
+    it "colors each line by its risk level and names it in the tooltip" do
       bs = create(:balance_sheet, user: user)
       asset = create(:asset, user: user, name: "Livret A", asset_type: :cash, risk_level: :low)
       create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 1_000)
@@ -154,8 +157,10 @@ RSpec.describe "BalanceSheets", type: :request do
 
       doc = Nokogiri::HTML(response.body)
       row = doc.at_css(".balance-sheet-columns table.table tbody tr:not(.table-group-header)")
+      badge = row.at_css(".badge.badge-success")
 
-      expect(row.at_css(".badge.badge-success").text.strip).to eq("Faible")
+      expect(badge.text.strip).to eq("Livret A")
+      expect(badge["title"]).to eq("Faible")
     end
 
     it "replaces the edit link with an inline value form on each line" do

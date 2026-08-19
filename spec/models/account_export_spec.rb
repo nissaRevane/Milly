@@ -149,26 +149,23 @@ RSpec.describe AccountExport do
       expect(JSON.parse(json).dig("balance_sheets", 0, "assets", "Liquidités")).to eq(3140.23)
     end
 
-    # The hand-written seed file predates properties, so the export is now a strict
-    # superset of it: every key it already had is still there, in the same order, and
-    # the only additions are the property keys that db/seeds.rb reads when present.
+    # db/seed_data.json is what db/seeds.rb reads back, so the export has to write exactly
+    # the keys it names, in the same order -- an export that drops one, or renames one,
+    # can no longer be fed back in. The loan is amortizable because the seed file's first
+    # one is: those seven fields are all-or-nothing, and only that shape carries them.
     it "matches the structure db/seeds.rb reads" do
       seed_data = JSON.parse(File.read(Rails.root.join("db", "seed_data.json")))
+      create(:property, user: user)
       create(:asset, user: user)
-      create(:liability, user: user)
+      create(:liability, :amortizable, user: user)
       create(:balance_sheet, user: user)
       data = described_class.new(user).to_h
 
-      expect(data.keys & seed_data.keys).to eq(seed_data.keys)
-      expect(data.keys - seed_data.keys).to eq(["properties"])
+      expect(data.keys).to eq(seed_data.keys)
       expect(data["user"].keys).to match_array(seed_data["user"].keys)
 
-      %w[assets liabilities].each do |collection|
-        seed_keys = seed_data[collection].first.keys
-        exported_keys = data[collection].first.keys
-
-        expect(exported_keys & seed_keys).to eq(seed_keys)
-        expect(exported_keys - seed_keys).to eq(["property"])
+      %w[properties assets liabilities].each do |collection|
+        expect(data[collection].first.keys).to eq(seed_data[collection].first.keys)
       end
 
       expect(data["balance_sheets"].first.keys).to eq(seed_data["balance_sheets"].first.keys)

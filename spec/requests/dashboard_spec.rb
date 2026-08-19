@@ -460,7 +460,7 @@ RSpec.describe "Dashboard", type: :request do
           sheet = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
           create(:balance_sheet_asset, balance_sheet: sheet, asset: create(:asset, user: user), value: 50_000)
 
-          get summary_balance_sheet_path(sheet)
+          get summary_balance_sheet_path(sheet, tab: "dashboard")
 
           doc = Nokogiri::HTML(response.body)
           expect(doc.css(".chart-legend-swatch")).not_to be_empty
