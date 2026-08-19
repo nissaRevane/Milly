@@ -1,5 +1,4 @@
-<%= form_with(model: liability, class: "form",
-    data: { controller: "conditional-fields", conditional_fields_show_when_value: "real_estate_loan" }) do |f| %>
+<%= form_with(model: liability, class: "form", data: { controller: "conditional-fields" }) do |f| %>
   <% if liability.errors.any? %>
     <div class="alert alert-danger">
       <ul>
@@ -21,9 +20,16 @@
         data: { conditional_fields_target: "select", action: "change->conditional-fields#toggle" } %>
   </div>
 
-  <%# Only offered once the user has declared a property — an empty select would just puzzle %>
+  <%#
+    Only offered once the user has declared a property — an empty select would just puzzle —
+    et seulement pour les types qu'un bien porte réellement : un crédit immobilier ou un
+    dépôt de garantie (masqué côté serveur aussi, pour éviter tout flash ; la validation du
+    modèle reste le filet de sécurité).
+  %>
   <% if @properties.any? %>
-    <div class="form-group">
+    <div class="form-group" data-conditional-fields-target="fields"
+        data-conditional-fields-show-when="<%= property_linkable_liability_types %>"
+        <%= "hidden" unless liability.property_linkable? %>>
       <%= f.label :property_id, t("views.liabilities.form.property") %>
       <%= f.collection_select :property_id, @properties, :id, :name,
           { include_blank: t("views.liabilities.form.property_none") }, class: "form-control" %>
@@ -47,6 +53,7 @@
     flash) ; la validation modèle reste le filet de sécurité côté serveur.
   %>
   <fieldset class="form-fieldset" data-conditional-fields-target="fields"
+      data-conditional-fields-show-when="real_estate_loan"
       <%= "hidden" unless liability.real_estate_loan? %>>
     <legend><%= t("views.liabilities.form.amortization_legend") %></legend>
     <p class="form-hint"><%= t("views.liabilities.form.amortization_hint") %></p>

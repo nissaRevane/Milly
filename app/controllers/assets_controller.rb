@@ -1,8 +1,5 @@
 class AssetsController < ApplicationController
   before_action :set_asset, only: [:edit, :update, :destroy]
-  # The form partial offers the property select, and it is also re-rendered on failure.
-  before_action :set_properties, only: [:new, :create, :edit, :update]
-  # Declared after set_properties: it renders the form, which needs the biens.
   before_action :refuse_reserved_asset_type, only: [:create]
 
   def index
@@ -53,10 +50,6 @@ class AssetsController < ApplicationController
     @asset = current_user.assets.find(params[:id])
   end
 
-  def set_properties
-    @properties = current_user.properties.order(:usage, :name)
-  end
-
   # A forged "Immobilier" is refused outright rather than silently saved as another type:
   # that type is minted by creating a bien, and by nothing else.
   def refuse_reserved_asset_type
@@ -68,9 +61,12 @@ class AssetsController < ApplicationController
   end
 
   def asset_params
-    scope_property_id(params.require(:asset).permit(*permitted_asset_attributes))
+    params.require(:asset).permit(*permitted_asset_attributes)
   end
 
+  # Le rattachement à un bien ne se saisit jamais ici : seul l'actif immobilier se rattache
+  # à un bien (voir PropertyLinkable), et c'est le bien qui le crée et qui le rattache.
+  #
   # The bien owns the type and the rattachement of its actif, and its name too. What is
   # left to edit here are the numbers and the dates. An orphan actif — one whose bien has
   # been deleted since — keeps its name editable, as nothing else can name it anymore.
@@ -79,7 +75,7 @@ class AssetsController < ApplicationController
   # qu'un défaut (voir Lifespanable).
   def permitted_asset_attributes
     lifespan = [:started_on, :ended_on]
-    return [:name, :risk_level, :asset_type, :ownership_share, :property_id, *lifespan] unless @asset&.real_estate?
+    return [:name, :risk_level, :asset_type, :ownership_share, *lifespan] unless @asset&.real_estate?
 
     editable_name = @asset.owned_by_property? ? [] : [:name]
     [*editable_name, :risk_level, :ownership_share, *lifespan]

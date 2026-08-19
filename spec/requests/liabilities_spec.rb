@@ -162,7 +162,7 @@ RSpec.describe "Liabilities", type: :request do
       expect(amortization_fieldset).not_to be_nil
       expect(amortization_fieldset.attribute("hidden")).to be_nil
       expect(response.body).to include('data-controller="conditional-fields"')
-      expect(response.body).to include('data-conditional-fields-show-when-value="real_estate_loan"')
+      expect(amortization_fieldset["data-conditional-fields-show-when"]).to eq("real_estate_loan")
     end
 
     it "shows the fieldset when editing a real estate loan" do
@@ -305,6 +305,32 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).to include("Bien immobilier rattaché")
     end
 
+    # Le champ n'est montré que pour les types qu'un bien porte — un crédit immobilier ou un
+    # dépôt de garantie — et le contrôleur Stimulus lit cette liste dans l'attribut data.
+    it "hides the property select for a type no bien carries" do
+      create(:property, user: user, name: "Maison")
+      liability = create(:liability, user: user, liability_type: :short_term_debt)
+
+      get edit_liability_path(liability)
+
+      doc = Nokogiri::HTML(response.body)
+      group = doc.css(%(div[data-conditional-fields-show-when~="security_deposit"])).sole
+      expect(group.css("select#liability_property_id")).not_to be_empty
+      expect(group.attribute("hidden")).not_to be_nil
+      expect(group["data-conditional-fields-show-when"]).to eq("real_estate_loan security_deposit")
+    end
+
+    it "shows the property select for a dépôt de garantie" do
+      create(:property, user: user, name: "Maison", usage: :rental)
+      liability = create(:liability, user: user, liability_type: :security_deposit)
+
+      get edit_liability_path(liability)
+
+      doc = Nokogiri::HTML(response.body)
+      group = doc.css(%(div[data-conditional-fields-show-when~="security_deposit"])).sole
+      expect(group.attribute("hidden")).to be_nil
+    end
+
     it "creates a liability linked to a property" do
       property = create(:property, user: user)
 
@@ -314,6 +340,46 @@ RSpec.describe "Liabilities", type: :request do
 
       expect(Liability.last.property).to eq(property)
       expect(response).to redirect_to(liabilities_path)
+    end
+
+    it "creates a dépôt de garantie linked to a property" do
+      property = create(:property, user: user, usage: :rental)
+
+      post liabilities_path, params: {
+        liability: { name: "Dépôt Studio", risk_level: "low", liability_type: "security_deposit",
+                     property_id: property.id }
+      }
+
+      expect(Liability.last.property).to eq(property)
+      expect(response).to redirect_to(liabilities_path)
+    end
+
+    # Une dette court terme n'est portée par aucun bien : le rattachement soumis est ignoré,
+    # comme le formulaire l'annonce en masquant le champ.
+    it "drops the property submitted for a type no bien carries" do
+      property = create(:property, user: user)
+
+      post liabilities_path, params: {
+        liability: { name: "Travaux", risk_level: "low", liability_type: "short_term_debt",
+                     property_id: property.id }
+      }
+
+      expect(response).to redirect_to(liabilities_path)
+      expect(Liability.find_by(name: "Travaux").property_id).to be_nil
+    end
+
+    # Le champ masqué ne renvoie rien : c'est le changement de type qui défait le
+    # rattachement, sans quoi la validation refuserait un champ devenu invisible.
+    it "unlinks a liability that leaves a type a bien carries" do
+      property = create(:property, user: user)
+      liability = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
+
+      patch liability_path(liability), params: { liability: { liability_type: "short_term_debt" } }
+
+      expect(response).to redirect_to(liabilities_path)
+      liability.reload
+      expect(liability.liability_type).to eq("short_term_debt")
+      expect(liability.property_id).to be_nil
     end
 
     it "unlinks a liability when the blank option is submitted" do

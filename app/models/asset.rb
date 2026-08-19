@@ -41,6 +41,13 @@ class Asset < ApplicationRecord
     self.class.asset_type_label_for(asset_type)
   end
 
+  # Seul l'actif immobilier se rattache à un bien : c'est le bien lui-même, vu du bilan.
+  # Un compte courant dédié à un bien, un placement, une créance restent des actifs à part
+  # — le bien ne les porte pas (voir PropertyLinkable).
+  def property_linkable?
+    real_estate?
+  end
+
   # The bien's own actif, as opposed to a real_estate actif whose bien has been deleted
   # since (Property nullifies instead of destroying, to keep the balance sheet history).
   def owned_by_property?

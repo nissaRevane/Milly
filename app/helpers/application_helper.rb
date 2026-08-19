@@ -34,6 +34,12 @@ module ApplicationHelper
     Liability.liability_types.keys.map { |key| [t("views.shared.liability_types.#{key}"), key] }
   end
 
+  # Les types de passifs qu'un bien porte réellement, tels que le contrôleur Stimulus les
+  # lit : une liste séparée par des espaces, dans l'attribut data du bloc à montrer.
+  def property_linkable_liability_types
+    Liability::PROPERTY_LINKABLE_TYPES.join(" ")
+  end
+
   def liability_type_label(type)
     Liability.liability_type_label_for(type)
   end

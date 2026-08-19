@@ -52,12 +52,26 @@ class LiabilitiesController < ApplicationController
   end
 
   def liability_params
-    scope_property_id(
-      params.require(:liability).permit(
-        :name, :risk_level, :liability_type, :ownership_share, :property_id,
-        :started_on, :ended_on,
-        *Liability::AMORTIZATION_FIELDS
+    drop_property_link_unless_linkable(
+      scope_property_id(
+        params.require(:liability).permit(
+          :name, :risk_level, :liability_type, :ownership_share, :property_id,
+          :started_on, :ended_on,
+          *Liability::AMORTIZATION_FIELDS
+        )
       )
     )
+  end
+
+  # Le rattachement suit le type : un crédit immobilier qui devient une dette court terme
+  # perd son bien. Le formulaire masque déjà le champ pour les types qu'aucun bien ne porte,
+  # donc il ne renvoie rien — et garder l'ancien rattachement ferait échouer la validation
+  # du modèle sur un champ que l'utilisateur ne voit plus.
+  def drop_property_link_unless_linkable(permitted)
+    type = permitted[:liability_type] || (@liability || Liability.new).liability_type
+    return permitted if Liability::PROPERTY_LINKABLE_TYPES.include?(type)
+
+    permitted[:property_id] = nil
+    permitted
   end
 end

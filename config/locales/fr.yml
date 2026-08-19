@@ -86,10 +86,14 @@ fr:
           attributes:
             asset_type:
               reserved_for_property: "ne peut être « Immobilier » que pour l'actif créé avec un bien immobilier"
+            property:
+              not_linkable: "ne se rattache qu'à un actif « Immobilier », celui créé avec le bien"
         liability:
           attributes:
             liability_type:
               amortization_reserved_for_real_estate_loans: "doit être « Crédit immobilier » pour porter un tableau d'amortissement"
+            property:
+              not_linkable: "ne se rattache qu'à un crédit immobilier ou à un dépôt de garantie"
         balance_sheet_asset:
           attributes:
             asset:
@@ -197,7 +201,6 @@ fr:
         asset_type: Type d'actif
         ownership_share: "Quote-part détenue (%)"
         property: Bien immobilier rattaché
-        property_none: Aucun bien
         name_from_property: Le nom de cet actif est celui du bien immobilier ; renommez le bien pour le changer.
         asset_type_locked: Le type « Immobilier » est défini par le bien immobilier et ne peut pas être modifié.
       edit:

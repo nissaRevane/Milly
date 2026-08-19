@@ -298,19 +298,20 @@ RSpec.describe BalanceSheet, type: :model do
       expect(bs.property_positions).to be_empty
     end
 
-    it "keeps a property line even when it is not a real estate asset" do
+    # Un bien ne porte que son actif immobilier, ses crédits immobiliers et les dépôts de
+    # garantie de ses locataires (voir PropertyLinkable) : le dépôt compte dans sa dette.
+    it "counts the dépôt de garantie of the bien in its debt" do
       bs = create(:balance_sheet)
       user = bs.user
-      property = create(:property, user: user)
-      charges = create(:asset, user: user, property: property, asset_type: :checking_account)
-      works = create(:liability, user: user, property: property, liability_type: :short_term_debt)
-      create(:balance_sheet_asset, balance_sheet: bs, asset: charges, value: 3_000)
-      create(:balance_sheet_liability, balance_sheet: bs, liability: works, remaining_capital: 1_000)
+      property = create(:property, user: user, usage: :rental)
+      deposit = create(:liability, user: user, property: property, liability_type: :security_deposit)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: property.real_estate_asset, value: 200_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 900)
 
       position = bs.property_positions.sole
 
-      expect(position.gross).to eq(3_000)
-      expect(position.debt).to eq(1_000)
+      expect(position.gross).to eq(200_000)
+      expect(position.debt).to eq(900)
     end
 
     it "returns no LTV when the position has no gross value" do
@@ -638,10 +639,10 @@ RSpec.describe BalanceSheet, type: :model do
 
     # Seul l'immobilier est éclaté : regrouper toutes les lignes d'un bien est le travail de
     # l'onglet Immobilier, pas celui d'une ventilation par catégorie.
-    it "leaves a non-immobilier line attached to a bien under its own category" do
+    it "leaves a non-immobilier line under its own category, whatever the biens du compte" do
       sheet = create(:balance_sheet, user: user)
-      property = create(:property, user: user, name: "Maison", usage: :primary_residence)
-      account = create(:asset, user: user, asset_type: :checking_account, property: property)
+      create(:property, user: user, name: "Maison", usage: :primary_residence)
+      account = create(:asset, user: user, asset_type: :checking_account)
       create(:balance_sheet_asset, balance_sheet: sheet, asset: account, value: 5_000)
 
       series = BalanceSheet.assets_breakdown_for([sheet])

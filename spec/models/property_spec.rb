@@ -135,15 +135,6 @@ RSpec.describe Property, type: :model do
 
       expect { property.update!(usage: :rental) }.not_to change { asset.reload.updated_at }
     end
-
-    # Another actif may be rattaché to the same bien; only the immobilier one is the bien.
-    it "is the immobilier one, not any other asset of the bien" do
-      property = create(:property, name: "Maison")
-      create(:asset, user: property.user, property: property, asset_type: :savings_account)
-
-      expect(property.reload.real_estate_asset).to eq(property.assets.find_by(asset_type: :real_estate))
-      expect(property.real_estate_asset.name).to eq("Maison")
-    end
   end
 
   describe "when destroyed" do
@@ -178,7 +169,7 @@ RSpec.describe Property, type: :model do
   describe "when its dates change" do
     it "moves the lines that still carry the dates of the bien" do
       property = create(:property, acquired_on: Date.new(2019, 3, 4))
-      asset = create(:asset, user: property.user, property: property)
+      asset = property.real_estate_asset
       liability = create(:liability, user: property.user, property: property)
 
       property.update!(acquired_on: Date.new(2019, 4, 1), sold_on: Date.new(2025, 2, 28))
@@ -199,7 +190,7 @@ RSpec.describe Property, type: :model do
 
     it "fills a line created before the bien had any date" do
       property = create(:property, acquired_on: nil)
-      asset = create(:asset, user: property.user, property: property)
+      asset = property.real_estate_asset
 
       property.update!(acquired_on: Date.new(2019, 3, 4))
 
@@ -208,7 +199,8 @@ RSpec.describe Property, type: :model do
 
     it "leaves alone a bound the user wrote himself" do
       property = create(:property, acquired_on: Date.new(2019, 3, 4))
-      asset = create(:asset, user: property.user, property: property, started_on: Date.new(2021, 1, 1))
+      asset = property.real_estate_asset
+      asset.update!(started_on: Date.new(2021, 1, 1))
 
       property.update!(acquired_on: Date.new(2019, 4, 1), sold_on: Date.new(2025, 2, 28))
 

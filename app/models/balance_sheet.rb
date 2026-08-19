@@ -123,8 +123,9 @@ class BalanceSheet < ApplicationRecord
   # La sous-catégorie des lignes immobilières qu'aucun bien ne porte encore.
   UNASSIGNED_USAGE = "unassigned".freeze
 
-  # Liability types that belong to a property even when none is linked yet.
-  UNASSIGNED_LIABILITY_TYPES = %w[real_estate_loan security_deposit].freeze
+  # Liability types that belong to a property even when none is linked yet — les mêmes que
+  # ceux qu'un bien peut porter, une seule liste pour les deux côtés du rattachement.
+  UNASSIGNED_LIABILITY_TYPES = Liability::PROPERTY_LINKABLE_TYPES
 
   belongs_to :user
   has_many :balance_sheet_assets, dependent: :destroy
@@ -307,12 +308,10 @@ class BalanceSheet < ApplicationRecord
   # unassigned bucket rejected), so the rows the table displays and the totals it shows
   # are computed from the very same positions and cannot disagree.
   #
-  # Beware of an asymmetry inherited from #property_positions and kept on purpose: a
-  # property bucket takes EVERY line rattachée to that bien whatever its type, while the
-  # unassigned bucket only takes the lines whose type says "real estate". You cannot infer
-  # that an unlinked compte courant belongs to a bien, but a compte courant the user
-  # explicitly attached to one is their statement that it does — so it counts, and it does
-  # inflate "Brut". Do not "fix" this by type-filtering the property buckets too.
+  # Les deux buckets portent les mêmes types, et par construction : seul l'actif immobilier
+  # d'un bien et ses crédits immobiliers ou dépôts de garantie se rattachent à lui (voir
+  # PropertyLinkable), et c'est exactement ce que le bucket « non rattaché » retient parmi
+  # les lignes sans bien. Le bucket d'un bien n'a donc rien à filtrer par type.
   def real_estate_totals_by_usage(positions = property_positions)
     grouped = positions.group_by { |position| position.property&.usage }
     ordered_keys = grouped.keys.compact.sort_by { |usage| Property.usages.fetch(usage) }

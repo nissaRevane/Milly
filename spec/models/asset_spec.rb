@@ -8,10 +8,10 @@ RSpec.describe Asset, type: :model do
   end
 
   describe "the property link" do
-    it "accepts a property of the same user" do
+    it "accepts a property of the same user on an immobilier asset" do
       property = create(:property)
 
-      expect(build(:asset, user: property.user, property: property)).to be_valid
+      expect(build(:asset, user: property.user, property: property, asset_type: :real_estate)).to be_valid
     end
 
     it "accepts no property at all" do
@@ -19,10 +19,22 @@ RSpec.describe Asset, type: :model do
     end
 
     it "rejects a property belonging to another user" do
-      asset = build(:asset, property: create(:property))
+      asset = build(:asset, property: create(:property), asset_type: :real_estate)
 
       expect(asset).not_to be_valid
       expect(asset.errors[:property]).to eq(["n'est pas valide"])
+    end
+
+    # Seul l'actif du bien se rattache à un bien : un compte courant dédié au bien, un
+    # placement ou une créance restent des actifs à part.
+    it "rejects a property on an asset that is not immobilier" do
+      property = create(:property)
+      asset = build(:asset, user: property.user, property: property, asset_type: :checking_account)
+
+      expect(asset).not_to be_valid
+      expect(asset.errors[:property]).to eq(
+        ["ne se rattache qu'à un actif « Immobilier », celui créé avec le bien"]
+      )
     end
   end
 
@@ -167,13 +179,6 @@ RSpec.describe Asset, type: :model do
 
       expect(asset.reload.name).to eq("Ancienne maison")
     end
-
-    it "leaves the name of an asset merely rattaché to the bien alone" do
-      property = create(:property, name: "Maison")
-      asset = create(:asset, user: property.user, property: property, name: "Travaux")
-
-      expect(asset.reload.name).to eq("Travaux")
-    end
   end
 
   describe "#owned_by_property?" do
@@ -188,13 +193,6 @@ RSpec.describe Asset, type: :model do
 
       expect(asset.reload).not_to be_owned_by_property
     end
-
-    it "is false for an asset merely rattaché to a bien" do
-      property = create(:property)
-      asset = create(:asset, user: property.user, property: property, asset_type: :savings_account)
-
-      expect(asset).not_to be_owned_by_property
-    end
   end
 
   describe "#suggested_value" do
@@ -208,13 +206,6 @@ RSpec.describe Asset, type: :model do
       property = create(:property, purchase_price: nil)
 
       expect(property.real_estate_asset.suggested_value).to be_nil
-    end
-
-    it "is nil for an asset merely rattaché to a bien" do
-      property = create(:property, purchase_price: 300_000)
-      asset = create(:asset, user: property.user, property: property, asset_type: :savings_account)
-
-      expect(asset.suggested_value).to be_nil
     end
 
     it "is nil for an immobilier asset whose bien is gone" do
@@ -318,15 +309,6 @@ RSpec.describe Asset, type: :model do
     end
 
     describe "when the asset is rattaché to a bien" do
-      it "takes the purchase and sale dates of the bien by default" do
-        property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
-
-        asset = create(:asset, user: property.user, property: property)
-
-        expect(asset.started_on).to eq(Date.new(2019, 3, 4))
-        expect(asset.ended_on).to eq(Date.new(2024, 8, 9))
-      end
-
       it "gives the immobilier asset of a bien the dates of the bien" do
         property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
 
@@ -337,7 +319,8 @@ RSpec.describe Asset, type: :model do
       it "keeps the dates the user wrote himself" do
         property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
 
-        asset = create(:asset, user: property.user, property: property, started_on: Date.new(2021, 1, 1))
+        asset = create(:asset, user: property.user, property: property, asset_type: :real_estate,
+                               started_on: Date.new(2021, 1, 1))
 
         expect(asset.started_on).to eq(Date.new(2021, 1, 1))
         expect(asset.ended_on).to eq(Date.new(2024, 8, 9))
@@ -347,7 +330,7 @@ RSpec.describe Asset, type: :model do
       # l'utilisateur, pas un oubli à combler.
       it "does not fill a bound cleared afterwards" do
         property = create(:property, acquired_on: Date.new(2019, 3, 4))
-        asset = create(:asset, user: property.user, property: property)
+        asset = property.real_estate_asset
 
         asset.update!(started_on: nil)
 

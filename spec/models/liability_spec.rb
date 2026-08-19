@@ -8,10 +8,19 @@ RSpec.describe Liability, type: :model do
   end
 
   describe "the property link" do
-    it "accepts a property of the same user" do
+    it "accepts a property of the same user on a crédit immobilier" do
       property = create(:property)
 
-      expect(build(:liability, user: property.user, property: property)).to be_valid
+      expect(build(:liability, user: property.user, property: property, liability_type: :real_estate_loan))
+        .to be_valid
+    end
+
+    # Le dépôt de garantie d'un locataire est porté par le bien qu'il loue.
+    it "accepts a property on a dépôt de garantie" do
+      property = create(:property, usage: :rental)
+
+      expect(build(:liability, user: property.user, property: property, liability_type: :security_deposit))
+        .to be_valid
     end
 
     it "accepts no property at all" do
@@ -23,6 +32,18 @@ RSpec.describe Liability, type: :model do
 
       expect(liability).not_to be_valid
       expect(liability.errors[:property]).to eq(["n'est pas valide"])
+    end
+
+    # Une dette court terme — des travaux à payer, un découvert — n'est portée par aucun
+    # bien : elle reste une dette de l'utilisateur.
+    it "rejects a property on a dette court terme" do
+      property = create(:property)
+      liability = build(:liability, user: property.user, property: property, liability_type: :short_term_debt)
+
+      expect(liability).not_to be_valid
+      expect(liability.errors[:property]).to eq(
+        ["ne se rattache qu'à un crédit immobilier ou à un dépôt de garantie"]
+      )
     end
   end
 

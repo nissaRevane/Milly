@@ -32,17 +32,14 @@
     <% end %>
   </div>
 
-  <%# Only offered once the user has declared a property — an empty select would just puzzle %>
+  <%#
+    Le rattachement ne se saisit pas : seul l'actif immobilier se rattache à un bien, et
+    c'est le bien qui l'a créé — il n'est ici qu'un rappel en lecture seule.
+  %>
   <% if asset.owned_by_property? %>
     <div class="form-group">
       <%= label_tag :property_name, t("views.assets.form.property") %>
       <%= text_field_tag :property_name, asset.property.name, class: "form-control", disabled: true %>
-    </div>
-  <% elsif @properties.any? && !asset.real_estate? %>
-    <div class="form-group">
-      <%= f.label :property_id, t("views.assets.form.property") %>
-      <%= f.collection_select :property_id, @properties, :id, :name,
-          { include_blank: t("views.assets.form.property_none") }, class: "form-control" %>
     </div>
   <% end %>
 

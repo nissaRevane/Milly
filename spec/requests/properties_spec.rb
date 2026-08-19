@@ -329,17 +329,6 @@ RSpec.describe "Properties", type: :request do
       expect(asset.reload.property_id).to be_nil
       expect(asset.asset_type).to eq("real_estate")
     end
-
-    it "keeps the linked asset and only unlinks it" do
-      property = create(:property, user: user)
-      asset = create(:asset, user: user, property: property)
-
-      expect {
-        delete property_path(property)
-      }.not_to change(Asset, :count)
-
-      expect(asset.reload.property_id).to be_nil
-    end
   end
 
   describe "authorization" do

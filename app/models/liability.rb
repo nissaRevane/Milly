@@ -26,6 +26,11 @@ class Liability < ApplicationRecord
     security_deposit: 2
   }, validate: true
 
+  # Les deux passifs qu'un bien porte réellement : le crédit qui l'a financé et le dépôt de
+  # garantie versé par son locataire. Une dette court terme n'est portée par aucun bien
+  # (voir PropertyLinkable).
+  PROPERTY_LINKABLE_TYPES = %w[real_estate_loan security_deposit].freeze
+
   validates :name, presence: true
   validate :amortization_fields_all_or_nothing
   validate :amortization_reserved_for_real_estate_loans
@@ -46,6 +51,10 @@ class Liability < ApplicationRecord
 
   def liability_type_label
     self.class.liability_type_label_for(liability_type)
+  end
+
+  def property_linkable?
+    PROPERTY_LINKABLE_TYPES.include?(liability_type)
   end
 
   def amortizable?
