@@ -99,13 +99,21 @@ module ApplicationHelper
 
   # Amounts and rates are formatted from their absolute value with an explicit sign, so a
   # gain reads "+12 000 €" where number_to_currency alone would only ever mark the losses.
+  # Les centimes d'une variation ne disent rien : le montant est arrondi à l'euro, ce qui
+  # raccourcit d'autant la note — elle tient dans les tuiles étroites du tableau de bord.
   # The rate is dropped when there is none: nothing to divide by (see BalanceSheet::Variation).
+  #
+  # Le montant et le taux sont deux spans distincts : chacun reste insécable, mais la note
+  # peut passer à la ligne entre les deux plutôt que de déborder de sa tuile.
   def variation_label(variation)
     sign = variation.flat? ? "" : (variation.gain? ? "+" : "-")
-    label = "#{sign}#{number_to_currency(variation.amount.abs)}"
-    return label if variation.rate.nil?
+    amount = tag.span("#{sign}#{number_to_currency(variation.amount.abs, precision: 0)}",
+                      class: "variation-amount")
+    return amount if variation.rate.nil?
 
-    "#{label} (#{sign}#{number_to_percentage(variation.rate.abs, precision: 1)})"
+    rate = tag.span("(#{sign}#{number_to_percentage(variation.rate.abs, precision: 1)})",
+                    class: "variation-rate")
+    safe_join([amount, rate], " ")
   end
 
   def variation_tone(variation, favorable)

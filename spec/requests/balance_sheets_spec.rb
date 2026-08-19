@@ -5,8 +5,13 @@ RSpec.describe "BalanceSheets", type: :request do
 
   before { sign_in user }
 
-  def currency(amount)
-    ActionController::Base.helpers.number_to_currency(amount)
+  def currency(amount, **options)
+    ActionController::Base.helpers.number_to_currency(amount, **options)
+  end
+
+  # Les variations sont arrondies à l'euro (voir ApplicationHelper#variation_label).
+  def variation_currency(amount)
+    currency(amount, precision: 0)
   end
 
   describe "GET /balance_sheets" do
@@ -696,9 +701,9 @@ RSpec.describe "BalanceSheets", type: :request do
         expect(response).to have_http_status(:success)
         doc = Nokogiri::HTML(response.body)
 
-        expect(note(doc.at_css(".summary-total-assets"))).to eq("+#{currency(20_000)} (+20,0 %)".gsub(/\s+/, " "))
-        expect(note(doc.at_css(".summary-total-liabilities"))).to eq("-#{currency(10_000)} (-16,7 %)".gsub(/\s+/, " "))
-        expect(note(doc.at_css(".equity-box"))).to eq("+#{currency(30_000)} (+75,0 %)".gsub(/\s+/, " "))
+        expect(note(doc.at_css(".summary-total-assets"))).to eq("+#{variation_currency(20_000)} (+20,0 %)".gsub(/\s+/, " "))
+        expect(note(doc.at_css(".summary-total-liabilities"))).to eq("-#{variation_currency(10_000)} (-16,7 %)".gsub(/\s+/, " "))
+        expect(note(doc.at_css(".equity-box"))).to eq("+#{variation_currency(30_000)} (+75,0 %)".gsub(/\s+/, " "))
       end
 
       it "reads a dette qui baisse as the good news it is, and a dette qui monte as a loss" do
@@ -716,7 +721,7 @@ RSpec.describe "BalanceSheets", type: :request do
 
         doc = Nokogiri::HTML(response.body)
         expect(doc.at_css(".summary-total-liabilities .variation")["class"]).to include("variation-loss")
-        expect(note(doc.at_css(".summary-total-liabilities"))).to eq("+#{currency(30_000)} (+60,0 %)".gsub(/\s+/, " "))
+        expect(note(doc.at_css(".summary-total-liabilities"))).to eq("+#{variation_currency(30_000)} (+60,0 %)".gsub(/\s+/, " "))
       end
 
       it "names the balance sheet the évolution is measured against" do
@@ -762,7 +767,7 @@ RSpec.describe "BalanceSheets", type: :request do
         expect(response).to have_http_status(:success)
         rows = Nokogiri::HTML(response.body).css(".real-estate-table tbody tr")
 
-        expect(note(rows.last)).to eq("+#{currency(40_000)} (+40,0 %)".gsub(/\s+/, " "))
+        expect(note(rows.last)).to eq("+#{variation_currency(40_000)} (+40,0 %)".gsub(/\s+/, " "))
         expect(rows.last.at_css(".variation").parent["class"]).to eq("amount-with-variation")
       end
 
@@ -778,7 +783,7 @@ RSpec.describe "BalanceSheets", type: :request do
         rows = doc.css(".real-estate-table tbody tr")
 
         expect(doc.css(".real-estate-table thead th").size).to eq(5)
-        expect(rows.map { |row| note(row) }).to eq([nil, nil, nil, "+#{currency(130_000)} (+130,0 %)".gsub(/\s+/, " ")])
+        expect(rows.map { |row| note(row) }).to eq([nil, nil, nil, "+#{variation_currency(130_000)} (+130,0 %)".gsub(/\s+/, " ")])
         expect(doc.css(".property-usage-row .variation")).to be_empty
         expect(doc.css(".property-bien-row .variation")).to be_empty
       end

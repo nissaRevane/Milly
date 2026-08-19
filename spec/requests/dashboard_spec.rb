@@ -74,7 +74,7 @@ RSpec.describe "Dashboard", type: :request do
 
       doc = Nokogiri::HTML(response.body)
       variation = doc.css(".stat-card .variation").first
-      expect(variation.text).to include("+#{currency(20_000)}")
+      expect(variation.text).to include("+#{currency(20_000, precision: 0)}")
       expect(variation["class"]).to include("variation-gain")
     end
 
@@ -105,7 +105,7 @@ RSpec.describe "Dashboard", type: :request do
         card = Nokogiri::HTML(response.body).css(".stat-card").find { |c|
           c.at_css(".stat-label").text.strip == I18n.t("views.dashboard.over_a_year")
         }
-        expect(card.at_css(".variation").text).to include("+#{currency(30_000)}")
+        expect(card.at_css(".variation").text).to include("+#{currency(30_000, precision: 0)}")
         expect(card.at_css(".stat-hint").text).to include("31 décembre 2024")
       end
 

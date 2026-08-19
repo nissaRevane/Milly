@@ -901,6 +901,15 @@ a.summary-nav-arrow:hover {
 .variation {
   font-size: 0.8125rem;
   font-weight: 600;
+}
+
+/*
+ * Le montant et son taux ne se coupent jamais en plein milieu ; la note, elle, peut se
+ * plier entre les deux quand la place manque (tuiles du tableau de bord).
+ */
+.variation-amount,
+.variation-rate {
+  display: inline-block;
   white-space: nowrap;
 }
 
@@ -1104,7 +1113,7 @@ a.summary-nav-arrow:hover {
 /* Tuiles chiffrées, au-dessus des courbes */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -1136,11 +1145,16 @@ a.summary-nav-arrow:hover {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-/* La variation garde sa couleur de gain/perte mais prend la taille de la tuile */
+/*
+ * La variation garde sa couleur de gain/perte et prend la taille de la tuile, mais la
+ * tuile ne s'élargit pas : le corps suit la largeur disponible plutôt que de déborder.
+ */
 .stat-value .variation {
-  font-size: inherit;
+  font-size: clamp(1.125rem, 2.5vw + 0.5rem, 1.5rem);
   font-weight: inherit;
 }
 
