@@ -1,15 +1,17 @@
 <%# Steps to the neighbouring bilans, on each side of the page title. The caller supplies
     the hrefs because each page steps within itself — the synthèse to synthèses, le détail
     to détails — and the i18n scope its arrow labels are read from. Absent neighbours stay
-    in the DOM as disabled spans so the title never shifts sideways between bilans. %>
-<div class="summary-nav">
+    in the DOM as disabled spans so the title never shifts sideways between bilans.
+    Le contrôleur sheet-nav rejoue ces mêmes liens sur les flèches du clavier. %>
+<div class="summary-nav" data-controller="sheet-nav">
   <% if previous %>
     <%= link_to "‹",
                 previous_path,
                 class: "summary-nav-arrow",
                 rel: "prev",
                 title: t("#{scope}.previous_sheet", date: l(previous.closing_date, format: :long)),
-                "aria-label" => t("#{scope}.previous_sheet", date: l(previous.closing_date, format: :long)) %>
+                "aria-label" => t("#{scope}.previous_sheet", date: l(previous.closing_date, format: :long)),
+                data: { sheet_nav_target: "previous" } %>
   <% else %>
     <span class="summary-nav-arrow summary-nav-arrow-disabled"
           aria-hidden="true"
@@ -24,7 +26,8 @@
                 class: "summary-nav-arrow",
                 rel: "next",
                 title: t("#{scope}.next_sheet", date: l(following.closing_date, format: :long)),
-                "aria-label" => t("#{scope}.next_sheet", date: l(following.closing_date, format: :long)) %>
+                "aria-label" => t("#{scope}.next_sheet", date: l(following.closing_date, format: :long)),
+                data: { sheet_nav_target: "following" } %>
   <% else %>
     <span class="summary-nav-arrow summary-nav-arrow-disabled"
           aria-hidden="true"

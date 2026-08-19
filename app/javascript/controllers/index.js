@@ -15,5 +15,8 @@ application.register("conditional-fields", ConditionalFieldsController)
 import InlineEditController from "controllers/inline_edit_controller"
 application.register("inline-edit", InlineEditController)
 
+import SheetNavController from "controllers/sheet_nav_controller"
+application.register("sheet-nav", SheetNavController)
+
 import SuggestedValueController from "controllers/suggested_value_controller"
 application.register("suggested-value", SuggestedValueController)

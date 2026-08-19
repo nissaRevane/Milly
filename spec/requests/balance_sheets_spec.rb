@@ -271,6 +271,19 @@ RSpec.describe "BalanceSheets", type: :request do
           expect(doc.at_css(".summary-nav a[rel=next]")["href"]).to eq(summary_balance_sheet_path(newer))
         end
 
+        it "hands both arrows to the keyboard controller" do
+          create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+          current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
+          create(:balance_sheet, user: user, closing_date: Date.new(2026, 12, 31))
+
+          get summary_balance_sheet_path(current)
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".summary-nav")["data-controller"]).to eq("sheet-nav")
+          expect(doc.at_css("a[data-sheet-nav-target=previous]")["rel"]).to eq("prev")
+          expect(doc.at_css("a[data-sheet-nav-target=following]")["rel"]).to eq("next")
+        end
+
         it "keeps the active tab on both arrows" do
           create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
           current = create(:balance_sheet, user: user, closing_date: Date.new(2026, 6, 30))
