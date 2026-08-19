@@ -35,6 +35,16 @@
     <%= f.date_field :acquired_on, class: "form-control" %>
   </div>
 
+  <%#
+    Les deux dates du bien donnent leur période, par défaut, à ses actifs et à ses passifs :
+    un bien vendu cesse d'être proposé aux bilans clos après la vente (voir Lifespanable).
+  %>
+  <div class="form-group">
+    <%= f.label :sold_on, t("views.properties.form.sold_on") %>
+    <%= f.date_field :sold_on, class: "form-control" %>
+    <p class="form-hint"><%= t("views.properties.form.sold_on_hint") %></p>
+  </div>
+
   <% if property.new_record? %>
     <p class="form-hint"><%= t("views.properties.form.asset_hint") %></p>
   <% end %>

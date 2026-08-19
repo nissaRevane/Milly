@@ -40,10 +40,26 @@ RSpec.describe Property, type: :model do
       expect(property.errors[:usage]).to be_present
     end
 
-    # The three descriptive fields are optional: every bien created before they existed
+    # The four descriptive fields are optional: every bien created before they existed
     # has none, and a bien is usable on the balance sheet without them.
     it "is valid without an address, a purchase price or an acquisition date" do
-      expect(build(:property, address: nil, purchase_price: nil, acquired_on: nil)).to be_valid
+      expect(build(:property, address: nil, purchase_price: nil, acquired_on: nil, sold_on: nil)).to be_valid
+    end
+
+    it "is valid with a sale date on or after the acquisition date" do
+      expect(build(:property, acquired_on: Date.new(2020, 1, 1), sold_on: Date.new(2020, 1, 1))).to be_valid
+      expect(build(:property, acquired_on: Date.new(2020, 1, 1), sold_on: Date.new(2024, 6, 30))).to be_valid
+    end
+
+    it "is valid with a sale date and no acquisition date" do
+      expect(build(:property, acquired_on: nil, sold_on: Date.new(2020, 1, 1))).to be_valid
+    end
+
+    it "rejects a sale date before the acquisition date" do
+      property = build(:property, acquired_on: Date.new(2020, 1, 1), sold_on: Date.new(2019, 12, 31))
+
+      expect(property).not_to be_valid
+      expect(property.errors[:sold_on]).to eq(["ne peut pas précéder la date d'acquisition"])
     end
 
     it "is invalid with a negative purchase price" do
@@ -154,6 +170,66 @@ RSpec.describe Property, type: :model do
 
       expect(BalanceSheetAsset.exists?(line.id)).to be true
       expect(balance_sheet.reload.total_assets).to eq(250_000)
+    end
+  end
+
+  # Les dates du bien sont la période par défaut de ses actifs et de ses passifs
+  # (voir Lifespanable) : elles doivent donc les suivre quand le bien les corrige.
+  describe "when its dates change" do
+    it "moves the lines that still carry the dates of the bien" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4))
+      asset = create(:asset, user: property.user, property: property)
+      liability = create(:liability, user: property.user, property: property)
+
+      property.update!(acquired_on: Date.new(2019, 4, 1), sold_on: Date.new(2025, 2, 28))
+
+      expect(asset.reload.started_on).to eq(Date.new(2019, 4, 1))
+      expect(asset.ended_on).to eq(Date.new(2025, 2, 28))
+      expect(liability.reload.started_on).to eq(Date.new(2019, 4, 1))
+      expect(liability.ended_on).to eq(Date.new(2025, 2, 28))
+    end
+
+    it "moves the immobilier asset of the bien too" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4))
+
+      property.update!(sold_on: Date.new(2025, 2, 28))
+
+      expect(property.real_estate_asset.reload.ended_on).to eq(Date.new(2025, 2, 28))
+    end
+
+    it "fills a line created before the bien had any date" do
+      property = create(:property, acquired_on: nil)
+      asset = create(:asset, user: property.user, property: property)
+
+      property.update!(acquired_on: Date.new(2019, 3, 4))
+
+      expect(asset.reload.started_on).to eq(Date.new(2019, 3, 4))
+    end
+
+    it "leaves alone a bound the user wrote himself" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4))
+      asset = create(:asset, user: property.user, property: property, started_on: Date.new(2021, 1, 1))
+
+      property.update!(acquired_on: Date.new(2019, 4, 1), sold_on: Date.new(2025, 2, 28))
+
+      expect(asset.reload.started_on).to eq(Date.new(2021, 1, 1))
+      expect(asset.ended_on).to eq(Date.new(2025, 2, 28))
+    end
+
+    it "leaves the lines of another bien alone" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4))
+      other = create(:property, user: property.user, acquired_on: Date.new(2019, 3, 4))
+
+      property.update!(sold_on: Date.new(2025, 2, 28))
+
+      expect(other.real_estate_asset.reload.ended_on).to be_nil
+    end
+
+    it "leaves the lines alone when the bien changes anything but its dates" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4), usage: :primary_residence)
+      asset = property.real_estate_asset
+
+      expect { property.update!(usage: :rental) }.not_to change { asset.reload.updated_at }
     end
   end
 end

@@ -21,7 +21,7 @@ properties = seed_data.fetch("properties", []).map do |data|
   property.usage = data["usage"]
   # Only touched when the seed file says something about them: seeding is re-runnable,
   # and a file written before these fields existed must not erase what the UI has set.
-  %w[address purchase_price acquired_on].each do |field|
+  %w[address purchase_price acquired_on sold_on].each do |field|
     property[field] = data[field] if data.key?(field)
   end
   property.save!
@@ -42,6 +42,11 @@ assets = seed_data["assets"].map do |data|
   # Only touched when the seed file says something about it: seeding is re-runnable, and
   # a file written before properties existed must not unlink what the UI has linked since.
   asset.property = find_property.call(data) if data.key?("property")
+  # Période d'existence, seulement quand le fichier en parle : sans ces clés, un actif
+  # rattaché à un bien reprend les dates du bien (voir Lifespanable).
+  %w[started_on ended_on].each do |field|
+    asset[field] = data[field] if data.key?(field)
+  end
   asset.save!
   asset
 end
@@ -56,6 +61,9 @@ liabilities = seed_data["liabilities"].map do |data|
   liability.ownership_share = data.fetch("ownership_share", 100)
   # See the asset loop above: absent key means "leave the link alone".
   liability.property = find_property.call(data) if data.key?("property")
+  %w[started_on ended_on].each do |field|
+    liability[field] = data[field] if data.key?(field)
+  end
   # Amortization fields, only touched when the seed file mentions them: a file written
   # before they existed must not erase a schedule the UI has defined since.
   Liability::AMORTIZATION_FIELDS.map(&:to_s).each do |field|

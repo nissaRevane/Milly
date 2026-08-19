@@ -40,7 +40,7 @@ class AccountExport
     }
   end
 
-  # The three descriptive fields are optional, and exported even when empty: db/seeds.rb
+  # The four descriptive fields are optional, and exported even when empty: db/seeds.rb
   # only touches what the file mentions, so writing them always is what makes clearing
   # an address survive an export → import round trip.
   def property_data(property)
@@ -49,7 +49,8 @@ class AccountExport
       "usage" => property.usage,
       "address" => property.address,
       "purchase_price" => property.purchase_price && number(property.purchase_price),
-      "acquired_on" => property.acquired_on&.iso8601
+      "acquired_on" => property.acquired_on&.iso8601,
+      "sold_on" => property.sold_on&.iso8601
     }
   end
 
@@ -59,7 +60,9 @@ class AccountExport
       "risk_level" => asset.risk_level,
       "asset_type" => asset.asset_type,
       "ownership_share" => number(asset.ownership_share),
-      "property" => asset.property&.name
+      "property" => asset.property&.name,
+      "started_on" => asset.started_on&.iso8601,
+      "ended_on" => asset.ended_on&.iso8601
     }
   end
 
@@ -72,7 +75,9 @@ class AccountExport
       "risk_level" => liability.risk_level,
       "liability_type" => liability.liability_type,
       "ownership_share" => number(liability.ownership_share),
-      "property" => liability.property&.name
+      "property" => liability.property&.name,
+      "started_on" => liability.started_on&.iso8601,
+      "ended_on" => liability.ended_on&.iso8601
     }
 
     if liability.amortizable?

@@ -72,11 +72,16 @@ class AssetsController < ApplicationController
   end
 
   # The bien owns the type and the rattachement of its actif, and its name too. What is
-  # left to edit here are the numbers. An orphan actif — one whose bien has been deleted
-  # since — keeps its name editable, as nothing else can name it anymore.
+  # left to edit here are the numbers and the dates. An orphan actif — one whose bien has
+  # been deleted since — keeps its name editable, as nothing else can name it anymore.
+  #
+  # Les dates restent modifiables même pour l'actif d'un bien : la période du bien n'est
+  # qu'un défaut (voir Lifespanable).
   def permitted_asset_attributes
-    return [:name, :risk_level, :asset_type, :ownership_share, :property_id] unless @asset&.real_estate?
+    lifespan = [:started_on, :ended_on]
+    return [:name, :risk_level, :asset_type, :ownership_share, :property_id, *lifespan] unless @asset&.real_estate?
 
-    @asset.owned_by_property? ? [:risk_level, :ownership_share] : [:name, :risk_level, :ownership_share]
+    editable_name = @asset.owned_by_property? ? [] : [:name]
+    [*editable_name, :risk_level, :ownership_share, *lifespan]
   end
 end

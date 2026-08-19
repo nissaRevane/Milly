@@ -46,13 +46,21 @@ class BalanceSheetAssetsController < ApplicationController
   end
 
   # Les actifs déjà présents dans le bilan ne doivent pas être proposés,
-  # à l'exception de celui de la ligne en cours d'édition.
+  # à l'exception de celui de la ligne en cours d'édition. Ceux qui n'existaient pas au mois
+  # de la clôture non plus : un bien vendu l'an dernier n'a rien à faire dans un bilan
+  # d'aujourd'hui, et l'inverse pour un bien acheté depuis (voir Lifespanable).
   def set_available_assets
     used_asset_ids = @balance_sheet.balance_sheet_assets.pluck(:asset_id)
     used_asset_ids -= [@balance_sheet_asset.asset_id] if @balance_sheet_asset&.asset_id
 
+    unused = current_user.assets.where.not(id: used_asset_ids)
+    offered = unused.available_on(@balance_sheet.closing_date)
+    # L'actif de la ligne en cours d'édition reste proposé même hors période : un select qui
+    # ne contient pas la valeur qu'il affiche la remplacerait au premier enregistrement.
+    offered = offered.or(unused.where(id: @balance_sheet_asset.asset_id)) if @balance_sheet_asset&.asset_id
+
     # :property est chargé pour Asset#suggested_value, que le formulaire lit sur chaque option.
-    @available_assets = current_user.assets.includes(:property).where.not(id: used_asset_ids).order(:name)
+    @available_assets = offered.includes(:property).order(:name)
   end
 
   def balance_sheet_asset_params

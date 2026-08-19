@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000014) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_01_000016) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000014) do
     t.integer "asset_type", default: 1, null: false
     t.decimal "ownership_share", precision: 5, scale: 2, default: "100.0", null: false
     t.bigint "property_id"
+    t.date "started_on"
+    t.date "ended_on"
     t.index ["property_id"], name: "index_assets_on_property_id"
     t.index ["user_id"], name: "index_assets_on_user_id"
   end
@@ -74,6 +76,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000014) do
     t.date "first_payment_on"
     t.decimal "first_payment_principal", precision: 15, scale: 2
     t.decimal "first_payment_interest", precision: 15, scale: 2
+    t.date "started_on"
+    t.date "ended_on"
     t.index ["property_id"], name: "index_liabilities_on_property_id"
     t.index ["user_id"], name: "index_liabilities_on_user_id"
   end
@@ -87,6 +91,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000014) do
     t.string "address"
     t.decimal "purchase_price", precision: 15, scale: 2
     t.date "acquired_on"
+    t.date "sold_on"
     t.index ["user_id"], name: "index_properties_on_user_id"
   end
 

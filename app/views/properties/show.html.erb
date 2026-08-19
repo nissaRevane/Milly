@@ -23,6 +23,10 @@
       <dt><%= t("views.properties.form.acquired_on") %></dt>
       <dd><%= @property.acquired_on ? l(@property.acquired_on, format: :long) : "—" %></dd>
     </div>
+    <div class="property-fact">
+      <dt><%= t("views.properties.form.sold_on") %></dt>
+      <dd><%= @property.sold_on ? l(@property.sold_on, format: :long) : "—" %></dd>
+    </div>
   </dl>
 </div>
 

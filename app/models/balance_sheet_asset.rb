@@ -13,7 +13,23 @@ class BalanceSheetAsset < ApplicationRecord
   validates :value, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :asset_id, uniqueness: { scope: :balance_sheet_id }
 
+  # Un actif n'entre pas dans un bilan clos hors de sa période de détention. Le formulaire
+  # ne le propose déjà plus (BalanceSheetAssetsController#set_available_assets) ; ceci en
+  # est le filet côté modèle. À la création seulement : une ligne enregistrée est de
+  # l'histoire, et une période resserrée après coup sur l'actif ne doit pas la rendre
+  # immodifiable.
+  validate :asset_within_its_lifespan, on: :create
+
   def owned_value
     (value * asset.share_ratio).round(2)
+  end
+
+  private
+
+  def asset_within_its_lifespan
+    return if asset.nil? || balance_sheet.nil?
+    return if asset.available_on?(balance_sheet.closing_date)
+
+    errors.add(:asset, :outside_lifespan)
   end
 end

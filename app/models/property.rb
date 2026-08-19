@@ -13,9 +13,15 @@ class Property < ApplicationRecord
           class_name: "Asset",
           inverse_of: :property
 
+  # Les deux bornes de la vie d'un bien et les deux bornes qu'elles donnent, par défaut,
+  # à chacun de ses actifs et passifs (voir Lifespanable).
+  LIFESPAN_MIRROR = { "acquired_on" => :started_on, "sold_on" => :ended_on }.freeze
+
   # Runs inside the save transaction: a bien that cannot get its actif is not created.
   after_create :create_own_real_estate_asset
   after_update :rename_real_estate_asset, if: :saved_change_to_name?
+  after_update :propagate_lifespan_to_lines,
+               if: -> { LIFESPAN_MIRROR.keys.any? { |field| saved_change_to_attribute?(field) } }
 
   enum :usage, {
     primary_residence: 0,
@@ -33,6 +39,11 @@ class Property < ApplicationRecord
   validates :purchase_price,
             numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
+
+  # Les deux dates sont facultatives — un bien encore détenu n'a pas de date de vente, et
+  # une date d'acquisition oubliée ne rend pas le bien inutilisable — mais on ne vend pas
+  # avant d'avoir acheté.
+  validate :sold_on_after_acquired_on
 
   def self.usage_label_for(usage)
     EnumLabel.for("property_usages", usage)
@@ -57,5 +68,33 @@ class Property < ApplicationRecord
 
   def rename_real_estate_asset
     real_estate_asset&.update!(name: name)
+  end
+
+  def sold_on_after_acquired_on
+    return if acquired_on.nil? || sold_on.nil? || sold_on >= acquired_on
+
+    errors.add(:sold_on, :sold_before_acquired)
+  end
+
+  # Les actifs et passifs rattachés suivent le bien quand il corrige sa date d'achat ou
+  # déclare sa vente : la période du bien est leur période par défaut, et un défaut qui ne
+  # bougerait qu'à la création laisserait la ligne sur une date que le bien a démentie.
+  #
+  # Seules les bornes restées à la valeur du bien sont reprises : celle que l'utilisateur a
+  # saisie lui-même — un compte courant ouvert bien après l'achat — est la sienne, et le
+  # bien n'a pas à l'écraser.
+  def propagate_lifespan_to_lines
+    (assets + liabilities).each do |line|
+      updates = LIFESPAN_MIRROR.filter_map do |property_field, line_field|
+        next unless saved_change_to_attribute?(property_field)
+
+        was, now = saved_change_to_attribute(property_field)
+        next unless line[line_field] == was
+
+        [line_field, now]
+      end
+
+      line.update!(updates.to_h) if updates.any?
+    end
   end
 end

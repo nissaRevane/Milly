@@ -248,4 +248,118 @@ RSpec.describe Asset, type: :model do
       expect(build(:asset, asset_type: :receivable).asset_type_label).to eq("Créance")
     end
   end
+
+  describe "la période d'existence" do
+    it "is valid without any date at all" do
+      expect(build(:asset, started_on: nil, ended_on: nil)).to be_valid
+    end
+
+    it "is valid with a single bound" do
+      expect(build(:asset, started_on: Date.new(2020, 1, 1))).to be_valid
+      expect(build(:asset, ended_on: Date.new(2020, 1, 1))).to be_valid
+    end
+
+    it "accepts an end date on the start date" do
+      expect(build(:asset, started_on: Date.new(2020, 1, 1), ended_on: Date.new(2020, 1, 1))).to be_valid
+    end
+
+    it "rejects an end date before the start date" do
+      asset = build(:asset, started_on: Date.new(2020, 6, 1), ended_on: Date.new(2020, 5, 31))
+
+      expect(asset).not_to be_valid
+      expect(asset.errors[:ended_on]).to eq(["ne peut pas précéder la date de début"])
+    end
+
+    describe "#available_on?" do
+      it "is true for an asset without any bound" do
+        expect(build(:asset).available_on?(Date.new(2020, 1, 1))).to be true
+      end
+
+      it "is false before the start date" do
+        asset = build(:asset, started_on: Date.new(2020, 6, 15))
+
+        expect(asset.available_on?(Date.new(2020, 5, 31))).to be false
+      end
+
+      it "is false after the end date" do
+        asset = build(:asset, ended_on: Date.new(2020, 6, 15))
+
+        expect(asset.available_on?(Date.new(2020, 7, 1))).to be false
+      end
+
+      # La tolérance du mois en cours : la comparaison se fait au mois, jamais au jour.
+      it "tolerates any day of the month the asset enters or leaves" do
+        entering = build(:asset, started_on: Date.new(2020, 6, 15))
+        leaving = build(:asset, ended_on: Date.new(2020, 6, 15))
+
+        expect(entering.available_on?(Date.new(2020, 6, 1))).to be true
+        expect(entering.available_on?(Date.new(2020, 6, 30))).to be true
+        expect(leaving.available_on?(Date.new(2020, 6, 1))).to be true
+        expect(leaving.available_on?(Date.new(2020, 6, 30))).to be true
+      end
+
+      it "is true inside both bounds" do
+        asset = build(:asset, started_on: Date.new(2020, 1, 1), ended_on: Date.new(2020, 12, 31))
+
+        expect(asset.available_on?(Date.new(2020, 6, 30))).to be true
+      end
+    end
+
+    describe ".available_on" do
+      it "keeps only the assets that existed in the month of the given date" do
+        user = create(:user)
+        always = create(:asset, user: user)
+        entering = create(:asset, user: user, started_on: Date.new(2020, 6, 20))
+        gone = create(:asset, user: user, ended_on: Date.new(2020, 5, 4))
+
+        expect(user.assets.available_on(Date.new(2020, 6, 1))).to contain_exactly(always, entering)
+        expect(user.assets.available_on(Date.new(2020, 5, 31))).to contain_exactly(always, gone)
+      end
+    end
+
+    describe "when the asset is rattaché to a bien" do
+      it "takes the purchase and sale dates of the bien by default" do
+        property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
+
+        asset = create(:asset, user: property.user, property: property)
+
+        expect(asset.started_on).to eq(Date.new(2019, 3, 4))
+        expect(asset.ended_on).to eq(Date.new(2024, 8, 9))
+      end
+
+      it "gives the immobilier asset of a bien the dates of the bien" do
+        property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
+
+        expect(property.real_estate_asset.started_on).to eq(Date.new(2019, 3, 4))
+        expect(property.real_estate_asset.ended_on).to eq(Date.new(2024, 8, 9))
+      end
+
+      it "keeps the dates the user wrote himself" do
+        property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
+
+        asset = create(:asset, user: property.user, property: property, started_on: Date.new(2021, 1, 1))
+
+        expect(asset.started_on).to eq(Date.new(2021, 1, 1))
+        expect(asset.ended_on).to eq(Date.new(2024, 8, 9))
+      end
+
+      # Le défaut ne vaut qu'à la création : vider une borne est une décision de
+      # l'utilisateur, pas un oubli à combler.
+      it "does not fill a bound cleared afterwards" do
+        property = create(:property, acquired_on: Date.new(2019, 3, 4))
+        asset = create(:asset, user: property.user, property: property)
+
+        asset.update!(started_on: nil)
+
+        expect(asset.reload.started_on).to be_nil
+      end
+
+      it "leaves an asset attached to no bien without any bound" do
+        asset = create(:asset, property: nil)
+
+        expect(asset.started_on).to be_nil
+        expect(asset.ended_on).to be_nil
+      end
+    end
+  end
 end

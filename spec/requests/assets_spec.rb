@@ -97,6 +97,24 @@ RSpec.describe "Assets", type: :request do
       expect(response).to redirect_to(assets_path)
     end
 
+    it "creates an asset with its lifespan" do
+      post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account",
+                                          started_on: "2020-01-05", ended_on: "2023-09-30" } }
+
+      asset = Asset.last
+      expect(asset.started_on).to eq(Date.new(2020, 1, 5))
+      expect(asset.ended_on).to eq(Date.new(2023, 9, 30))
+    end
+
+    it "does not create with a lifespan ending before it starts" do
+      expect {
+        post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account",
+                                            started_on: "2020-06-01", ended_on: "2020-05-31" } }
+      }.not_to change(Asset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it "does not create with an unknown asset type" do
       expect {
         post assets_path, params: { asset: { name: "X", risk_level: "low", asset_type: "bogus" } }
@@ -205,6 +223,16 @@ RSpec.describe "Assets", type: :request do
 
       expect(asset.reload.risk_level).to eq("high")
       expect(asset.ownership_share).to eq(50)
+      expect(response).to redirect_to(assets_path)
+    end
+
+    # La période du bien n'est qu'un défaut : elle reste modifiable sur la fiche de l'actif.
+    it "updates its lifespan" do
+      patch asset_path(asset), params: { asset: { started_on: "2019-03-04", ended_on: "2025-02-28" } }
+
+      asset.reload
+      expect(asset.started_on).to eq(Date.new(2019, 3, 4))
+      expect(asset.ended_on).to eq(Date.new(2025, 2, 28))
       expect(response).to redirect_to(assets_path)
     end
 
@@ -345,6 +373,23 @@ RSpec.describe "Assets", type: :request do
       patch asset_path(asset), params: { asset: { ownership_share: "33.33" } }
       expect(asset.reload.ownership_share).to eq(BigDecimal("33.33"))
       expect(response).to redirect_to(assets_path)
+    end
+
+    it "updates the lifespan" do
+      patch asset_path(asset), params: { asset: { started_on: "2020-01-05", ended_on: "2023-09-30" } }
+
+      asset.reload
+      expect(asset.started_on).to eq(Date.new(2020, 1, 5))
+      expect(asset.ended_on).to eq(Date.new(2023, 9, 30))
+      expect(response).to redirect_to(assets_path)
+    end
+
+    it "clears a lifespan bound submitted empty" do
+      asset.update!(ended_on: Date.new(2023, 9, 30))
+
+      patch asset_path(asset), params: { asset: { ended_on: "" } }
+
+      expect(asset.reload.ended_on).to be_nil
     end
   end
 

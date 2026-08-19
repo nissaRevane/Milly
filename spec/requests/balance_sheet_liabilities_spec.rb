@@ -52,6 +52,32 @@ RSpec.describe "BalanceSheetLiabilities", type: :request do
       expect(field["value"]).to be_nil
     end
 
+    # Un passif éteint ou pas encore né ne pèse pas sur ce bilan-là.
+    it "excludes a liability outside its lifespan at the closing date" do
+      future_loan = create(:liability, user: user, name: "Prêt futur",
+                           started_on: balance_sheet.closing_date + 2.months)
+      repaid_loan = create(:liability, user: user, name: "Prêt soldé",
+                           ended_on: balance_sheet.closing_date - 2.months)
+
+      get new_balance_sheet_balance_sheet_liability_path(balance_sheet)
+
+      expect(response.body).not_to include("value=\"#{future_loan.id}\"")
+      expect(response.body).not_to include("value=\"#{repaid_loan.id}\"")
+    end
+
+    # La tolérance du mois en cours : la comparaison se fait au mois, jamais au jour.
+    it "keeps a liability that started or ended in the month of the closing date" do
+      starting = create(:liability, user: user, name: "Souscrit",
+                        started_on: balance_sheet.closing_date.end_of_month)
+      ending = create(:liability, user: user, name: "Soldé",
+                      ended_on: balance_sheet.closing_date.beginning_of_month)
+
+      get new_balance_sheet_balance_sheet_liability_path(balance_sheet)
+
+      expect(response.body).to include("value=\"#{starting.id}\"")
+      expect(response.body).to include("value=\"#{ending.id}\"")
+    end
+
     it "excludes liabilities belonging to another user" do
       other_liability = create(:liability, user: create(:user), name: "Autre")
 
@@ -70,6 +96,16 @@ RSpec.describe "BalanceSheetLiabilities", type: :request do
       expect(response.body).to include("value=\"#{used_liability.id}\"")
       expect(response.body).to include("value=\"#{free_liability.id}\"")
     end
+
+    # Voir BalanceSheetAssets : une ligne enregistrée est de l'histoire.
+    it "keeps the currently selected liability even once it is out of its lifespan" do
+      balance_sheet_liability = balance_sheet.balance_sheet_liabilities.first
+      used_liability.update!(ended_on: balance_sheet.closing_date - 2.months)
+
+      get edit_balance_sheet_balance_sheet_liability_path(balance_sheet, balance_sheet_liability)
+
+      expect(response.body).to include("value=\"#{used_liability.id}\"")
+    end
   end
 
   describe "POST /balance_sheets/:id/balance_sheet_liabilities" do
@@ -80,6 +116,17 @@ RSpec.describe "BalanceSheetLiabilities", type: :request do
       }.to change(BalanceSheetLiability, :count).by(1)
 
       expect(response).to redirect_to(balance_sheet)
+    end
+
+    it "rejects a liability outside its lifespan" do
+      repaid_loan = create(:liability, user: user, ended_on: balance_sheet.closing_date - 2.months)
+
+      expect {
+        post balance_sheet_balance_sheet_liabilities_path(balance_sheet),
+             params: { balance_sheet_liability: { liability_id: repaid_loan.id, remaining_capital: 5_000 } }
+      }.not_to change(BalanceSheetLiability, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "rejects a liability already present in the balance sheet" do

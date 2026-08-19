@@ -193,6 +193,26 @@ RSpec.describe "Liabilities", type: :request do
       expect(response).to redirect_to(liabilities_path)
     end
 
+    it "creates a liability with its lifespan" do
+      post liabilities_path, params: { liability: { name: "Prêt immobilier", risk_level: "low",
+                                                   liability_type: "real_estate_loan",
+                                                   started_on: "2020-02-01", ended_on: "2040-01-31" } }
+
+      liability = Liability.last
+      expect(liability.started_on).to eq(Date.new(2020, 2, 1))
+      expect(liability.ended_on).to eq(Date.new(2040, 1, 31))
+    end
+
+    it "does not create with a lifespan ending before it starts" do
+      expect {
+        post liabilities_path, params: { liability: { name: "Prêt", risk_level: "low",
+                                                     liability_type: "real_estate_loan",
+                                                     started_on: "2020-06-01", ended_on: "2020-05-31" } }
+      }.not_to change(Liability, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it "does not create with an unknown liability type" do
       expect {
         post liabilities_path, params: { liability: { name: "X", risk_level: "low", liability_type: "bogus" } }

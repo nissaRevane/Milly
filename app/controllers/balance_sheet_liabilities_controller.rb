@@ -46,12 +46,22 @@ class BalanceSheetLiabilitiesController < ApplicationController
   end
 
   # Les passifs déjà présents dans le bilan ne doivent pas être proposés,
-  # à l'exception de celui de la ligne en cours d'édition.
+  # à l'exception de celui de la ligne en cours d'édition. Ceux qui n'existaient pas au mois
+  # de la clôture non plus : un prêt soldé avant, ou souscrit après, ne pèse pas sur ce
+  # bilan-là (voir Lifespanable).
   def set_available_liabilities
     used_liability_ids = @balance_sheet.balance_sheet_liabilities.pluck(:liability_id)
     used_liability_ids -= [@balance_sheet_liability.liability_id] if @balance_sheet_liability&.liability_id
 
-    @available_liabilities = current_user.liabilities.where.not(id: used_liability_ids).order(:name)
+    unused = current_user.liabilities.where.not(id: used_liability_ids)
+    offered = unused.available_on(@balance_sheet.closing_date)
+    # Le passif de la ligne en cours d'édition reste proposé même hors période : voir
+    # BalanceSheetAssetsController#set_available_assets.
+    if @balance_sheet_liability&.liability_id
+      offered = offered.or(unused.where(id: @balance_sheet_liability.liability_id))
+    end
+
+    @available_liabilities = offered.order(:name)
   end
 
   def balance_sheet_liability_params

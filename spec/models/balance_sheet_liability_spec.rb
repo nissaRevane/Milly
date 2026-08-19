@@ -10,6 +10,23 @@ RSpec.describe BalanceSheetLiability, type: :model do
     it { is_expected.to validate_presence_of(:remaining_capital) }
     it { is_expected.to validate_numericality_of(:remaining_capital).is_greater_than_or_equal_to(0) }
 
+    # Le pendant de BalanceSheetAsset : voir son spec pour le détail de la tolérance.
+    it "rejects a liability that did not exist yet at the closing date" do
+      bs = create(:balance_sheet, closing_date: Date.new(2025, 3, 31))
+      liability = create(:liability, user: bs.user, started_on: Date.new(2025, 5, 1))
+      line = build(:balance_sheet_liability, balance_sheet: bs, liability: liability)
+
+      expect(line).not_to be_valid
+      expect(line.errors[:liability]).to eq(["n'existait pas à la date de ce bilan"])
+    end
+
+    it "accepts a liability repaid anywhere in the month of the closing date" do
+      bs = create(:balance_sheet, closing_date: Date.new(2025, 3, 31))
+      liability = create(:liability, user: bs.user, ended_on: Date.new(2025, 3, 2))
+
+      expect(build(:balance_sheet_liability, balance_sheet: bs, liability: liability)).to be_valid
+    end
+
     it "validates uniqueness of liability_id scoped to balance_sheet" do
       bs = create(:balance_sheet)
       liability = create(:liability, user: bs.user)

@@ -31,11 +31,14 @@ RSpec.describe AccountExport do
       data = described_class.new(user).to_h
 
       expect(data["assets"]).to eq([
-        { "name" => "Liquidités", "risk_level" => "low", "asset_type" => "cash", "ownership_share" => 100, "property" => nil },
-        { "name" => "Immobilier", "risk_level" => "medium", "asset_type" => "real_estate", "ownership_share" => 50, "property" => nil }
+        { "name" => "Liquidités", "risk_level" => "low", "asset_type" => "cash", "ownership_share" => 100,
+          "property" => nil, "started_on" => nil, "ended_on" => nil },
+        { "name" => "Immobilier", "risk_level" => "medium", "asset_type" => "real_estate", "ownership_share" => 50,
+          "property" => nil, "started_on" => nil, "ended_on" => nil }
       ])
       expect(data["liabilities"]).to eq([
-        { "name" => "Dettes LT", "risk_level" => "low", "liability_type" => "real_estate_loan", "ownership_share" => 50, "property" => nil }
+        { "name" => "Dettes LT", "risk_level" => "low", "liability_type" => "real_estate_loan", "ownership_share" => 50,
+          "property" => nil, "started_on" => nil, "ended_on" => nil }
       ])
     end
 
@@ -47,21 +50,32 @@ RSpec.describe AccountExport do
 
       expect(data["properties"]).to eq([
         { "name" => "Maison", "usage" => "primary_residence",
-          "address" => nil, "purchase_price" => nil, "acquired_on" => nil },
+          "address" => nil, "purchase_price" => nil, "acquired_on" => nil, "sold_on" => nil },
         { "name" => "Studio", "usage" => "rental",
-          "address" => nil, "purchase_price" => nil, "acquired_on" => nil }
+          "address" => nil, "purchase_price" => nil, "acquired_on" => nil, "sold_on" => nil }
       ])
     end
 
     it "exports the descriptive fields of a bien" do
       create(:property, user: user, name: "Maison", address: "1 rue des Lilas, Nice",
-             purchase_price: 320_000, acquired_on: Date.new(2019, 6, 12))
+             purchase_price: 320_000, acquired_on: Date.new(2019, 6, 12), sold_on: Date.new(2024, 3, 1))
 
       expect(described_class.new(user).to_h["properties"].sole).to include(
         "address" => "1 rue des Lilas, Nice",
         "purchase_price" => 320_000,
-        "acquired_on" => "2019-06-12"
+        "acquired_on" => "2019-06-12",
+        "sold_on" => "2024-03-01"
       )
+    end
+
+    it "exports the lifespan of an asset and of a liability" do
+      create(:asset, user: user, name: "Livret", started_on: Date.new(2020, 1, 5), ended_on: Date.new(2023, 9, 30))
+      create(:liability, user: user, name: "Prêt", started_on: Date.new(2020, 2, 1))
+
+      data = described_class.new(user).to_h
+
+      expect(data["assets"].sole).to include("started_on" => "2020-01-05", "ended_on" => "2023-09-30")
+      expect(data["liabilities"].sole).to include("started_on" => "2020-02-01", "ended_on" => nil)
     end
 
     it "exports the amortization terms of an amortizable loan" do
@@ -82,7 +96,7 @@ RSpec.describe AccountExport do
       create(:liability, user: user, name: "Dette simple")
 
       expect(described_class.new(user).to_h["liabilities"].sole.keys).to eq(
-        %w[name risk_level liability_type ownership_share property]
+        %w[name risk_level liability_type ownership_share property started_on ended_on]
       )
     end
 

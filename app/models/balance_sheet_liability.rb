@@ -10,7 +10,20 @@ class BalanceSheetLiability < ApplicationRecord
   validates :remaining_capital, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :liability_id, uniqueness: { scope: :balance_sheet_id }
 
+  # Le pendant de BalanceSheetAsset#asset_within_its_lifespan, pour les mêmes raisons :
+  # un passif éteint ou pas encore né n'entre pas dans un bilan clos hors de sa période.
+  validate :liability_within_its_lifespan, on: :create
+
   def owned_remaining_capital
     (remaining_capital * liability.share_ratio).round(2)
+  end
+
+  private
+
+  def liability_within_its_lifespan
+    return if liability.nil? || balance_sheet.nil?
+    return if liability.available_on?(balance_sheet.closing_date)
+
+    errors.add(:liability, :outside_lifespan)
   end
 end

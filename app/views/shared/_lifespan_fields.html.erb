@@ -1,0 +1,15 @@
+<%#
+  La période d'existence d'un actif ou d'un passif, les deux bornes facultatives : sans
+  elles, la ligne peut entrer dans n'importe quel bilan. Laissées vides sur une ligne
+  rattachée à un bien, elles reprennent ses dates d'achat et de vente (voir Lifespanable).
+%>
+<div class="form-group">
+  <%= f.label :started_on, t("views.shared.lifespan.started_on") %>
+  <%= f.date_field :started_on, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :ended_on, t("views.shared.lifespan.ended_on") %>
+  <%= f.date_field :ended_on, class: "form-control" %>
+  <small class="form-hint"><%= t("views.shared.lifespan.hint") %></small>
+</div>

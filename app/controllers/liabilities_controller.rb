@@ -55,6 +55,7 @@ class LiabilitiesController < ApplicationController
     scope_property_id(
       params.require(:liability).permit(
         :name, :risk_level, :liability_type, :ownership_share, :property_id,
+        :started_on, :ended_on,
         *Liability::AMORTIZATION_FIELDS
       )
     )

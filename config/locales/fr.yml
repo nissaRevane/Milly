@@ -36,18 +36,23 @@ fr:
         address: Adresse
         purchase_price: Valeur à l'achat
         acquired_on: Date d'acquisition
+        sold_on: Date de vente
       asset:
         name: Nom
         risk_level: Niveau de risque
         asset_type: Type
         ownership_share: Quote-part
         property: Bien immobilier
+        started_on: Date de début
+        ended_on: Date de fin
       liability:
         name: Nom
         risk_level: Niveau de risque
         liability_type: Type
         ownership_share: Quote-part
         property: Bien immobilier
+        started_on: Date de début
+        ended_on: Date de fin
         borrowed_capital: Capital emprunté
         annual_rate: "Taux annuel (%)"
         duration_months: "Durée (mois)"
@@ -75,6 +80,8 @@ fr:
           attributes:
             name:
               taken: est déjà utilisé pour un autre bien
+            sold_on:
+              sold_before_acquired: ne peut pas précéder la date d'acquisition
         asset:
           attributes:
             asset_type:
@@ -83,9 +90,20 @@ fr:
           attributes:
             liability_type:
               amortization_reserved_for_real_estate_loans: "doit être « Crédit immobilier » pour porter un tableau d'amortissement"
+        balance_sheet_asset:
+          attributes:
+            asset:
+              outside_lifespan: n'existait pas à la date de ce bilan
+        balance_sheet_liability:
+          attributes:
+            liability:
+              outside_lifespan: n'existait pas à la date de ce bilan
   errors:
     messages:
       blank: doit être rempli(e)
+      # La borne de fin d'un actif ou d'un passif (voir Lifespanable), partagée par les deux
+      # modèles : un seul message, une seule formulation.
+      ended_before_started: ne peut pas précéder la date de début
       inclusion: n'est pas inclus(e) dans la liste
       invalid: n'est pas valide
       required: doit exister
@@ -148,6 +166,8 @@ fr:
         purchase_price: Valeur à l'achat
         purchase_price_hint: Prix payé pour le bien entier, quote-part non appliquée.
         acquired_on: Date d'acquisition
+        sold_on: Date de vente
+        sold_on_hint: Laissez vide pour un bien encore détenu. Une fois renseignée, les actifs et passifs du bien ne sont plus proposés aux bilans clos après la vente.
         asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement, avec un risque « Moyen » que vous pourrez ajuster.
       show:
         edit: Modifier
@@ -354,6 +374,10 @@ fr:
         subtitle: Votre bilan patrimonial personnel
         cta: Commencer
     shared:
+      lifespan:
+        started_on: Date de début (facultative)
+        ended_on: Date de fin (facultative)
+        hint: Laissées vides sur une ligne rattachée à un bien, ces dates reprennent celles d'achat et de vente du bien. Hors de cette période, la ligne n'est plus proposée aux bilans.
       owned_value_detail: "%{share} de %{total}"
       # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
       breakdown_split: "%{type} · %{usage}"

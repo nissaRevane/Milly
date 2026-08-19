@@ -56,6 +56,8 @@
     <%= f.select :risk_level, risk_level_options, {}, class: "form-control" %>
   </div>
 
+  <%= render "shared/lifespan_fields", f: f %>
+
   <div class="form-actions">
     <%= f.submit class: "btn btn-primary" %>
     <%= link_to "Annuler", assets_path, class: "btn btn-outline" %>

@@ -11,35 +11,40 @@
       "usage": "primary_residence",
       "address": "14 rue de Cassel, 59200 Tourcoing",
       "purchase_price": 125250,
-      "acquired_on": "2024-12-26"
+      "acquired_on": "2024-12-26",
+      "sold_on": null
     },
     {
       "name": "Beau Laurier",
       "usage": "rental",
       "address": "14 rue du Beau Laurier, 59200 Tourcoing",
       "purchase_price": 87300,
-      "acquired_on": "2025-07-31"
+      "acquired_on": "2025-07-31",
+      "sold_on": null
     },
     {
       "name": "Epideme",
       "usage": "rental",
       "address": "7 rue des Peigneurs, 59200 Tourcoing",
       "purchase_price": 75000,
-      "acquired_on": "2026-07-16"
+      "acquired_on": "2026-07-16",
+      "sold_on": null
     },
     {
       "name": "Fleury",
       "usage": "rental",
       "address": "1 rue René Ferragu, 45400 Fleury-les-Aubrais",
       "purchase_price": 77000,
-      "acquired_on": "2021-02-01"
+      "acquired_on": "2021-02-01",
+      "sold_on": null
     },
     {
       "name": "Roubaix",
       "usage": "rental",
       "address": "32 grande rue, 59100 Roubaix",
       "purchase_price": 80300,
-      "acquired_on": "2025-06-30"
+      "acquired_on": "2025-06-30",
+      "sold_on": null
     }
   ],
   "assets": [
@@ -48,133 +53,171 @@
       "risk_level": "low",
       "asset_type": "cash",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Boursobank",
       "risk_level": "low",
       "asset_type": "checking_account",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "CA IDF Perso",
       "risk_level": "low",
       "asset_type": "checking_account",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "CA IDF Famille",
       "risk_level": "low",
       "asset_type": "checking_account",
       "ownership_share": 50,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "LCL Commun",
       "risk_level": "low",
       "asset_type": "checking_account",
       "ownership_share": 50,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "CCF",
       "risk_level": "low",
       "asset_type": "checking_account",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Livret A",
       "risk_level": "low",
       "asset_type": "savings_account",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Splitwise Eunieu",
       "risk_level": "high",
       "asset_type": "receivable",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Enerfip",
       "risk_level": "high",
       "asset_type": "financial_investment",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "PEA Liquidité",
       "risk_level": "low",
       "asset_type": "financial_investment",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "PEA Actions",
       "risk_level": "high",
       "asset_type": "financial_investment",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Sapeg",
       "risk_level": "medium",
       "asset_type": "real_estate",
       "ownership_share": 50,
-      "property": "Sapeg"
+      "property": "Sapeg",
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Beau Laurier",
       "risk_level": "medium",
       "asset_type": "real_estate",
       "ownership_share": 50,
-      "property": "Beau Laurier"
+      "property": "Beau Laurier",
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Epideme",
       "risk_level": "medium",
       "asset_type": "real_estate",
       "ownership_share": 100,
-      "property": "Epideme"
+      "property": "Epideme",
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Splitwise Famille",
       "risk_level": "high",
       "asset_type": "receivable",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "PEA-PME liquidité",
       "risk_level": "low",
       "asset_type": "financial_investment",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Fleury",
       "risk_level": "medium",
       "asset_type": "real_estate",
       "ownership_share": 100,
-      "property": "Fleury"
+      "property": "Fleury",
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Roubaix",
       "risk_level": "medium",
       "asset_type": "real_estate",
       "ownership_share": 100,
-      "property": "Roubaix"
+      "property": "Roubaix",
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "LDDS",
       "risk_level": "low",
       "asset_type": "savings_account",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     }
   ],
   "liabilities": [
@@ -184,6 +227,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Sapeg",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 100375,
       "annual_rate": 3.56,
       "duration_months": 300,
@@ -198,6 +243,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Sapeg",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 11097,
       "annual_rate": 0,
       "duration_months": 300,
@@ -211,7 +258,9 @@
       "risk_level": "high",
       "liability_type": "short_term_debt",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Prêt Crédit Mutuel Fleury",
@@ -219,6 +268,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Fleury",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 77895,
       "annual_rate": 1.2,
       "duration_months": 240,
@@ -233,6 +284,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Roubaix",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 78619,
       "annual_rate": 3.1,
       "duration_months": 300,
@@ -247,6 +300,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Beau Laurier",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 93000,
       "annual_rate": 3.1,
       "duration_months": 276,
@@ -261,6 +316,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Beau Laurier",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 2584,
       "annual_rate": 3.1,
       "duration_months": 276,
@@ -275,6 +332,8 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Epideme",
+      "started_on": null,
+      "ended_on": null,
       "borrowed_capital": 75725,
       "annual_rate": 3.35,
       "duration_months": 240,
@@ -288,35 +347,45 @@
       "risk_level": "high",
       "liability_type": "short_term_debt",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Caution Fleury",
       "risk_level": "high",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Caution Roubaix",
       "risk_level": "high",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Caution Beau Laurier",
       "risk_level": "high",
       "liability_type": "security_deposit",
       "ownership_share": 50,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     },
     {
       "name": "Caution Epideme",
       "risk_level": "high",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null
+      "property": null,
+      "started_on": null,
+      "ended_on": null
     }
   ],
   "balance_sheets": [

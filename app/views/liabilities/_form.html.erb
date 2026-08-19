@@ -40,6 +40,8 @@
     <%= f.select :risk_level, risk_level_options, {}, class: "form-control" %>
   </div>
 
+  <%= render "shared/lifespan_fields", f: f %>
+
   <%#
     Visible seulement pour un crédit immobilier (masqué côté serveur pour éviter tout
     flash) ; la validation modèle reste le filet de sécurité côté serveur.

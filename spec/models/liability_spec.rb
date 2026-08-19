@@ -215,4 +215,37 @@ RSpec.describe Liability, type: :model do
       expect(build(:liability, liability_type: :security_deposit).liability_type_label).to eq("Dépôt de garantie")
     end
   end
+
+  # La période d'existence est partagée avec Asset (Lifespanable), qui la couvre en détail ;
+  # ce qui est vérifié ici, c'est qu'un passif la porte bel et bien.
+  describe "la période d'existence" do
+    it "is valid without any date at all" do
+      expect(build(:liability, started_on: nil, ended_on: nil)).to be_valid
+    end
+
+    it "rejects an end date before the start date" do
+      liability = build(:liability, started_on: Date.new(2020, 6, 1), ended_on: Date.new(2020, 5, 31))
+
+      expect(liability).not_to be_valid
+      expect(liability.errors[:ended_on]).to eq(["ne peut pas précéder la date de début"])
+    end
+
+    it "takes the purchase and sale dates of the bien by default" do
+      property = create(:property, acquired_on: Date.new(2019, 3, 4), sold_on: Date.new(2024, 8, 9))
+
+      liability = create(:liability, user: property.user, property: property)
+
+      expect(liability.started_on).to eq(Date.new(2019, 3, 4))
+      expect(liability.ended_on).to eq(Date.new(2024, 8, 9))
+    end
+
+    it "keeps only the liabilities that existed in the month of the given date" do
+      user = create(:user)
+      running = create(:liability, user: user)
+      repaid = create(:liability, user: user, ended_on: Date.new(2020, 5, 4))
+
+      expect(user.liabilities.available_on(Date.new(2020, 6, 1))).to contain_exactly(running)
+      expect(user.liabilities.available_on(Date.new(2020, 5, 31))).to contain_exactly(running, repaid)
+    end
+  end
 end

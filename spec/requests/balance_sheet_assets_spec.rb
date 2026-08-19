@@ -50,6 +50,44 @@ RSpec.describe "BalanceSheetAssets", type: :request do
       expect(response.body).to include("<option value=\"#{free_asset.id}\">")
     end
 
+    # Un actif hors de sa période de détention n'a rien à faire dans ce bilan-là.
+    it "excludes an asset that did not exist yet at the closing date" do
+      future_asset = create(:asset, user: user, name: "Livret futur",
+                            started_on: balance_sheet.closing_date + 2.months)
+
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).not_to include("value=\"#{future_asset.id}\"")
+    end
+
+    it "excludes an asset already gone at the closing date" do
+      sold_asset = create(:asset, user: user, name: "Livret soldé",
+                          ended_on: balance_sheet.closing_date - 2.months)
+
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).not_to include("value=\"#{sold_asset.id}\"")
+    end
+
+    # La tolérance du mois en cours : la comparaison se fait au mois, jamais au jour.
+    it "keeps an asset that entered or left in the month of the closing date" do
+      entering = create(:asset, user: user, name: "Entrant", started_on: balance_sheet.closing_date.end_of_month)
+      leaving = create(:asset, user: user, name: "Sortant", ended_on: balance_sheet.closing_date.beginning_of_month)
+
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).to include("value=\"#{entering.id}\"")
+      expect(response.body).to include("value=\"#{leaving.id}\"")
+    end
+
+    it "excludes the asset of a bien sold before the closing date" do
+      property = create(:property, user: user, name: "Maison", sold_on: balance_sheet.closing_date - 2.months)
+
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      expect(response.body).not_to include("value=\"#{property.real_estate_asset.id}\"")
+    end
+
     it "excludes assets belonging to another user" do
       other_asset = create(:asset, user: create(:user), name: "Autre")
 
@@ -68,6 +106,17 @@ RSpec.describe "BalanceSheetAssets", type: :request do
       expect(response.body).to include("value=\"#{used_asset.id}\"")
       expect(response.body).to include("value=\"#{free_asset.id}\"")
     end
+
+    # Une ligne enregistrée est de l'histoire : un select qui ne contient pas l'actif qu'il
+    # affiche le remplacerait au premier enregistrement.
+    it "keeps the currently selected asset even once it is out of its lifespan" do
+      balance_sheet_asset = balance_sheet.balance_sheet_assets.first
+      used_asset.update!(ended_on: balance_sheet.closing_date - 2.months)
+
+      get edit_balance_sheet_balance_sheet_asset_path(balance_sheet, balance_sheet_asset)
+
+      expect(response.body).to include("value=\"#{used_asset.id}\"")
+    end
   end
 
   describe "POST /balance_sheets/:id/balance_sheet_assets" do
@@ -78,6 +127,17 @@ RSpec.describe "BalanceSheetAssets", type: :request do
       }.to change(BalanceSheetAsset, :count).by(1)
 
       expect(response).to redirect_to(balance_sheet)
+    end
+
+    it "rejects an asset outside its lifespan" do
+      future_asset = create(:asset, user: user, started_on: balance_sheet.closing_date + 2.months)
+
+      expect {
+        post balance_sheet_balance_sheet_assets_path(balance_sheet),
+             params: { balance_sheet_asset: { asset_id: future_asset.id, value: 5_000 } }
+      }.not_to change(BalanceSheetAsset, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "rejects an asset already present in the balance sheet" do

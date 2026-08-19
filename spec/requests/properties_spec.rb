@@ -158,12 +158,23 @@ RSpec.describe "Properties", type: :request do
       post properties_path, params: { property: { name: "Maison", usage: "rental",
                                                   address: "1 rue des Lilas, Nice",
                                                   purchase_price: "320000.50",
-                                                  acquired_on: "2019-06-12" } }
+                                                  acquired_on: "2019-06-12",
+                                                  sold_on: "2024-03-01" } }
 
       property = Property.last
       expect(property.address).to eq("1 rue des Lilas, Nice")
       expect(property.purchase_price).to eq(320_000.50)
       expect(property.acquired_on).to eq(Date.new(2019, 6, 12))
+      expect(property.sold_on).to eq(Date.new(2024, 3, 1))
+    end
+
+    it "does not create with a sale date before the acquisition date" do
+      expect {
+        post properties_path, params: { property: { name: "Maison", usage: "rental",
+                                                    acquired_on: "2019-06-12", sold_on: "2019-06-11" } }
+      }.not_to change(Property, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
     end
 
     it "does not create with a negative purchase price" do
@@ -246,12 +257,22 @@ RSpec.describe "Properties", type: :request do
     it "updates the descriptive fields" do
       patch property_path(property), params: { property: { address: "2 avenue Jean Médecin, Nice",
                                                            purchase_price: "410000",
-                                                           acquired_on: "2021-03-01" } }
+                                                           acquired_on: "2021-03-01",
+                                                           sold_on: "2026-01-31" } }
 
       property.reload
       expect(property.address).to eq("2 avenue Jean Médecin, Nice")
       expect(property.purchase_price).to eq(410_000)
       expect(property.acquired_on).to eq(Date.new(2021, 3, 1))
+      expect(property.sold_on).to eq(Date.new(2026, 1, 31))
+    end
+
+    # La date de vente ferme la période de l'actif du bien, qui n'est alors plus proposé
+    # aux bilans clos après elle (voir Lifespanable).
+    it "closes the lifespan of the lines of the bien when it is sold" do
+      patch property_path(property), params: { property: { sold_on: "2026-01-31" } }
+
+      expect(property.real_estate_asset.reload.ended_on).to eq(Date.new(2026, 1, 31))
     end
 
     it "clears a descriptive field submitted empty" do
