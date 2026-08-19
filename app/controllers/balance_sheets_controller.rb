@@ -70,11 +70,21 @@ class BalanceSheetsController < ApplicationController
       # Les mêmes regroupements que la synthèse, lus en graphiques plutôt qu'en tableaux :
       # l'onglet ne calcule rien de neuf, il donne une autre forme aux mêmes chiffres. Les
       # positions immobilières viennent en plus, une barre par bien.
-      @assets_by_type = @balance_sheet.assets_by_type
-      @liabilities_by_type = @balance_sheet.liabilities_by_type
-      @assets_by_risk = @balance_sheet.assets_by_risk_level
+      #
+      # Les anneaux sont découpés sur les catégories du tableau de bord — mêmes regroupements,
+      # mêmes clés, donc mêmes couleurs (voir BalanceSheet::ASSET_CATEGORIES) : une teinte doit
+      # nommer le même poste d'un écran à l'autre. Le miroir d'accueil lit l'historique entier,
+      # l'anneau ne lit qu'un bilan, d'où la série d'un seul élément.
+      @assets_breakdown = BalanceSheet.assets_breakdown_for([@balance_sheet])
+      @liabilities_breakdown = BalanceSheet.liabilities_breakdown_for([@balance_sheet])
       @property_positions = @balance_sheet.real_estate_positions
       @variations = @previous && @balance_sheet.variations_against(@previous)
+
+      # Le cœur des anneaux dit d'où viennent leurs totaux : le bilan précédent, puis celui
+      # d'il y a un an. Les deux se lisent sur les mêmes variations — un même écart ne peut
+      # donc pas s'écrire d'une façon au centre d'un anneau et d'une autre sur une tuile.
+      @year_ago = @balance_sheet.year_ago
+      @yearly_variations = @year_ago && @balance_sheet.variations_against(@year_ago)
     else
       @assets_by_risk = @balance_sheet.assets_by_risk_level
       @assets_by_type = @balance_sheet.assets_by_type

@@ -292,7 +292,10 @@ fr:
         charts:
           assets_by_type: "Répartition des actifs"
           liabilities_by_type: "Répartition de la dette"
-          assets_by_risk: Actifs par niveau de risque
+          since_previous: Depuis le bilan précédent
+          over_a_year: Sur un an
+          no_previous: Premier bilan de l'historique
+          no_year_ago: "Moins d'un an d'historique"
           real_estate: Patrimoine immobilier
           real_estate_hint: Valeur nette de chaque bien, dette déduite.
           no_assets: Aucun actif sur ce bilan.

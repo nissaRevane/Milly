@@ -213,6 +213,24 @@ RSpec.describe "BalanceSheets", type: :request do
 
   describe "the real estate band" do
     # A bien with a 200k flat financed by a 150k loan, plus an unlinked real estate asset.
+    def previous_label
+      I18n.t("views.balance_sheets.summary.charts.since_previous")
+    end
+
+    def yearly_label
+      I18n.t("views.balance_sheets.summary.charts.over_a_year")
+    end
+
+    def create_sheet_worth(closing_date, value:, debt: 0)
+      sheet = create(:balance_sheet, user: user, closing_date: closing_date)
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: create(:asset, user: user), value: value)
+      if debt.positive?
+        create(:balance_sheet_liability, balance_sheet: sheet,
+                                         liability: create(:liability, user: user), remaining_capital: debt)
+      end
+      sheet
+    end
+
     def build_property_sheet(with_unassigned: false)
       bs = create(:balance_sheet, user: user)
       property = create(:property, user: user, name: "Appartement Lyon", usage: :rental)
@@ -344,15 +362,62 @@ RSpec.describe "BalanceSheets", type: :request do
           expect(doc.css(".chart-donut").size).to eq(2)
         end
 
-        # L'onglet ne recalcule rien : il doit dire exactement ce que la synthèse dit.
+        # L'onglet ne recalcule rien : il doit dire exactement ce que la synthèse dit. Les
+        # deux totaux que découpent les anneaux se lisent au CENTRE de ceux-ci ; seuls les
+        # fonds propres, que ni l'un ni l'autre ne totalise, gardent leur tuile.
         it "headlines the same three totals as the synthèse" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "dashboard")
 
           doc = Nokogiri::HTML(response.body)
-          amounts = doc.css(".stat-grid .stat-value").map { |value| value.text.strip }
-          expect(amounts).to eq([currency(200_000), currency(150_000), currency(50_000)])
+          expect(doc.css(".stat-grid .stat-value").map { |value| value.text.strip })
+            .to eq([currency(50_000)])
+          expect(doc.css(".chart-donut-total").map { |total| total.text.strip })
+            .to eq([variation_currency(200_000), variation_currency(150_000)])
+        end
+
+        # Un anneau ne dit qu'une composition : deux patrimoines sans rapport y dessinent le
+        # même camembert. Le total au centre dit de quelle somme il s'agit, et les deux
+        # écarts d'où elle vient — sans quoi il faudrait retourner à la synthèse pour le
+        # savoir, et les tuiles supprimées n'auraient fait que déménager.
+        it "reads each total against the previous bilan and the one a year back" do
+          create_sheet_worth(Date.new(2024, 12, 31), value: 100_000, debt: 90_000)
+          create_sheet_worth(Date.new(2025, 6, 30), value: 150_000, debt: 80_000)
+          current = create_sheet_worth(Date.new(2025, 12, 31), value: 200_000, debt: 70_000)
+
+          get summary_balance_sheet_path(current, tab: "dashboard")
+
+          assets, liabilities = Nokogiri::HTML(response.body).css(".chart-donut-center")
+          expect(assets.css(".chart-donut-note").map { |note| note.text.split.join(" ") })
+            .to eq(["#{previous_label} +#{variation_currency(50_000)} (+33,3 %)",
+                    "#{yearly_label} +#{variation_currency(100_000)} (+100,0 %)"])
+          # Une dette qui recule est une bonne nouvelle : le signe suit le montant, la
+          # couleur suit la lecture.
+          expect(liabilities.css(".chart-donut-note .variation").map { |note| note["class"] })
+            .to eq(["variation variation-gain", "variation variation-gain"])
+        end
+
+        # Le premier bilan de l'historique n'a rien à comparer, et le trou de l'anneau est
+        # trop étroit pour y écrire pourquoi : la ligne saute plutôt que d'annoncer un tiret.
+        it "leaves the ring bare of any note on the very first bilan" do
+          bs = create_sheet_worth(Date.new(2025, 12, 31), value: 200_000)
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.at_css(".chart-donut-total").text.strip).to eq(variation_currency(200_000))
+          expect(doc.css(".chart-donut-note")).to be_empty
+        end
+
+        # Le détail par niveau de risque se lit dans la synthèse, qui le tient en toutes
+        # lettres : le répéter en barres ici allongeait la page sans rien y ajouter.
+        it "no longer breaks the actifs down by niveau de risque" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          expect(response.body).not_to include("Actifs par niveau de risque")
         end
 
         # Les parts de l'anneau sont des cercles en pointillés : sans le trait d'union dans
@@ -377,6 +442,45 @@ RSpec.describe "BalanceSheets", type: :request do
             .to be_within(0.5).of(2 * Math::PI * 75 * 0.75)
           expect(slices.first["stroke-dashoffset"].to_f).to eq(0)
           expect(slices.last["stroke-dashoffset"].to_f).to be < 0
+        end
+
+        # Les anneaux et le miroir d'accueil ne racontent le patrimoine que s'ils le découpent
+        # pareil : même catégorie, même clé, donc même teinte d'un écran à l'autre. Un anneau
+        # redécoupé sur les types d'enum donnerait au livret la couleur que le miroir donne
+        # aux placements, et la lecture croisée serait fausse sans que rien ne le dise.
+        it "colours the rings on the same categories as the tableau de bord" do
+          bs = build_property_sheet
+          create(:balance_sheet_asset, balance_sheet: bs,
+                                       asset: create(:asset, user: user, asset_type: :savings_account),
+                                       value: 20_000)
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          doc = Nokogiri::HTML(response.body)
+          assets, liabilities = doc.css(".chart-donut")
+          expect(assets.css(".chart-donut-ring .chart-slice").map { |slice| slice["class"] })
+            .to eq(["chart-slice chart-series-liquidity",
+                    "chart-slice chart-series-real-estate-rental"])
+          expect(liabilities.css(".chart-donut-ring .chart-slice").map { |slice| slice["class"] })
+            .to eq(["chart-slice chart-series-real-estate-loan-rental"])
+          # La pastille de la légende porte la même classe que sa part : c'est par elle que
+          # la couleur se nomme, et les deux la lisent au même endroit.
+          expect(assets.css(".chart-legend-swatch").map { |swatch| swatch["class"] })
+            .to eq(["chart-legend-swatch chart-series-liquidity",
+                    "chart-legend-swatch chart-series-real-estate-rental"])
+        end
+
+        # L'immobilier passe en titre de section dès qu'il montre plusieurs usages, comme dans
+        # la légende du miroir : « Immobilier » écrit une fois, ses usages dessous.
+        it "names the categories as the tableau de bord names them" do
+          bs = build_property_sheet(with_unassigned: true)
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          legend = Nokogiri::HTML(response.body).at_css(".chart-donut .chart-legend")
+          expect(legend.at_css(".chart-legend-group-title").text.strip).to eq("Immobilier")
+          expect(legend.css(".chart-legend-sublist .chart-legend-label").map { |label| label.text.strip })
+            .to eq(["Locatif", "Non rattaché"])
         end
 
         it "draws one bar per bien, read on its valeur nette" do

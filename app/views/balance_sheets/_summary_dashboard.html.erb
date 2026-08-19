@@ -4,52 +4,53 @@
   Rien n'y est calculé qui ne le soit déjà ailleurs — mêmes regroupements, mêmes variations,
   mêmes totaux immobiliers. Un anneau et un tableau du même bilan ne peuvent donc pas dire
   deux choses différentes.
+
+  Les deux anneaux découpent le bilan sur les catégories du tableau de bord d'accueil, et
+  en reprennent donc les couleurs : le vert des liquidités ou le gris d'un crédit immobilier
+  nomment le même poste ici et là-bas.
+
+  Le total des actifs et celui de la dette se lisent AU CENTRE de leur anneau, avec leurs
+  deux variations : une tuile qui les répétait au-dessus disait le même chiffre deux fois, et
+  prenait la largeur qui manquait aux anneaux. Ne reste en tête que les fonds propres, qui
+  ne sont l'objet d'aucun des deux.
 %>
 <div class="stat-grid">
-  <div class="stat-card">
-    <span class="stat-label"><%= t("views.balance_sheets.summary.total_assets") %></span>
-    <span class="stat-value"><%= number_to_currency(@balance_sheet.total_assets) %></span>
-    <span class="stat-hint"><%= variation_note(@variations[:assets]) if @variations %></span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label"><%= t("views.balance_sheets.summary.total_liabilities") %></span>
-    <span class="stat-value"><%= number_to_currency(@balance_sheet.total_liabilities) %></span>
-    <%# La dette qui baisse est la bonne nouvelle : la couleur suit ce sens-là, pas le signe. %>
-    <span class="stat-hint"><%= variation_note(@variations[:liabilities], favorable: :down) if @variations %></span>
-  </div>
-
   <div class="stat-card stat-card-highlight">
     <span class="stat-label"><%= t("views.balance_sheets.summary.equity") %></span>
     <span class="stat-value"><%= number_to_currency(@balance_sheet.equity) %></span>
-    <span class="stat-hint"><%= variation_note(@variations[:equity]) if @variations %></span>
+    <span class="stat-hint">
+      <%= t("views.balance_sheets.summary.charts.since_previous") %>
+      <%= @variations ? variation_note(@variations[:equity]) : t("views.balance_sheets.summary.charts.no_previous") %>
+    </span>
+    <span class="stat-hint">
+      <%= t("views.balance_sheets.summary.charts.over_a_year") %>
+      <%= @yearly_variations ? variation_note(@yearly_variations[:equity]) : t("views.balance_sheets.summary.charts.no_year_ago") %>
+    </span>
   </div>
 </div>
 
 <div class="chart-grid">
   <section class="chart-card">
     <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.assets_by_type") %></h2>
-    <%= donut_chart(Asset.asset_types.keys.map { |type|
-          { label: asset_type_label(type), amount: @assets_by_type.fetch(type, []).sum(&:owned_value) }
-        }) || tag.p(t("views.balance_sheets.summary.charts.no_assets"), class: "empty-state") %>
+    <%= donut_chart(breakdown_slices(@assets_breakdown),
+                    center: donut_center(@balance_sheet.total_assets, [
+                      [t("views.balance_sheets.summary.charts.since_previous"), @variations && @variations[:assets]],
+                      [t("views.balance_sheets.summary.charts.over_a_year"), @yearly_variations && @yearly_variations[:assets]]
+                    ])) ||
+          tag.p(t("views.balance_sheets.summary.charts.no_assets"), class: "empty-state") %>
   </section>
 
   <section class="chart-card">
     <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.liabilities_by_type") %></h2>
-    <%= donut_chart(Liability.liability_types.keys.map { |type|
-          { label: liability_type_label(type), amount: @liabilities_by_type.fetch(type, []).sum(&:owned_remaining_capital) }
-        }) || tag.p(t("views.balance_sheets.summary.charts.no_liabilities"), class: "empty-state") %>
+    <%# La dette qui baisse est la bonne nouvelle : la couleur suit ce sens-là, pas le signe. %>
+    <%= donut_chart(breakdown_slices(@liabilities_breakdown),
+                    center: donut_center(@balance_sheet.total_liabilities, [
+                      [t("views.balance_sheets.summary.charts.since_previous"), @variations && @variations[:liabilities]],
+                      [t("views.balance_sheets.summary.charts.over_a_year"), @yearly_variations && @yearly_variations[:liabilities]]
+                    ], favorable: :down)) ||
+          tag.p(t("views.balance_sheets.summary.charts.no_liabilities"), class: "empty-state") %>
   </section>
 </div>
-
-<section class="chart-card">
-  <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.assets_by_risk") %></h2>
-  <%= bar_breakdown(%w[low medium high].map { |level|
-        { label: risk_level_label(level),
-          amount: @assets_by_risk.fetch(level, []).sum(&:owned_value),
-          tone: "chart-fill-risk-#{level}" }
-      }) || tag.p(t("views.balance_sheets.summary.charts.no_assets"), class: "empty-state") %>
-</section>
 
 <% if @property_positions.any? %>
   <section class="chart-card">

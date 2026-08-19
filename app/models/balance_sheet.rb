@@ -332,6 +332,22 @@ class BalanceSheet < ApplicationRecord
     @previous = user.balance_sheets.where("closing_date < ?", closing_date).order(closing_date: :desc).first
   end
 
+  # Le bilan sur lequel se lit la variation « sur un an » : le plus récent qui ait au moins
+  # un an de recul sur celui-ci. Une année calendaire et non 365 jours, pour qu'un bilan au
+  # 31/12 se compare au 31/12 précédent même quand une année bissextile s'intercale — c'est
+  # la lecture du tableau de bord d'accueil (DashboardController#point_a_year_before), et
+  # les deux écrans doivent tomber sur le même bilan de référence.
+  #
+  # nil tant que l'historique ne remonte pas à un an : mieux vaut ne rien annoncer qu'une
+  # progression mesurée sur trois mois présentée comme annuelle. Mémoïsé comme #previous,
+  # nil étant ici une réponse à part entière.
+  def year_ago
+    return @year_ago if defined?(@year_ago)
+
+    @year_ago = user.balance_sheets.where("closing_date <= ?", closing_date - 1.year)
+      .order(closing_date: :desc).first
+  end
+
   # The user's balance sheet immediately after this one, nil for the latest one. Only the
   # header navigation reads it — no variation is ever measured against it — but it is
   # memoized like #previous so a page asking twice queries once.

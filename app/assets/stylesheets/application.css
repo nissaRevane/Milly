@@ -1242,20 +1242,73 @@ a.summary-nav-arrow:hover {
 }
 
 /* L'anneau et sa légende, côte à côte tant que la carte est assez large */
+/* L'anneau et sa légende, l'un AU-DESSUS de l'autre : côte à côte, la légende prenait la
+   moitié de la carte et l'anneau restait un petit disque de 180 px. En pile, le dessin a
+   toute la largeur pour lui et la légende s'étale en colonnes sous lui. */
 .chart-donut {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
+}
+
+/* Le cadre qui superpose le total au tracé : c'est lui qui donne sa taille à l'anneau, le
+   SVG suivant en largeur et le texte se posant par-dessus. */
+.chart-donut-figure {
+  position: relative;
+  width: min(18rem, 100%);
 }
 
 .chart-donut-ring {
-  flex: 0 0 auto;
-  width: 180px;
-  height: 180px;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
+/* Le total dans le trou de l'anneau. Le retrait tient au tracé : l'épaisseur du trait vaut
+   un sixième du diamètre (ChartsHelper::DONUT_THICKNESS sur DONUT_SIZE), et 20 % laissent le
+   texte à l'intérieur du disque libre sans le coller au trait. */
+.chart-donut-center {
+  position: absolute;
+  inset: 20%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.chart-donut-total {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* D'où vient ce total : le libellé sur sa ligne, la variation sous lui — côte à côte, les
+   deux ne tiendraient pas dans la largeur du trou. */
+.chart-donut-note {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.chart-donut-note-label {
+  color: var(--color-text-muted);
+}
+
+.chart-donut-note .variation {
+  font-size: 0.75rem;
+}
+
+/* Une part de l'anneau porte sa teinte en TRAIT, la bande du miroir en fond : les deux la
+   lisent dans --series-color, que la classe de catégorie pose une fois pour toutes. Sans ce
+   détour, colorer la part depuis la classe de catégorie effacerait au passage le liseré
+   blanc que .chart-series-area donne aux bandes. */
 .chart-slice {
+  stroke: var(--series-color);
   transition: opacity 0.15s ease;
 }
 
@@ -1270,6 +1323,21 @@ a.summary-nav-arrow:hover {
   flex-direction: column;
   gap: 0.375rem;
   min-width: 0;
+}
+
+/* Sous l'anneau, la légende prend toute la largeur de la carte : une seule colonne, mais
+   large. Deux colonnes tenaient dans la place et coupaient les libellés à l'ellipse —
+   « Résiden… » ne nomme plus rien, alors qu'une catégorie ne se lit que par son nom. */
+.chart-donut > .chart-legend {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* La place ne manque plus : un libellé trop long passe à la ligne plutôt que de se faire
+   couper, seuls les chiffres de droite restant insécables. */
+.chart-donut .chart-legend-label {
+  overflow: visible;
+  white-space: normal;
 }
 
 /* Les deux légendes du miroir : une par côté de l'axe. Elles ne fusionnent pas, leurs
@@ -1398,7 +1466,7 @@ a.summary-nav-arrow:hover {
   height: 0.75rem;
   margin-top: 0.2rem;
   border-radius: 3px;
-  background: var(--color-border);
+  background: var(--series-color, var(--color-border));
 }
 
 /* Dans le miroir, la pastille est un bouton qui masque sa catégorie : elle garde l'aspect
@@ -1497,28 +1565,18 @@ button.chart-legend-swatch:hover {
   white-space: nowrap;
 }
 
-/* Le miroir : la bande dans le graphique, la pastille dans la légende. Une catégorie tient
-   sa couleur de sa clé (ChartsHelper#series_tone) et non de son rang, pour qu'elle la garde
-   quand une autre disparaît du bilan. */
+/* Les couleurs par catégorie : la bande du miroir, la part de l'anneau du bilan et la
+   pastille de leurs légendes. Une catégorie tient sa couleur de sa clé
+   (ChartsHelper#series_tone) et non de son rang, pour qu'elle la garde quand une autre
+   disparaît du bilan — et pour que les deux écrans nomment le même poste de la même teinte.
+
+   Les classes de catégorie ne posent que --series-color ; chaque forme y puise comme elle
+   se colore : la bande en remplissage, la part d'anneau en trait, la pastille en fond. Un
+   fill posé sur la classe couvrirait le fill: none du cercle et remplirait l'anneau. */
 .chart-series-area {
+  fill: var(--series-color);
   stroke: var(--color-surface);
   stroke-width: 0.75;
-}
-
-.chart-series-liquidity,
-.chart-series-financial-investment,
-.chart-series-short-term-debt,
-.chart-series-security-deposit,
-.chart-series-real-estate-primary-residence,
-.chart-series-real-estate-secondary-residence,
-.chart-series-real-estate-rental,
-.chart-series-real-estate-unassigned,
-.chart-series-real-estate-loan-primary-residence,
-.chart-series-real-estate-loan-secondary-residence,
-.chart-series-real-estate-loan-rental,
-.chart-series-real-estate-loan-unassigned {
-  fill: var(--series-color);
-  background: var(--series-color);
 }
 
 /* Au-dessus de l'axe : les liquidités, puis l'immobilier, puis les placements */
@@ -1541,13 +1599,14 @@ button.chart-legend-swatch:hover {
 .chart-series-real-estate-loan-rental { --series-color: var(--chart-debt-re-3); }
 .chart-series-real-estate-loan-unassigned { --series-color: var(--chart-debt-re-4); }
 
-/* La palette : une part de l'anneau la porte en stroke, une pastille de légende en fond */
-.chart-palette-1 { stroke: var(--chart-1); background: var(--chart-1); }
-.chart-palette-2 { stroke: var(--chart-2); background: var(--chart-2); }
-.chart-palette-3 { stroke: var(--chart-3); background: var(--chart-3); }
-.chart-palette-4 { stroke: var(--chart-4); background: var(--chart-4); }
-.chart-palette-5 { stroke: var(--chart-5); background: var(--chart-5); }
-.chart-palette-6 { stroke: var(--chart-6); background: var(--chart-6); }
+/* La palette de repli, pour un anneau dont les parts ne nomment aucune catégorie : elle ne
+   pose que --series-color, la part et la pastille s'y servant comme pour le miroir. */
+.chart-palette-1 { --series-color: var(--chart-1); }
+.chart-palette-2 { --series-color: var(--chart-2); }
+.chart-palette-3 { --series-color: var(--chart-3); }
+.chart-palette-4 { --series-color: var(--chart-4); }
+.chart-palette-5 { --series-color: var(--chart-5); }
+.chart-palette-6 { --series-color: var(--chart-6); }
 
 /* Barres horizontales en HTML, pour les répartitions courtes */
 .bar-breakdown {
@@ -1590,18 +1649,6 @@ button.chart-legend-swatch:hover {
   background: var(--color-danger);
 }
 
-.bar-breakdown-fill.chart-fill-risk-low {
-  background: var(--color-success);
-}
-
-.bar-breakdown-fill.chart-fill-risk-medium {
-  background: var(--color-warning);
-}
-
-.bar-breakdown-fill.chart-fill-risk-high {
-  background: var(--color-danger);
-}
-
 .bar-breakdown-amount {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -1613,16 +1660,6 @@ button.chart-legend-swatch:hover {
 }
 
 @media (max-width: 768px) {
-  /* Sur mobile, l'anneau passe au-dessus de sa légende plutôt qu'à côté */
-  .chart-donut {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .chart-donut-ring {
-    align-self: center;
-  }
-
   .bar-breakdown-row {
     grid-template-columns: 1fr auto;
   }

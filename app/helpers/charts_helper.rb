@@ -155,17 +155,26 @@ module ChartsHelper
   # les parts nulles ou négatives sont écartées — un anneau ne sait pas les dessiner, et la
   # légende ne gagne rien à lister des catégories absentes du bilan.
   #
+  # Une part peut nommer sa teinte (+tone+) plutôt que de la prendre à son rang : c'est ainsi
+  # que les anneaux du bilan reprennent les couleurs du miroir d'accueil, poste par poste.
+  # +sublabel+ et +full_label+ suivent alors, pour que la légende éclate une famille sur deux
+  # lignes exactement comme celle du miroir. Sans +tone+, la palette tourne sur les rangs.
+  #
+  # +center+ se pose dans le trou de l'anneau — le total qu'il découpe (voir #donut_center).
+  # C'est du HTML superposé au SVG et non un <text> du tracé : le texte y garde la taille et
+  # les retours à la ligne du reste de la page, là où un texte SVG grossirait avec le dessin.
+  #
   # L'anneau est fait de cercles en pointillés (stroke-dasharray) plutôt que d'arcs calculés
   # à la trigonométrie : une part vaut une longueur de trait, son décalage la somme des
   # précédentes, et il n'y a aucun cas limite à traiter au passage des 180°.
-  def donut_chart(slices)
+  def donut_chart(slices, center: nil)
     slices = slices.reject { |slice| slice[:amount].to_f <= 0 }
     return if slices.empty?
 
     total = slices.sum { |slice| slice[:amount].to_f }
     radius = (DONUT_SIZE - DONUT_THICKNESS) / 2.0
     circumference = 2 * Math::PI * radius
-    center = DONUT_SIZE / 2.0
+    middle = DONUT_SIZE / 2.0
     offset = 0.0
 
     ring = slices.each_with_index.map do |slice, index|
@@ -174,13 +183,13 @@ module ChartsHelper
       # ne convertit PAS les underscores en tirets hors des data-* et aria-*, et un
       # stroke_dasharray="…" est un attribut inconnu que le navigateur ignore en silence —
       # l'anneau se dessinerait alors en un seul trait continu.
-      arc = tag.circle(class: "chart-slice #{palette_class(index)}",
-                       cx: center, cy: center, r: coord(radius),
+      arc = tag.circle(class: "chart-slice #{slice[:tone] || palette_class(index)}",
+                       cx: middle, cy: middle, r: coord(radius),
                        fill: "none",
                        "stroke-width" => DONUT_THICKNESS,
                        "stroke-dasharray" => "#{coord(length)} #{coord(circumference - length)}",
                        "stroke-dashoffset" => coord(-offset)) do
-        tag.title("#{slice[:label]} — #{number_to_currency(slice[:amount])}")
+        tag.title("#{slice[:full_label] || slice[:label]} — #{number_to_currency(slice[:amount])}")
       end
       offset += length
       arc
@@ -188,24 +197,74 @@ module ChartsHelper
 
     tag.div(class: "chart-donut") do
       safe_join([
-        tag.svg(class: "chart-donut-ring", "viewBox" => "0 0 #{DONUT_SIZE} #{DONUT_SIZE}", role: "img") do
-          # La rotation d'un quart de tour fait partir la première part de midi plutôt que
-          # de 3 h, où stroke-dashoffset la placerait.
-          tag.g(transform: "rotate(-90 #{center} #{center})") { safe_join(ring) }
+        tag.div(class: "chart-donut-figure") do
+          safe_join([
+            tag.svg(class: "chart-donut-ring", "viewBox" => "0 0 #{DONUT_SIZE} #{DONUT_SIZE}", role: "img") do
+              # La rotation d'un quart de tour fait partir la première part de midi plutôt
+              # que de 3 h, où stroke-dashoffset la placerait.
+              tag.g(transform: "rotate(-90 #{middle} #{middle})") { safe_join(ring) }
+            end,
+            center
+          ].compact)
         end,
         chart_legend(slices.each_with_index.map { |slice, index|
-          slice.merge(tone: palette_class(index))
+          slice.merge(tone: slice[:tone] || palette_class(index))
         }, total)
       ])
     end
+  end
+
+  # Ce que l'anneau totalise, écrit dans son trou : le montant, puis d'où il vient — l'écart
+  # avec le bilan précédent, puis avec celui d'il y a un an. Un anneau dit une composition ;
+  # sans ce chiffre au milieu il ne dirait pas de quelle somme, et deux bilans très
+  # différents dessineraient exactement le même camembert.
+  #
+  # +notes+ est une liste de [libellé, variation], la variation valant nil quand il n'y a
+  # rien à comparer — premier bilan, ou historique de moins d'un an. La ligne disparaît
+  # alors : le trou est trop étroit pour y loger l'explication que la page d'accueil donne.
+  #
+  # +favorable+ dit quel sens est la bonne nouvelle et part colorer la note, la dette
+  # passant :down comme partout ailleurs (voir ApplicationHelper#variation_note).
+  #
+  # Les montants sont arrondis à l'euro comme ceux de la légende : le centime se lit dans
+  # les tableaux du bilan, il ne tient pas dans un trou d'anneau.
+  def donut_center(amount, notes, favorable: :up)
+    lines = notes.filter_map { |label, variation|
+      next if variation.nil?
+
+      # Les deux morceaux sont séparés par une espace, invisible entre deux blocs d'une
+      # colonne flex mais bien là pour qui lit le texte de la page : sans elle, un lecteur
+      # d'écran annonce « Sur un an+100 000 € ».
+      tag.span(class: "chart-donut-note") do
+        safe_join([tag.span(label, class: "chart-donut-note-label"),
+                   variation_note(variation, favorable: favorable)], " ")
+      end
+    }
+
+    tag.div(class: "chart-donut-center") do
+      safe_join([tag.span(number_to_currency(amount, precision: 0), class: "chart-donut-total"), *lines])
+    end
+  end
+
+  # Les parts d'anneau d'une ventilation du tableau de bord (BalanceSheet::BreakdownSeries),
+  # lues sur le DERNIER bilan de la série : l'anneau montre une composition à une date, là où
+  # le miroir d'accueil montre son histoire.
+  #
+  # Le découpage, l'ordre et les clés viennent tels quels du modèle : c'est ce qui garantit
+  # qu'une teinte nomme le même poste sur les deux écrans. L'anneau n'a rien à rejouer.
+  def breakdown_slices(series)
+    series.map { |serie|
+      { label: serie.label, sublabel: serie.sublabel, full_label: serie.full_label,
+        amount: serie.values.last, tone: series_tone(serie.key) }
+    }
   end
 
   # Des barres horizontales en HTML, pour les répartitions courtes (risque, biens) où un
   # anneau serait moins lisible qu'une liste ordonnée. Chaque ligne est proportionnelle au
   # plus grand montant, pas au total : on compare les postes entre eux, pas au patrimoine.
   #
-  # Chaque ligne est un { label:, amount:, tone: } ; +tone+ nomme la classe de remplissage
-  # (chart-fill-risk-low…) et vaut nil pour la teinte neutre.
+  # Chaque ligne est un { label:, amount:, tone: } ; +tone+ nomme la classe de remplissage et
+  # vaut nil pour la teinte neutre, celle des barres du patrimoine immobilier.
   # Seules les lignes à zéro disparaissent — une catégorie absente du bilan n'a rien à dire.
   # Un montant négatif reste affiché, en rouge : un bien dont la dette dépasse la valeur a une
   # valeur nette négative, et c'est précisément ce qu'il faut voir. L'échelle se prend donc sur
