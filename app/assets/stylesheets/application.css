@@ -1608,50 +1608,115 @@ button.chart-legend-swatch:hover {
 .chart-palette-5 { --series-color: var(--chart-5); }
 .chart-palette-6 { --series-color: var(--chart-6); }
 
-/* Barres horizontales en HTML, pour les répartitions courtes */
-.bar-breakdown {
+/* Le patrimoine immobilier bien par bien : la dette à gauche, la valeur nette au centre,
+   la valeur de l'actif à droite. Cinq colonnes, dont deux pistes qui se partagent également
+   la place restante — sans quoi une dette et un actif de même montant n'auraient pas la
+   même longueur, et l'échelle commune du helper serait démentie par la mise en page. */
+.property-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.property-balance-rows {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.bar-breakdown-row {
+.property-balance-row,
+.property-balance-head {
   display: grid;
-  grid-template-columns: minmax(6rem, 12rem) 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(8rem, 13rem) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.25rem 0.75rem;
   font-size: 0.875rem;
 }
 
-.bar-breakdown-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Les colonnes nommées une fois, chacune au-dessus de la sienne : deux barres opposées ne
+   disent de quel côté est la dette que si quelque chose l'écrit. */
+.property-balance-head {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.property-balance-head-debt {
+  grid-column: 1;
+  text-align: right;
+}
+
+.property-balance-head-net {
+  grid-column: 3;
+  text-align: center;
+}
+
+.property-balance-head-gross {
+  grid-column: 5;
+}
+
+/* Les montants se serrent contre leur piste plutôt que contre le bord du bloc : chaque barre
+   part de son chiffre, et les deux colonnes restent alignées d'une ligne à l'autre. */
+.property-balance-amount {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 
-.bar-breakdown-track {
-  display: block;
+.property-balance-amount-debt {
+  text-align: right;
+}
+
+.property-balance-track {
+  display: flex;
   background: var(--color-bg);
   border-radius: 999px;
-  height: 0.75rem;
+  height: 0.85rem;
   overflow: hidden;
 }
 
-.bar-breakdown-fill {
-  display: block;
+/* La piste de gauche se remplit depuis la droite : les deux barres partent du centre. */
+.property-balance-track-debt {
+  justify-content: flex-end;
+}
+
+/* La teinte n'est jamais écrite ici : elle arrive par --series-color, que la classe de
+   catégorie pose (voir .chart-series-*). L'actif garde donc la couleur de l'immobilier de
+   son usage, la dette celle du crédit du même usage. */
+.property-balance-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--chart-1);
+  background: var(--series-color, var(--chart-1));
 }
 
-.bar-breakdown-fill-negative {
-  background: var(--color-danger);
+.property-balance-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
 }
 
-.bar-breakdown-amount {
+.property-balance-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.property-balance-net {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Un bien dont la dette dépasse la valeur : le chiffre le dit avant que l'œil ne compare
+   les deux barres. */
+.property-balance-net-negative {
+  color: var(--color-danger);
 }
 
 .empty-state-action {
@@ -1660,13 +1725,26 @@ button.chart-legend-swatch:hover {
 }
 
 @media (max-width: 768px) {
-  .bar-breakdown-row {
-    grid-template-columns: 1fr auto;
+  /* Le nom du bien et sa valeur nette passent sur leur propre ligne, en tête : les deux
+     pistes gardent ainsi toute la largeur pour se faire face. */
+  .property-balance-row,
+  .property-balance-head {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
   }
 
-  /* La piste passe sous son libellé : deux colonnes ne suffisent plus à trois cellules */
-  .bar-breakdown-track {
+  .property-balance-center {
     grid-column: 1 / -1;
-    order: 3;
+    order: -1;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .property-balance-head-net {
+    grid-column: 2 / 4;
+  }
+
+  .property-balance-head-gross {
+    grid-column: 4;
   }
 }

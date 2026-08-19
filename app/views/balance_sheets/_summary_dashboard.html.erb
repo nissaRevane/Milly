@@ -56,10 +56,9 @@
   <section class="chart-card">
     <h2 class="chart-title"><%= t("views.balance_sheets.summary.charts.real_estate") %></h2>
     <p class="chart-hint"><%= t("views.balance_sheets.summary.charts.real_estate_hint") %></p>
-    <%# Les barres se lisent sur la valeur nette : le brut et la dette d'un bien bougent
-        chacun pour leurs raisons, seule leur différence dit ce que le bien pèse. %>
-    <%= bar_breakdown(@property_positions.map { |position|
-          { label: position.property.name, amount: position.net }
-        }) %>
+    <%# Le bien se lit d'un seul regard : sa dette à gauche, sa valeur à droite, et entre les
+        deux ce qu'il pèse vraiment. Le brut et la dette bougent chacun pour leurs raisons,
+        et l'écart qu'ils laissent est la seule chose qui appartienne au propriétaire. %>
+    <%= property_balance_bars(@property_positions) %>
   </section>
 <% end %>

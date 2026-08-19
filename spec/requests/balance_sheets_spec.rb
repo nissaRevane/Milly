@@ -483,14 +483,47 @@ RSpec.describe "BalanceSheets", type: :request do
             .to eq(["Locatif", "Non rattaché"])
         end
 
-        it "draws one bar per bien, read on its valeur nette" do
+        # Le bien s'y lit sur les trois chiffres à la fois : ce qu'il vaut, ce qu'il doit, et
+        # l'écart entre les deux. Une barre sur la seule valeur nette laissait un bien payé
+        # comptant et un bien financé à 90 % avoir exactement la même allure.
+        it "frames the valeur nette of each bien with its dette and its valeur" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "dashboard")
 
-          row = Nokogiri::HTML(response.body).css(".bar-breakdown").last.at_css(".bar-breakdown-row")
-          expect(row.at_css(".bar-breakdown-label").text.strip).to eq("Appartement Lyon")
-          expect(row.at_css(".bar-breakdown-amount").text.strip).to eq(currency(50_000))
+          row = Nokogiri::HTML(response.body).at_css(".property-balance-row")
+          expect(row.at_css(".property-balance-label").text.strip).to eq("Appartement Lyon")
+          expect(row.at_css(".property-balance-net").text.strip).to eq(currency(50_000))
+          expect(row.at_css(".property-balance-amount-debt").text.strip).to eq(currency(150_000))
+          expect(row.at_css(".property-balance-amount-gross").text.strip).to eq(currency(200_000))
+        end
+
+        # Les deux barres partagent l'échelle du plus gros montant du tableau : la dette de
+        # 150 000 € ne mesure les trois quarts de l'actif de 200 000 € que si le même pour
+        # cent vaut la même somme des deux côtés.
+        it "scales both bars on the same largest amount" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          row = Nokogiri::HTML(response.body).at_css(".property-balance-row")
+          debt, gross = row.css(".property-balance-fill")
+          expect(debt["style"]).to eq("width: 75.0%")
+          expect(gross["style"]).to eq("width: 100.0%")
+        end
+
+        # La barre d'actif prend la couleur de l'immobilier de cet usage, celle de dette la
+        # couleur du crédit du même usage : ce sont les teintes des anneaux et du miroir, et
+        # un bien ne peut pas changer de camp d'un graphique à l'autre.
+        it "colours each bar on the asset and liability palettes" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "dashboard")
+
+          row = Nokogiri::HTML(response.body).at_css(".property-balance-row")
+          expect(row.css(".property-balance-fill").map { |fill| fill["class"] })
+            .to eq(["property-balance-fill chart-series-real-estate-loan-rental",
+                    "property-balance-fill chart-series-real-estate-rental"])
         end
 
         it "keeps the tab when stepping to a neighbouring bilan" do

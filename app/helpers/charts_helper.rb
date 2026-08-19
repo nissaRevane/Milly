@@ -259,42 +259,89 @@ module ChartsHelper
     }
   end
 
-  # Des barres horizontales en HTML, pour les répartitions courtes (risque, biens) où un
-  # anneau serait moins lisible qu'une liste ordonnée. Chaque ligne est proportionnelle au
-  # plus grand montant, pas au total : on compare les postes entre eux, pas au patrimoine.
+  # Le patrimoine immobilier bien par bien, lu de part et d'autre de sa valeur nette : la
+  # dette à gauche, la valeur de l'actif à droite, et au centre ce qui reste quand on retire
+  # l'une de l'autre. Un bien ne se juge pas sur son prix ni sur son crédit pris seul, mais
+  # sur l'écart entre les deux — l'écart est donc au milieu, et les deux montants qui le
+  # produisent l'encadrent.
   #
-  # Chaque ligne est un { label:, amount:, tone: } ; +tone+ nomme la classe de remplissage et
-  # vaut nil pour la teinte neutre, celle des barres du patrimoine immobilier.
-  # Seules les lignes à zéro disparaissent — une catégorie absente du bilan n'a rien à dire.
-  # Un montant négatif reste affiché, en rouge : un bien dont la dette dépasse la valeur a une
-  # valeur nette négative, et c'est précisément ce qu'il faut voir. L'échelle se prend donc sur
-  # la plus grande valeur ABSOLUE, sinon une série entièrement négative n'aurait aucune barre.
-  def bar_breakdown(rows)
-    rows = rows.reject { |row| row[:amount].to_f.zero? }
-    return if rows.empty?
+  # Les deux barres partagent une seule échelle, celle du plus grand montant de tout le
+  # tableau : une dette ne se compare à son actif, et un bien à un autre, que si le même
+  # centimètre vaut la même somme partout.
+  #
+  # Les teintes sont celles des ventilations (voir #series_tone) : la barre d'actif prend la
+  # couleur de l'immobilier de cet usage, celle de dette la couleur du crédit immobilier du
+  # même usage. Un bien change ainsi de nuance d'un graphique à l'autre, jamais de camp.
+  #
+  # Un bien sans aucun montant disparaît ; un bien dont la dette dépasse la valeur reste, sa
+  # valeur nette écrite en rouge — c'est précisément ce qu'il faut voir.
+  def property_balance_bars(positions)
+    positions = positions.reject { |position| position.gross.zero? && position.debt.zero? }
+    high = positions.flat_map { |position| [position.gross.abs, position.debt.abs] }.max
+    return if high.nil? || high.zero?
 
-    high = rows.map { |row| row[:amount].to_f.abs }.max
-
-    tag.ul(class: "bar-breakdown") do
-      safe_join(rows.map { |row|
-        amount = row[:amount].to_f
-        fill_class = amount.negative? ? "bar-breakdown-fill-negative" : row[:tone]
-
-        tag.li(class: "bar-breakdown-row") do
-          safe_join([
-            tag.span(row[:label], class: "bar-breakdown-label"),
-            tag.span(class: "bar-breakdown-track") do
-              tag.span(class: "bar-breakdown-fill #{fill_class}".strip,
-                       style: "width: #{coord(amount.abs / high * 100)}%")
-            end,
-            tag.span(number_to_currency(row[:amount]), class: "bar-breakdown-amount")
-          ])
+    tag.div(class: "property-balance") do
+      safe_join([
+        property_balance_head,
+        tag.ul(class: "property-balance-rows") do
+          safe_join(positions.map { |position| property_balance_row(position, high) })
         end
-      })
+      ])
     end
   end
 
   private
+
+  # Les trois colonnes nommées une fois en tête, sinon rien ne dirait de quel côté est la
+  # dette : deux barres opposées se lisent par leur légende, pas par leur seule couleur.
+  def property_balance_head
+    tag.div(class: "property-balance-head") do
+      safe_join([
+        tag.span(t("views.balance_sheets.properties.debt"), class: "property-balance-head-debt"),
+        tag.span(t("views.balance_sheets.properties.net"), class: "property-balance-head-net"),
+        tag.span(t("views.balance_sheets.properties.gross"), class: "property-balance-head-gross")
+      ])
+    end
+  end
+
+  # L'ordre du DOM est celui de la lecture : dette, bien, valeur. La grille place les cinq
+  # cellules, le CSS les replie sur deux lignes quand la largeur manque.
+  def property_balance_row(position, high)
+    usage = position.property&.usage || BalanceSheet::UNASSIGNED_USAGE
+
+    tag.li(class: "property-balance-row") do
+      safe_join([
+        tag.span(number_to_currency(position.debt), class: "property-balance-amount property-balance-amount-debt"),
+        property_balance_track(position.debt, high, "real_estate_loan:#{usage}", "debt"),
+        property_balance_center(position),
+        property_balance_track(position.gross, high, "real_estate:#{usage}", "gross"),
+        tag.span(number_to_currency(position.gross), class: "property-balance-amount property-balance-amount-gross")
+      ])
+    end
+  end
+
+  def property_balance_center(position)
+    net_class = "property-balance-net"
+    net_class += " property-balance-net-negative" if position.net.negative?
+
+    tag.span(class: "property-balance-center") do
+      safe_join([
+        tag.span(position.property&.name || t("views.shared.unassigned_property"),
+                 class: "property-balance-label"),
+        tag.span(number_to_currency(position.net), class: net_class)
+      ])
+    end
+  end
+
+  # La piste occupe toute la colonne quel que soit le montant : c'est elle qui donne l'échelle
+  # commune, la barre n'en prend que sa part. Celle de gauche se remplit depuis la droite,
+  # pour que les deux barres partent du centre et non des bords.
+  def property_balance_track(amount, high, key, side)
+    tag.span(class: "property-balance-track property-balance-track-#{side}") do
+      tag.span(class: "property-balance-fill #{series_tone(key)}",
+               style: "width: #{coord(amount.abs / high * 100)}%")
+    end
+  end
 
   # +height+ est un mot-clé nommé parmi les autres attributs, d'où le **options : un
   # chart_svg(class: "…") sans accolades doit continuer à passer par là intact.

@@ -297,7 +297,7 @@ fr:
           no_previous: Premier bilan de l'historique
           no_year_ago: "Moins d'un an d'historique"
           real_estate: Patrimoine immobilier
-          real_estate_hint: Valeur nette de chaque bien, dette déduite.
+          real_estate_hint: "Pour chaque bien : sa dette à gauche, la valeur de l'actif à droite, et au centre la valeur nette qu'elles laissent."
           no_assets: Aucun actif sur ce bilan.
           no_liabilities: Aucun passif sur ce bilan.
       properties:
