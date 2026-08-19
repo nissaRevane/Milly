@@ -1,5 +1,8 @@
 .bundle
-log/*.log
+# Ignore every log, rotated ones included: log/test.log.0 reached 100 MB and got
+# committed once because `log/*.log` does not match a rotated suffix.
+log/*
+!log/.keep
 tmp/
 db/*.sqlite3
 db/*.sqlite3-journal

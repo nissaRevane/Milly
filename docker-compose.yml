@@ -28,6 +28,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://milly:milly_password@db:5432/milly_development
+      TEST_DATABASE_URL: postgres://milly:milly_password@db:5432/milly_test
       RAILS_ENV: development
       SECRET_KEY_BASE: dev_secret_key_base_change_in_production
 
