@@ -1,69 +1,66 @@
+<%#
+  La fiche d'un passif : elle EST son formulaire. Chaque fait s'y corrige au clic, comme les
+  montants d'un bilan (voir balance_sheets#show), et il n'y a plus de page « Modifier »
+  derrière — un bouton qui envoyait saisir ailleurs ce qu'on est en train de lire.
+
+  Trois facettes, trois onglets : ce que le passif est, ce qu'il a valu bilan après bilan, et
+  l'échéancier du crédit quand son type en porte un.
+%>
 <div class="page-header">
-  <h1>
-    <%= @liability.name %>
-    <span class="badge <%= risk_level_badge_class(@liability.risk_level) %>" title="<%= risk_level_label(@liability.risk_level) %>">
-      <%= @liability.liability_type_label %>
-    </span>
-  </h1>
+  <%# Le nom s'édite dans le titre, comme la date de clôture d'un bilan. %>
+  <div data-controller="inline-edit">
+    <h1 data-inline-edit-target="display">
+      <button type="button" class="inline-edit-trigger inline-edit-trigger-title"
+              data-action="inline-edit#edit"
+              title="<%= t("views.liabilities.show.click_to_edit_name") %>">
+        <%= @liability.name %>
+      </button>
+      <span class="badge <%= risk_level_badge_class(@liability.risk_level) %>"
+            title="<%= risk_level_label(@liability.risk_level) %>">
+        <%= @liability.liability_type_label %>
+      </span>
+    </h1>
+    <%= form_with model: @liability, class: "inline-edit-form",
+                  data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                  html: { hidden: true } do |f| %>
+      <%= hidden_field_tag :tab, @tab, id: nil %>
+      <%= f.text_field :name, required: true,
+            class: "inline-edit-input inline-edit-input-title",
+            data: inline_edit_input_data %>
+    <% end %>
+  </div>
   <div class="page-header-actions">
-    <%= link_to t("views.liabilities.show.edit"), edit_liability_path(@liability), class: "btn btn-primary" %>
     <%= link_to t("views.liabilities.show.back"), liabilities_path, class: "btn btn-outline" %>
   </div>
 </div>
 
-<% if @liability.amortizable? %>
-  <div class="section">
-    <dl class="property-facts">
-      <div class="property-fact">
-        <dt><%= t("views.liabilities.form.borrowed_capital") %></dt>
-        <dd><%= number_to_currency(@liability.borrowed_capital) %></dd>
-      </div>
-      <div class="property-fact">
-        <dt><%= t("views.liabilities.show.annual_rate") %></dt>
-        <dd><%= number_to_percentage(@liability.annual_rate, precision: 3, strip_insignificant_zeros: true) %></dd>
-      </div>
-      <div class="property-fact">
-        <dt><%= t("views.liabilities.form.duration_months") %></dt>
-        <dd><%= @liability.duration_months %></dd>
-      </div>
-      <div class="property-fact">
-        <dt><%= t("views.liabilities.form.monthly_payment") %></dt>
-        <dd><%= number_to_currency(@liability.monthly_payment) %></dd>
-      </div>
-    </dl>
-  </div>
+<%# Un enregistrement refusé revient ici : les erreurs se lisent en tête de la fiche, et la
+    valeur refusée est restée dans son champ. %>
+<%= render "shared/errors", resource: @liability %>
 
-  <div class="section">
-    <div class="section-header">
-      <h2><%= t("views.liabilities.show.schedule_title") %></h2>
-    </div>
-    <div class="table-scroll">
-      <table class="table table-compact amortization-table">
-        <thead>
-          <tr>
-            <th><%= t("views.liabilities.show.number") %></th>
-            <th><%= t("views.liabilities.show.due_on") %></th>
-            <th class="text-right"><%= t("views.liabilities.show.interest") %></th>
-            <th class="text-right"><%= t("views.liabilities.show.principal") %></th>
-            <th class="text-right"><%= t("views.liabilities.show.remaining_capital") %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @liability.amortization_schedule.rows.each do |row| %>
-            <tr>
-              <td><%= row.number %></td>
-              <td><%= l(row.due_on) %></td>
-              <td class="text-right"><%= number_to_currency(row.interest) %></td>
-              <td class="text-right"><%= number_to_currency(row.principal) %></td>
-              <td class="text-right"><%= number_to_currency(row.remaining_capital) %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-<% elsif @liability.amortizable_type? %>
-  <p class="empty-state"><%= t("views.liabilities.show.no_schedule") %></p>
+<%
+  tabs = [
+    [t("views.liabilities.show.tabs.general"), liability_path(@liability), "general"],
+    [t("views.liabilities.show.tabs.history"), liability_path(@liability, tab: "history"), "history"]
+  ]
+  # L'échéancier n'a d'onglet que sur les types de crédits qui en portent un : les autres
+  # passifs se saisissent bilan par bilan (voir Liability::AMORTIZABLE_TYPES).
+  if @liability.amortizable_type?
+    tabs << [t("views.liabilities.show.tabs.schedule"), liability_path(@liability, tab: "schedule"), "schedule"]
+  end
+%>
+<%= render "shared/tab_nav", tabs: tabs, current: @tab %>
+
+<% case @tab %>
+<% when "history" %>
+  <%# La dette qui baisse est la bonne nouvelle : la couleur suit ce sens-là, pas le signe. %>
+  <%= render "shared/value_history",
+             history: @history,
+             value_label: t("views.liabilities.show.owned_remaining_capital"),
+             empty: t("views.liabilities.show.no_history"),
+             favorable: :down %>
+<% when "schedule" %>
+  <%= render "schedule" %>
 <% else %>
-  <p class="empty-state"><%= t("views.liabilities.show.no_schedule_unavailable") %></p>
+  <%= render "facts" %>
 <% end %>

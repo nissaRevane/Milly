@@ -81,10 +81,83 @@ RSpec.describe "Liabilities", type: :request do
   end
 
   describe "GET /liabilities/:id" do
+    it "renders the fiche, whose facts are corrected in place" do
+      liability = create(:liability, user: user, name: "Prêt maison", ownership_share: 60)
+
+      get liability_path(liability)
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+
+      # Le nom s'édite dans le titre, les autres faits dans la liste : chacun porte son
+      # propre formulaire vers l'update, et aucun ne mène à une page de saisie séparée.
+      expect(doc.at_css("h1 .inline-edit-trigger").text.strip).to eq("Prêt maison")
+      forms = doc.css("form.inline-edit-form[action='#{liability_path(liability)}']")
+      expect(forms.length).to be >= 6
+      expect(doc.at_css("select#liability_liability_type")).not_to be_nil
+      expect(doc.at_css("select#liability_risk_level")).not_to be_nil
+      expect(doc.at_css("input#liability_ownership_share")).not_to be_nil
+      expect(doc.at_css("input#liability_started_on")).not_to be_nil
+      expect(doc.at_css("input#liability_ended_on")).not_to be_nil
+      expect(response.body).to include("60 %")
+    end
+
+    # Chaque formulaire de la fiche renvoie l'onglet lu : on revient sur la facette qu'on
+    # était en train de corriger, pas sur celle d'accueil.
+    it "carries the tab it was read on in every inline form" do
+      liability = create(:liability, :amortizable, user: user)
+
+      get liability_path(liability, tab: "schedule")
+
+      doc = Nokogiri::HTML(response.body)
+      expect(doc.at_css("form input[name='tab']")["value"]).to eq("schedule")
+    end
+
+    it "offers the fiche, the évolution and, on a crédit, the échéancier" do
+      liability = create(:liability, user: user, liability_type: :real_estate_loan)
+
+      get liability_path(liability)
+
+      tabs = Nokogiri::HTML(response.body).css(".tab-nav .tab-link")
+      expect(tabs.map { |tab| tab.text.strip }).to eq(["Fiche", "Évolution", "Échéancier"])
+      expect(tabs.first["aria-current"]).to eq("page")
+    end
+
+    it "offers no échéancier tab for a type that carries none" do
+      liability = create(:liability, user: user, liability_type: :security_deposit)
+
+      get liability_path(liability)
+
+      tabs = Nokogiri::HTML(response.body).css(".tab-nav .tab-link")
+      expect(tabs.map { |tab| tab.text.strip }).to eq(["Fiche", "Évolution"])
+    end
+
+    # L'onglet demandé n'existe pas : la fiche répond, plutôt qu'une erreur ou un onglet vide.
+    it "falls back to the fiche when the échéancier is asked of a type that carries none" do
+      liability = create(:liability, user: user, liability_type: :security_deposit)
+
+      get liability_path(liability, tab: "schedule")
+
+      expect(response).to have_http_status(:success)
+      expect(response.body).not_to include("amortization-table")
+      expect(Nokogiri::HTML(response.body).at_css(".tab-link-active").text.strip).to eq("Fiche")
+    end
+
+    it "does not show another user's liability" do
+      other = create(:liability, :amortizable, user: create(:user))
+
+      get liability_path(other)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))
+    end
+  end
+
+  describe "the échéancier tab" do
     it "renders the amortization schedule of an amortizable loan" do
       liability = create(:liability, :amortizable, user: user, name: "Prêt maison")
 
-      get liability_path(liability)
+      get liability_path(liability, tab: "schedule")
 
       expect(response).to have_http_status(:success)
       expect(response.body).to include("Prêt maison")
@@ -100,46 +173,78 @@ RSpec.describe "Liabilities", type: :request do
       expect(first_cells).to eq(["1", "05/03/2024", currency.call(312.50), currency.call(650), currency.call(199_350)])
     end
 
-    it "shows a hint instead of a table when the liability carries no schedule" do
-      liability = create(:liability, user: user, name: "Dette simple")
-
-      get liability_path(liability)
-
-      expect(response).to have_http_status(:success)
-      hint = Nokogiri::HTML(response.body).at_css(".empty-state")
-      expect(hint.text).to include("Aucun tableau d'amortissement défini pour ce passif.")
-      expect(response.body).not_to include("amortization-table")
-    end
-
-    it "shows a neutral hint for liability types that cannot carry a schedule" do
-      liability = create(:liability, user: user, liability_type: :security_deposit, name: "Caution")
-
-      get liability_path(liability)
-
-      expect(response).to have_http_status(:success)
-      hint = Nokogiri::HTML(response.body).at_css(".empty-state")
-      expect(hint.text).to include("Les tableaux d'amortissement ne concernent que les crédits.")
-      expect(hint.text).not_to include("Renseignez les caractéristiques du prêt")
-      expect(response.body).not_to include("amortization-table")
-    end
-
     it "renders the amortization schedule of an autre crédit" do
       liability = create(:liability, :amortizable, user: user, liability_type: :other_credit, name: "Prêt auto")
 
-      get liability_path(liability)
+      get liability_path(liability, tab: "schedule")
 
       expect(response).to have_http_status(:success)
       expect(Nokogiri::HTML(response.body).css(".amortization-table tbody tr").length)
         .to eq(liability.amortization_schedule.rows.length)
     end
 
-    it "does not show another user's liability" do
-      other = create(:liability, :amortizable, user: create(:user))
+    # Les sept caractéristiques se saisissent en bloc : le formulaire est là, prérempli,
+    # même quand aucune n'est renseignée — c'est le seul endroit d'où l'échéancier naît.
+    it "offers the seven terms as one block, and says there is no schedule yet" do
+      liability = create(:liability, user: user, liability_type: :real_estate_loan)
 
-      get liability_path(other)
+      get liability_path(liability, tab: "schedule")
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))
+      doc = Nokogiri::HTML(response.body)
+      Liability::AMORTIZATION_FIELDS.each do |field|
+        expect(doc.at_css("##{"liability_#{field}"}")).not_to be_nil
+      end
+      expect(doc.at_css(".empty-state").text)
+        .to include("Aucun tableau d'amortissement pour l'instant")
+      expect(response.body).not_to include("amortization-table")
+    end
+
+    it "defines a schedule from the terms submitted together, and comes back to the tab" do
+      liability = create(:liability, user: user, liability_type: :real_estate_loan)
+
+      patch liability_path(liability), params: {
+        tab: "schedule",
+        liability: {
+          borrowed_capital: "200000", annual_rate: "3.125", duration_months: "240",
+          monthly_payment: "1109.20", first_payment_on: "2024-03-05",
+          first_payment_principal: "650", first_payment_interest: "312.50"
+        }
+      }
+
+      expect(response).to redirect_to(liability_path(liability, tab: "schedule"))
+      expect(liability.reload).to be_amortizable
+    end
+  end
+
+  describe "the évolution tab" do
+    it "reads the line's amounts bilan after bilan, with its two variations" do
+      liability = create(:liability, user: user, name: "Prêt maison", ownership_share: 50)
+      [[Date.new(2024, 6, 30), 200_000], [Date.new(2025, 6, 30), 190_000],
+       [Date.new(2025, 12, 31), 180_000]].each do |date, capital|
+        create(:balance_sheet_liability,
+               balance_sheet: create(:balance_sheet, user: user, closing_date: date),
+               liability: liability, remaining_capital: capital)
+      end
+
+      get liability_path(liability, tab: "history")
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+
+      # Le montant lu est le capital DÉTENU, quote-part appliquée, comme sur le bilan.
+      expect(doc.at_css(".stat-card-highlight .stat-value").text).to include("90 000")
+      # Une dette qui baisse est une bonne nouvelle : la variation se lit en gain.
+      expect(doc.css(".stat-card .variation-gain").length).to eq(2)
+      expect(doc.css(".chart-line .chart-point").length).to eq(3)
+    end
+
+    it "says so when no bilan carries the liability yet" do
+      liability = create(:liability, user: user)
+
+      get liability_path(liability, tab: "history")
+
+      expect(Nokogiri::HTML(response.body).at_css(".empty-state").text)
+        .to include("Ce passif ne figure dans aucun bilan")
     end
   end
 
@@ -175,29 +280,15 @@ RSpec.describe "Liabilities", type: :request do
       expect(amortization_fieldset["data-conditional-fields-show-when"]).to eq("real_estate_loan other_credit")
     end
 
-    it "shows the fieldset when editing a real estate loan" do
+    # Sur la fiche, le serveur a déjà tranché : le bloc n'est pas masqué là, il est sur son
+    # onglet ou il n'y est pas (voir « the échéancier tab »).
+    it "leaves no conditional fieldset on the fiche" do
       liability = create(:liability, user: user, liability_type: :real_estate_loan)
 
-      get edit_liability_path(liability)
+      get liability_path(liability, tab: "schedule")
 
-      expect(amortization_fieldset.attribute("hidden")).to be_nil
-    end
-
-    it "shows the fieldset when editing an autre crédit" do
-      liability = create(:liability, user: user, liability_type: :other_credit)
-
-      get edit_liability_path(liability)
-
-      expect(amortization_fieldset.attribute("hidden")).to be_nil
-    end
-
-    it "hides the fieldset when editing a liability of another type" do
-      liability = create(:liability, user: user, liability_type: :security_deposit)
-
-      get edit_liability_path(liability)
-
-      expect(amortization_fieldset).not_to be_nil
-      expect(amortization_fieldset.attribute("hidden")).not_to be_nil
+      expect(amortization_fieldset).to be_nil
+      expect(response.body).not_to include('data-controller="conditional-fields"')
     end
   end
 
@@ -323,30 +414,28 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).to include("Bien immobilier rattaché")
     end
 
-    # Le champ n'est montré que pour les types qu'un bien porte — un crédit immobilier ou un
-    # dépôt de garantie — et le contrôleur Stimulus lit cette liste dans l'attribut data.
-    it "hides the property select for a type no bien carries" do
+    # Sur le formulaire de création, le champ apparaît selon le type choisi et le contrôleur
+    # Stimulus lit la liste des types dans l'attribut data. Sur la fiche, le serveur a déjà
+    # tranché : le fait est là, ou il n'y est pas.
+    it "leaves the property fact off the fiche of a type no bien carries" do
       create(:property, user: user, name: "Maison")
       liability = create(:liability, user: user, liability_type: :short_term_debt)
 
-      get edit_liability_path(liability)
+      get liability_path(liability)
 
-      doc = Nokogiri::HTML(response.body)
-      group = doc.css(%(div[data-conditional-fields-show-when~="security_deposit"])).sole
-      expect(group.css("select#liability_property_id")).not_to be_empty
-      expect(group.attribute("hidden")).not_to be_nil
-      expect(group["data-conditional-fields-show-when"]).to eq("real_estate_loan security_deposit")
+      expect(Nokogiri::HTML(response.body).at_css("select#liability_property_id")).to be_nil
+      expect(response.body).not_to include("Bien immobilier rattaché")
     end
 
-    it "shows the property select for a dépôt de garantie" do
+    it "shows the property fact on the fiche of a dépôt de garantie" do
       create(:property, user: user, name: "Maison", usage: :rental)
       liability = create(:liability, user: user, liability_type: :security_deposit)
 
-      get edit_liability_path(liability)
+      get liability_path(liability)
 
       doc = Nokogiri::HTML(response.body)
-      group = doc.css(%(div[data-conditional-fields-show-when~="security_deposit"])).sole
-      expect(group.attribute("hidden")).to be_nil
+      expect(doc.at_css("select#liability_property_id")).not_to be_nil
+      expect(response.body).to include("Bien immobilier rattaché")
     end
 
     it "creates a liability linked to a property" do
@@ -394,7 +483,7 @@ RSpec.describe "Liabilities", type: :request do
 
       patch liability_path(liability), params: { liability: { liability_type: "short_term_debt" } }
 
-      expect(response).to redirect_to(liabilities_path)
+      expect(response).to redirect_to(liability_path(liability))
       liability.reload
       expect(liability.liability_type).to eq("short_term_debt")
       expect(liability.property_id).to be_nil
@@ -407,7 +496,7 @@ RSpec.describe "Liabilities", type: :request do
       patch liability_path(liability), params: { liability: { property_id: "" } }
 
       expect(liability.reload.property_id).to be_nil
-      expect(response).to redirect_to(liabilities_path)
+      expect(response).to redirect_to(liability_path(liability))
     end
 
     # See the assets spec: a forged property_id must never cross accounts.
@@ -436,10 +525,23 @@ RSpec.describe "Liabilities", type: :request do
   describe "PATCH /liabilities/:id" do
     let(:liability) { create(:liability, user: user, name: "Old Name") }
 
-    it "updates the ownership share" do
+    # La fiche est le formulaire : on revient dessus, sur l'onglet où l'on était, plutôt que
+    # sur la liste — on corrige un champ pour continuer à lire le passif, pas pour le quitter.
+    it "updates the ownership share and comes back to the fiche" do
       patch liability_path(liability), params: { liability: { ownership_share: "33.33" } }
       expect(liability.reload.ownership_share).to eq(BigDecimal("33.33"))
-      expect(response).to redirect_to(liabilities_path)
+      expect(response).to redirect_to(liability_path(liability))
+    end
+
+    it "renders the fiche again with its errors when the update is refused" do
+      patch liability_path(liability), params: { liability: { name: "" } }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(liability.reload.name).to eq("Old Name")
+      expect(Nokogiri::HTML(response.body).at_css(".alert-danger").text)
+        .to include("doit être rempli")
+      # C'est bien la fiche qui répond, ses onglets compris.
+      expect(response.body).to include("tab-nav")
     end
   end
 

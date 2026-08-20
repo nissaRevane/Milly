@@ -1,7 +1,13 @@
 class LiabilitiesController < ApplicationController
-  before_action :set_liability, only: [:show, :edit, :update, :destroy]
-  # The form partial offers the property select, and it is also re-rendered on failure.
-  before_action :set_properties, only: [:new, :create, :edit, :update]
+  # Les facettes de la fiche, dans l'ordre des onglets. « general » est celle qu'on obtient
+  # sans ?tab= : c'est le passif lui-même, et c'est là qu'on revient d'un onglet disparu.
+  TABS = %w[general history schedule].freeze
+  DEFAULT_TAB = "general".freeze
+
+  before_action :set_liability, only: [:show, :update, :destroy]
+  # Le select de rattachement est offert par le formulaire de création comme par la fiche,
+  # et le formulaire est aussi réaffiché en cas d'échec.
+  before_action :set_properties, only: [:new, :create, :show, :update]
 
   def index
     @liability_type_filter = params[:liability_type].presence_in(Liability.liability_types.keys)
@@ -9,7 +15,9 @@ class LiabilitiesController < ApplicationController
     @liabilities = @liabilities.where(liability_type: @liability_type_filter) if @liability_type_filter
   end
 
+  # La fiche : elle est aussi le formulaire du passif, chaque champ s'y corrigeant sur place.
   def show
+    load_tab
   end
 
   def new
@@ -25,14 +33,15 @@ class LiabilitiesController < ApplicationController
     end
   end
 
-  def edit
-  end
-
+  # Un enregistrement ne renvoie pas à la liste mais à la fiche, sur l'onglet où l'on était :
+  # on corrige un champ pour continuer à lire le passif, pas pour le quitter. Un refus
+  # réaffiche cette même fiche, ses erreurs en tête et la valeur refusée dans son champ.
   def update
     if @liability.update(liability_params)
-      redirect_to liabilities_path, notice: t("flash.liabilities.updated")
+      redirect_to fiche_path, notice: t("flash.liabilities.updated")
     else
-      render :edit, status: :unprocessable_entity
+      load_tab
+      render :show, status: :unprocessable_entity
     end
   end
 
@@ -49,6 +58,31 @@ class LiabilitiesController < ApplicationController
 
   def set_properties
     @properties = current_user.properties.order(:usage, :name)
+  end
+
+  # L'onglet demandé, ramené à la fiche quand il n'existe pas — ou plus : un passif qui quitte
+  # les types amortissables perd son échéancier, et l'enregistrement doit alors renvoyer vers
+  # un onglet qui est toujours là.
+  def current_tab
+    tab = TABS.include?(params[:tab]) ? params[:tab] : DEFAULT_TAB
+    return DEFAULT_TAB if tab == "schedule" && !@liability.amortizable_type?
+
+    tab
+  end
+
+  # Chaque onglet est une page entière rendue par le serveur : on ne lit que ce qu'il montre
+  # (voir BalanceSheetsController#summary).
+  def load_tab
+    @tab = current_tab
+    @history = @liability.value_history if @tab == "history"
+  end
+
+  # La fiche telle qu'on y revient : sur l'onglet où l'on était, et sans ?tab= sur celui
+  # d'accueil — l'adresse d'une fiche reste celle qu'on partage.
+  def fiche_path
+    tab = current_tab
+
+    liability_path(@liability, tab: (tab unless tab == DEFAULT_TAB))
   end
 
   def liability_params

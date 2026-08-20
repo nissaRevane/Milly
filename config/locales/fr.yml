@@ -203,8 +203,14 @@ fr:
         property: Bien immobilier rattaché
         name_from_property: Le nom de cet actif est celui du bien immobilier ; renommez le bien pour le changer.
         asset_type_locked: Le type « Immobilier » est défini par le bien immobilier et ne peut pas être modifié.
-      edit:
-        title: Modifier l'actif
+      show:
+        back: Retour aux actifs
+        click_to_edit_name: Cliquer pour modifier le nom
+        owned_value: Valeur détenue
+        no_history: "Cet actif ne figure dans aucun bilan pour l'instant."
+        tabs:
+          general: Fiche
+          history: Évolution
       new:
         title: Nouvel actif
     liabilities:
@@ -235,19 +241,23 @@ fr:
         first_payment_principal: Capital de la première échéance
         first_payment_interest: Intérêts de la première échéance
       show:
-        edit: Modifier
         back: Retour aux passifs
+        click_to_edit_name: Cliquer pour modifier le nom
+        owned_remaining_capital: Capital détenu restant dû
+        no_history: "Ce passif ne figure dans aucun bilan pour l'instant."
+        tabs:
+          general: Fiche
+          history: Évolution
+          schedule: Échéancier
         annual_rate: Taux annuel
+        terms_title: Caractéristiques du crédit
         schedule_title: Tableau d'amortissement
         number: "#"
         due_on: Date
         interest: Intérêts
         principal: Capital
         remaining_capital: Capital restant dû
-        no_schedule: "Aucun tableau d'amortissement défini pour ce passif. Renseignez les caractéristiques du prêt sur sa fiche pour l'obtenir."
-        no_schedule_unavailable: "Les tableaux d'amortissement ne concernent que les crédits."
-      edit:
-        title: Modifier le passif
+        no_schedule: "Aucun tableau d'amortissement pour l'instant : renseignez les sept caractéristiques ci-dessus pour l'obtenir."
       new:
         title: Nouveau passif
     balance_sheets:
@@ -384,6 +394,18 @@ fr:
         ended_on: Date de fin (facultative)
         hint: Laissées vides sur une ligne rattachée à un bien, ces dates reprennent celles d'achat et de vente du bien. Hors de cette période, la ligne n'est plus proposée aux bilans.
       owned_value_detail: "%{share} de %{total}"
+      inline_edit:
+        click_to_edit: Cliquer pour modifier
+      # L'onglet Évolution d'une fiche d'actif ou de passif : les mêmes intitulés des deux
+      # côtés du bilan, seul le montant lu change de nom.
+      value_history:
+        as_of: "au %{date}"
+        since_previous: Depuis le bilan précédent
+        no_previous: Premier bilan qui la porte
+        over_a_year: Sur un an
+        no_year_ago: "Moins d'un an d'historique"
+        chart_title: Évolution dans les bilans
+        chart_hint: "Un point par bilan qui porte cette ligne. L'échelle suit les montants et ne part pas de zéro."
       # Une catégorie éclatée par usage du bien, dans la légende des aires empilées.
       breakdown_split: "%{type} · %{usage}"
       # Le nom accessible de la pastille de légende du miroir, qui n'a aucun texte à elle.

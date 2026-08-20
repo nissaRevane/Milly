@@ -1,0 +1,68 @@
+<%#
+  La fiche d'un actif : elle EST son formulaire. Chaque fait s'y corrige au clic, comme les
+  montants d'un bilan (voir balance_sheets#show), et il n'y a plus de page « Modifier »
+  derrière — un bouton qui envoyait saisir ailleurs ce qu'on est en train de lire.
+
+  Deux facettes, deux onglets : ce que l'actif est, et ce qu'il a valu bilan après bilan.
+
+  Le nom de l'actif d'un bien est celui du bien, renommé avec lui : le titre se lit alors
+  plutôt qu'il ne s'édite (voir Asset#adopt_property_name).
+%>
+<div class="page-header">
+  <% if @asset.owned_by_property? %>
+    <h1>
+      <%= @asset.name %>
+      <span class="badge <%= risk_level_badge_class(@asset.risk_level) %>"
+            title="<%= risk_level_label(@asset.risk_level) %>">
+        <%= @asset.asset_type_label %>
+      </span>
+    </h1>
+    <p class="page-header-hint"><%= t("views.assets.form.name_from_property") %></p>
+  <% else %>
+    <div data-controller="inline-edit">
+      <h1 data-inline-edit-target="display">
+        <button type="button" class="inline-edit-trigger inline-edit-trigger-title"
+                data-action="inline-edit#edit"
+                title="<%= t("views.assets.show.click_to_edit_name") %>">
+          <%= @asset.name %>
+        </button>
+        <span class="badge <%= risk_level_badge_class(@asset.risk_level) %>"
+              title="<%= risk_level_label(@asset.risk_level) %>">
+          <%= @asset.asset_type_label %>
+        </span>
+      </h1>
+      <%= form_with model: @asset, class: "inline-edit-form",
+                    data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                    html: { hidden: true } do |f| %>
+        <%= hidden_field_tag :tab, @tab, id: nil %>
+        <%= f.text_field :name, required: true,
+              class: "inline-edit-input inline-edit-input-title",
+              data: inline_edit_input_data %>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="page-header-actions">
+    <%= link_to t("views.assets.show.back"), assets_path, class: "btn btn-outline" %>
+  </div>
+</div>
+
+<%# Un enregistrement refusé revient ici : les erreurs se lisent en tête de la fiche, et la
+    valeur refusée est restée dans son champ. %>
+<%= render "shared/errors", resource: @asset %>
+
+<%= render "shared/tab_nav",
+           tabs: [
+             [t("views.assets.show.tabs.general"), asset_path(@asset), "general"],
+             [t("views.assets.show.tabs.history"), asset_path(@asset, tab: "history"), "history"]
+           ],
+           current: @tab %>
+
+<% if @tab == "history" %>
+  <%= render "shared/value_history",
+             history: @history,
+             value_label: t("views.assets.show.owned_value"),
+             empty: t("views.assets.show.no_history"),
+             favorable: :up %>
+<% else %>
+  <%= render "facts" %>
+<% end %>

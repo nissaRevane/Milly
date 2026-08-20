@@ -1,0 +1,44 @@
+<%#
+  Les sept caractéristiques d'un crédit. Elles vont ensemble — sans l'une d'elles l'échéancier
+  est incalculable, et le modèle les refuse en bloc (voir Liability::AMORTIZATION_FIELDS) —
+  d'où un seul jeu de champs partagé par le formulaire de création et par l'onglet Échéancier
+  de la fiche : deux copies auraient fini par ne plus proposer les mêmes pas de saisie.
+
+  Le cadre — la légende, la visibilité selon le type — reste à l'appelant : à la création il
+  se montre et se masque au fil du type choisi, sur la fiche le serveur a déjà tranché.
+%>
+<div class="form-group">
+  <%= f.label :borrowed_capital, t("views.liabilities.form.borrowed_capital") %>
+  <%= f.number_field :borrowed_capital, step: 0.01, min: 0, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :annual_rate, t("views.liabilities.form.annual_rate") %>
+  <%= f.number_field :annual_rate, step: 0.001, min: 0, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :duration_months, t("views.liabilities.form.duration_months") %>
+  <%= f.number_field :duration_months, step: 1, min: 1, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :monthly_payment, t("views.liabilities.form.monthly_payment") %>
+  <%= f.number_field :monthly_payment, step: 0.01, min: 0, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :first_payment_on, t("views.liabilities.form.first_payment_on") %>
+  <%= f.date_field :first_payment_on, class: "form-control" %>
+  <small class="form-hint"><%= t("views.liabilities.form.first_payment_hint") %></small>
+</div>
+
+<div class="form-group">
+  <%= f.label :first_payment_principal, t("views.liabilities.form.first_payment_principal") %>
+  <%= f.number_field :first_payment_principal, step: 0.01, min: 0, class: "form-control" %>
+</div>
+
+<div class="form-group">
+  <%= f.label :first_payment_interest, t("views.liabilities.form.first_payment_interest") %>
+  <%= f.number_field :first_payment_interest, step: 0.01, min: 0, class: "form-control" %>
+</div>

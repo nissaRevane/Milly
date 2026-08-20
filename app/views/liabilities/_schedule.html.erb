@@ -1,0 +1,60 @@
+<%#
+  L'échéancier : les caractéristiques du crédit, puis le tableau qu'elles produisent.
+
+  Elles se saisissent en BLOC, d'un seul enregistrement, là où les faits de la fiche se
+  corrigent un par un : sans l'une d'elles l'échéancier est incalculable, et le modèle les
+  refuse ensemble (voir Liability::AMORTIZATION_FIELDS). Un champ qu'on corrigerait seul sur
+  un crédit encore vierge se ferait refuser six fois — d'où le formulaire prérempli. Les
+  vider toutes retire l'échéancier, et c'est le seul chemin pour changer le type d'un crédit
+  qui en porte un.
+%>
+<div class="section">
+  <div class="section-header">
+    <h2><%= t("views.liabilities.show.terms_title") %></h2>
+  </div>
+
+  <%= form_with model: @liability, class: "form" do |f| %>
+    <%= hidden_field_tag :tab, @tab, id: nil %>
+    <p class="form-hint"><%= t("views.liabilities.form.amortization_hint") %></p>
+
+    <%= render "amortization_fields", f: f %>
+
+    <div class="form-actions">
+      <%= f.submit class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<% if @liability.amortizable? %>
+  <div class="section">
+    <div class="section-header">
+      <h2><%= t("views.liabilities.show.schedule_title") %></h2>
+    </div>
+    <div class="table-scroll">
+      <table class="table table-compact amortization-table">
+        <thead>
+          <tr>
+            <th><%= t("views.liabilities.show.number") %></th>
+            <th><%= t("views.liabilities.show.due_on") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.interest") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.principal") %></th>
+            <th class="text-right"><%= t("views.liabilities.show.remaining_capital") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @liability.amortization_schedule.rows.each do |row| %>
+            <tr>
+              <td><%= row.number %></td>
+              <td><%= l(row.due_on) %></td>
+              <td class="text-right"><%= number_to_currency(row.interest) %></td>
+              <td class="text-right"><%= number_to_currency(row.principal) %></td>
+              <td class="text-right"><%= number_to_currency(row.remaining_capital) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <p class="empty-state"><%= t("views.liabilities.show.no_schedule") %></p>
+<% end %>

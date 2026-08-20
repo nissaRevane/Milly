@@ -27,16 +27,21 @@
     </thead>
     <tbody>
       <% @assets.each do |asset| %>
+        <%# La ligne mène à la fiche, qui est aussi là qu'on modifie l'actif : plus de crayon
+            vers une page de saisie séparée. %>
         <tr>
-          <td><%= asset.name %></td>
+          <td><%= link_to asset.name, asset_path(asset), class: "row-link" %></td>
           <td>
-            <span class="badge <%= risk_level_badge_class(asset.risk_level) %>" title="<%= risk_level_label(asset.risk_level) %>">
-              <%= asset.asset_type_label %>
-            </span>
+            <%= link_to asset_path(asset), class: "row-link" do %>
+              <span class="badge <%= risk_level_badge_class(asset.risk_level) %>" title="<%= risk_level_label(asset.risk_level) %>">
+                <%= asset.asset_type_label %>
+              </span>
+            <% end %>
           </td>
-          <td class="text-right"><%= ownership_share_label(asset.ownership_share) %></td>
+          <td class="text-right">
+            <%= link_to ownership_share_label(asset.ownership_share), asset_path(asset), class: "row-link" %>
+          </td>
           <td class="table-actions">
-            <%= link_to "✏️", edit_asset_path(asset), class: "btn btn-sm btn-outline" %>
             <%# The actif of a bien is deleted from the bien, so it keeps no delete button here %>
             <% unless asset.owned_by_property? %>
               <%= button_to "🗑️", asset_path(asset), method: :delete, class: "btn btn-sm btn-danger",

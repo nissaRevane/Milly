@@ -1,0 +1,61 @@
+<%#
+  Ce que le passif est. Chaque fait se corrige au clic (voir shared/_inline_fact) : c'est
+  cette liste qui remplace l'ancien formulaire de modification.
+
+  Le rattachement à un bien n'apparaît que pour les types qu'un bien porte réellement, et
+  seulement si l'utilisateur a déclaré un bien — un select vide n'énonce rien. Passer à un
+  type qu'aucun bien ne porte défait le rattachement (voir LiabilitiesController), et la ligne
+  quitte alors la fiche d'elle-même : le serveur rend la page à chaque enregistrement.
+%>
+<dl class="property-facts">
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @liability, tab: @tab,
+                       label: t("views.liabilities.form.liability_type"),
+                       display: @liability.liability_type_label } do |f| %>
+    <%= f.select :liability_type, liability_type_options, {},
+          class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
+  <% end %>
+
+  <% if @liability.property_linkable? && @properties.any? %>
+    <%= render layout: "shared/inline_fact",
+               locals: { record: @liability, tab: @tab,
+                         label: t("views.liabilities.form.property"),
+                         display: @liability.property&.name || t("views.liabilities.form.property_none") } do |f| %>
+      <%= f.collection_select :property_id, @properties, :id, :name,
+            { include_blank: t("views.liabilities.form.property_none") },
+            class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
+    <% end %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @liability, tab: @tab,
+                       label: t("views.liabilities.form.ownership_share"),
+                       display: ownership_share_label(@liability.ownership_share) } do |f| %>
+    <%= f.number_field :ownership_share, step: 0.01, min: 0, max: 100, required: true,
+          class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @liability, tab: @tab,
+                       label: t("views.liabilities.form.risk_level"),
+                       display: @liability.risk_level_label } do |f| %>
+    <%= f.select :risk_level, risk_level_options, {},
+          class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
+  <% end %>
+
+  <%# Les deux bornes de la période d'existence, facultatives : sans elles, le passif peut
+      entrer dans n'importe quel bilan (voir Lifespanable). %>
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @liability, tab: @tab,
+                       label: t("views.shared.lifespan.started_on"),
+                       display: (l(@liability.started_on, format: :long) if @liability.started_on) } do |f| %>
+    <%= f.date_field :started_on, class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @liability, tab: @tab,
+                       label: t("views.shared.lifespan.ended_on"),
+                       display: (l(@liability.ended_on, format: :long) if @liability.ended_on) } do |f| %>
+    <%= f.date_field :ended_on, class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+</dl>

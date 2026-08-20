@@ -80,6 +80,91 @@ RSpec.describe "Assets", type: :request do
     end
   end
 
+  describe "GET /assets/:id" do
+    it "renders the fiche, whose facts are corrected in place" do
+      asset = create(:asset, user: user, name: "Livret A", ownership_share: 60)
+
+      get asset_path(asset)
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+
+      # Le nom s'édite dans le titre, les autres faits dans la liste : chacun porte son
+      # propre formulaire vers l'update, et aucun ne mène à une page de saisie séparée.
+      expect(doc.at_css("h1 .inline-edit-trigger").text.strip).to eq("Livret A")
+      forms = doc.css("form.inline-edit-form[action='#{asset_path(asset)}']")
+      expect(forms.length).to be >= 6
+      expect(doc.at_css("select#asset_asset_type")).not_to be_nil
+      expect(doc.at_css("select#asset_risk_level")).not_to be_nil
+      expect(doc.at_css("input#asset_ownership_share")).not_to be_nil
+      expect(doc.at_css("input#asset_started_on")).not_to be_nil
+      expect(doc.at_css("input#asset_ended_on")).not_to be_nil
+      expect(response.body).to include("60 %")
+    end
+
+    # « Immobilier » n'est pas un type qu'on prend ni qu'on quitte : le select ne l'offre pas.
+    it "offers every type but immobilier" do
+      asset = create(:asset, user: user)
+
+      get asset_path(asset)
+
+      options = Nokogiri::HTML(response.body).css("select#asset_asset_type option").map(&:text)
+      expect(options).not_to include("Immobilier")
+      expect(options).to include("Compte épargne")
+    end
+
+    it "offers the fiche and the évolution" do
+      asset = create(:asset, user: user)
+
+      get asset_path(asset)
+
+      tabs = Nokogiri::HTML(response.body).css(".tab-nav .tab-link")
+      expect(tabs.map { |tab| tab.text.strip }).to eq(["Fiche", "Évolution"])
+      expect(tabs.first["aria-current"]).to eq("page")
+    end
+  end
+
+  describe "the évolution tab" do
+    it "reads the asset's amounts bilan after bilan, with its two variations" do
+      asset = create(:asset, user: user, name: "Livret A", ownership_share: 50)
+      [[Date.new(2024, 6, 30), 10_000], [Date.new(2025, 6, 30), 12_000],
+       [Date.new(2025, 12, 31), 14_000]].each do |date, value|
+        create(:balance_sheet_asset,
+               balance_sheet: create(:balance_sheet, user: user, closing_date: date),
+               asset: asset, value: value)
+      end
+
+      get asset_path(asset, tab: "history")
+
+      expect(response).to have_http_status(:success)
+      doc = Nokogiri::HTML(response.body)
+
+      # Le montant lu est la valeur DÉTENUE, quote-part appliquée, comme sur le bilan.
+      expect(doc.at_css(".stat-card-highlight .stat-value").text).to include("7 000")
+      expect(doc.css(".stat-card .variation-gain").length).to eq(2)
+      expect(doc.css(".chart-line .chart-point").length).to eq(3)
+    end
+
+    it "says so when no bilan carries the asset yet" do
+      asset = create(:asset, user: user)
+
+      get asset_path(asset, tab: "history")
+
+      expect(Nokogiri::HTML(response.body).at_css(".empty-state").text)
+        .to include("Cet actif ne figure dans aucun bilan")
+    end
+
+    # Un onglet inconnu ne casse rien : la fiche répond.
+    it "falls back to the fiche when the tab is unknown" do
+      asset = create(:asset, user: user)
+
+      get asset_path(asset, tab: "bogus")
+
+      expect(response).to have_http_status(:success)
+      expect(Nokogiri::HTML(response.body).at_css(".tab-link-active").text.strip).to eq("Fiche")
+    end
+  end
+
   describe "GET /assets/new" do
     it "returns success" do
       get new_asset_path
@@ -208,14 +293,21 @@ RSpec.describe "Assets", type: :request do
     let(:property) { create(:property, user: user, name: "Maison") }
     let(:asset) { property.real_estate_asset }
 
-    it "shows its name and type as read-only, and offers no bien select" do
-      get edit_asset_path(asset)
+    it "reads its name, type and bien rather than offering them for editing" do
+      get asset_path(asset)
 
       doc = Nokogiri::HTML(response.body)
-      expect(doc.css("input#asset_name").first["disabled"]).to eq("disabled")
+      # Le nom vient du bien : le titre n'a pas de déclencheur d'édition, et rien ne le poste.
+      expect(doc.css("h1 .inline-edit-trigger")).to be_empty
+      expect(doc.css("input#asset_name")).to be_empty
       expect(doc.css("select#asset_asset_type")).to be_empty
       expect(doc.css("select#asset_property_id")).to be_empty
       expect(response.body).to include("Le nom de cet actif est celui du bien immobilier")
+      expect(response.body).to include("Maison")
+      # Ce qui reste modifiable l'est sur place.
+      expect(doc.at_css("input#asset_ownership_share")).not_to be_nil
+      expect(doc.at_css("select#asset_risk_level")).not_to be_nil
+      expect(doc.at_css("input#asset_started_on")).not_to be_nil
     end
 
     it "updates its risk level and ownership share" do
@@ -223,7 +315,7 @@ RSpec.describe "Assets", type: :request do
 
       expect(asset.reload.risk_level).to eq("high")
       expect(asset.ownership_share).to eq(50)
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     # La période du bien n'est qu'un défaut : elle reste modifiable sur la fiche de l'actif.
@@ -233,7 +325,7 @@ RSpec.describe "Assets", type: :request do
       asset.reload
       expect(asset.started_on).to eq(Date.new(2019, 3, 4))
       expect(asset.ended_on).to eq(Date.new(2025, 2, 28))
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     it "ignores a submitted name, type and bien" do
@@ -247,7 +339,7 @@ RSpec.describe "Assets", type: :request do
       expect(asset.name).to eq("Maison")
       expect(asset.asset_type).to eq("real_estate")
       expect(asset.property).to eq(property)
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     it "carries no delete button, as it is deleted with its bien" do
@@ -257,7 +349,7 @@ RSpec.describe "Assets", type: :request do
 
       doc = Nokogiri::HTML(response.body)
       expect(doc.css("form[action='#{asset_path(asset)}']")).to be_empty
-      expect(doc.css("a[href='#{edit_asset_path(asset)}']")).to be_present
+      expect(doc.css("a[href='#{asset_path(asset)}']")).to be_present
     end
 
     it "cannot be deleted on its own" do
@@ -316,7 +408,7 @@ RSpec.describe "Assets", type: :request do
 
       patch asset_path(asset), params: { asset: { property_id: property.id } }
 
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
       expect(asset.reload.property_id).to be_nil
     end
 
@@ -338,22 +430,34 @@ RSpec.describe "Assets", type: :request do
   describe "PATCH /assets/:id" do
     let(:asset) { create(:asset, user: user, name: "Old Name") }
 
-    it "updates the asset" do
+    # La fiche est le formulaire : on revient dessus plutôt que sur la liste — on corrige un
+    # champ pour continuer à lire l'actif, pas pour le quitter.
+    it "updates the asset and comes back to the fiche" do
       patch asset_path(asset), params: { asset: { name: "New Name" } }
       expect(asset.reload.name).to eq("New Name")
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
+    end
+
+    it "renders the fiche again with its errors when the update is refused" do
+      patch asset_path(asset), params: { asset: { name: "" } }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(asset.reload.name).to eq("Old Name")
+      expect(Nokogiri::HTML(response.body).at_css(".alert-danger").text)
+        .to include("doit être rempli")
+      expect(response.body).to include("tab-nav")
     end
 
     it "updates the asset type" do
       patch asset_path(asset), params: { asset: { asset_type: "financial_investment" } }
       expect(asset.reload.asset_type).to eq("financial_investment")
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     it "updates the ownership share" do
       patch asset_path(asset), params: { asset: { ownership_share: "33.33" } }
       expect(asset.reload.ownership_share).to eq(BigDecimal("33.33"))
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     it "updates the lifespan" do
@@ -362,7 +466,7 @@ RSpec.describe "Assets", type: :request do
       asset.reload
       expect(asset.started_on).to eq(Date.new(2020, 1, 5))
       expect(asset.ended_on).to eq(Date.new(2023, 9, 30))
-      expect(response).to redirect_to(assets_path)
+      expect(response).to redirect_to(asset_path(asset))
     end
 
     it "clears a lifespan bound submitted empty" do
@@ -390,7 +494,7 @@ RSpec.describe "Assets", type: :request do
       other_user = create(:user)
       other_asset = create(:asset, user: other_user, name: "Villa du voisin")
 
-      get edit_asset_path(other_asset)
+      get asset_path(other_asset)
 
       expect(response).to redirect_to(root_path)
       expect(flash[:alert]).to eq(I18n.t("flash.errors.not_found"))

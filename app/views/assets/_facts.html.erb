@@ -1,0 +1,63 @@
+<%#
+  Ce que l'actif est. Chaque fait se corrige au clic (voir shared/_inline_fact) : c'est cette
+  liste qui remplace l'ancien formulaire de modification.
+
+  Deux faits n'y sont que rappelés : « Immobilier » est le type que produit la création d'un
+  bien, et rien d'autre ne le donne ni ne le retire (voir Asset::RESERVED_ASSET_TYPE) ; le
+  rattachement à un bien ne se saisit pas ici non plus, c'est le bien qui a créé cet actif.
+  Les dates, elles, restent modifiables : la période du bien n'est qu'un défaut.
+%>
+<dl class="property-facts">
+  <% if @asset.real_estate? %>
+    <%= render "shared/fact",
+               label: t("views.assets.form.asset_type"),
+               value: @asset.asset_type_label,
+               hint: t("views.assets.form.asset_type_locked") %>
+  <% else %>
+    <%= render layout: "shared/inline_fact",
+               locals: { record: @asset, tab: @tab,
+                         label: t("views.assets.form.asset_type"),
+                         display: @asset.asset_type_label } do |f| %>
+      <%= f.select :asset_type, selectable_asset_type_options, {},
+            class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
+    <% end %>
+  <% end %>
+
+  <% if @asset.owned_by_property? %>
+    <%= render "shared/fact",
+               label: t("views.assets.form.property"),
+               value: @asset.property.name %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @asset, tab: @tab,
+                       label: t("views.assets.form.ownership_share"),
+                       display: ownership_share_label(@asset.ownership_share) } do |f| %>
+    <%= f.number_field :ownership_share, step: 0.01, min: 0, max: 100, required: true,
+          class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @asset, tab: @tab,
+                       label: t("views.assets.form.risk_level"),
+                       display: @asset.risk_level_label } do |f| %>
+    <%= f.select :risk_level, risk_level_options, {},
+          class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
+  <% end %>
+
+  <%# Les deux bornes de la période d'existence, facultatives : sans elles, l'actif peut
+      entrer dans n'importe quel bilan (voir Lifespanable). %>
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @asset, tab: @tab,
+                       label: t("views.shared.lifespan.started_on"),
+                       display: (l(@asset.started_on, format: :long) if @asset.started_on) } do |f| %>
+    <%= f.date_field :started_on, class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+
+  <%= render layout: "shared/inline_fact",
+             locals: { record: @asset, tab: @tab,
+                       label: t("views.shared.lifespan.ended_on"),
+                       display: (l(@asset.ended_on, format: :long) if @asset.ended_on) } do |f| %>
+    <%= f.date_field :ended_on, class: "inline-edit-input", data: inline_edit_input_data %>
+  <% end %>
+</dl>

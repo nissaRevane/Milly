@@ -1,11 +1,22 @@
 class AssetsController < ApplicationController
-  before_action :set_asset, only: [:edit, :update, :destroy]
+  # Les facettes de la fiche, dans l'ordre des onglets. « general » est celle qu'on obtient
+  # sans ?tab= : c'est l'actif lui-même. L'actif n'a pas d'échéancier — seul un crédit en
+  # porte un (voir LiabilitiesController::TABS).
+  TABS = %w[general history].freeze
+  DEFAULT_TAB = "general".freeze
+
+  before_action :set_asset, only: [:show, :update, :destroy]
   before_action :refuse_reserved_asset_type, only: [:create]
 
   def index
     @asset_type_filter = params[:asset_type].presence_in(Asset.asset_types.keys)
     @assets = current_user.assets.order(:asset_type, :risk_level, :name)
     @assets = @assets.where(asset_type: @asset_type_filter) if @asset_type_filter
+  end
+
+  # La fiche : elle est aussi le formulaire de l'actif, chaque champ s'y corrigeant sur place.
+  def show
+    load_tab
   end
 
   def new
@@ -21,14 +32,15 @@ class AssetsController < ApplicationController
     end
   end
 
-  def edit
-  end
-
+  # Un enregistrement ne renvoie pas à la liste mais à la fiche, sur l'onglet où l'on était :
+  # on corrige un champ pour continuer à lire l'actif, pas pour le quitter. Un refus réaffiche
+  # cette même fiche, ses erreurs en tête et la valeur refusée dans son champ.
   def update
     if @asset.update(asset_params)
-      redirect_to assets_path, notice: t("flash.assets.updated")
+      redirect_to fiche_path, notice: t("flash.assets.updated")
     else
-      render :edit, status: :unprocessable_entity
+      load_tab
+      render :show, status: :unprocessable_entity
     end
   end
 
@@ -48,6 +60,25 @@ class AssetsController < ApplicationController
 
   def set_asset
     @asset = current_user.assets.find(params[:id])
+  end
+
+  def current_tab
+    TABS.include?(params[:tab]) ? params[:tab] : DEFAULT_TAB
+  end
+
+  # Chaque onglet est une page entière rendue par le serveur : on ne lit que ce qu'il montre
+  # (voir BalanceSheetsController#summary).
+  def load_tab
+    @tab = current_tab
+    @history = @asset.value_history if @tab == "history"
+  end
+
+  # La fiche telle qu'on y revient : sur l'onglet où l'on était, et sans ?tab= sur celui
+  # d'accueil — l'adresse d'une fiche reste celle qu'on partage.
+  def fiche_path
+    tab = current_tab
+
+    asset_path(@asset, tab: (tab unless tab == DEFAULT_TAB))
   end
 
   # A forged "Immobilier" is refused outright rather than silently saved as another type:
