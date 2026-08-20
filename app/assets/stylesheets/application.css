@@ -402,19 +402,36 @@ a.nav-user-name:hover {
   text-align: right;
 }
 
-/* La date de clôture s'édite dans le titre : contrairement aux montants du tableau,
-   le déclencheur et le champ se lisent de gauche à droite. */
+/* Ce qui s'édite dans un titre — la date de clôture d'un bilan, le nom d'un actif ou d'un
+   passif : contrairement aux montants du tableau, le déclencheur et le champ se lisent de
+   gauche à droite, et le champ prend la taille du titre qu'il remplace. */
 .inline-edit-trigger-title {
   text-align: left;
 }
 
-.inline-edit-input-date {
+.inline-edit-input-title {
   max-width: none;
   text-align: left;
   padding: 0.25rem 0.5rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   font-size: 1.25rem;
+}
+
+/* Un fait de fiche s'édite comme un montant de bilan, mais se lit de gauche à droite et
+   occupe la largeur de sa colonne : un champ calé à droite sur 8,5 rem convient à un
+   montant, pas à un nom de bien ni à une liste de types. */
+.property-fact .inline-edit-trigger {
+  text-align: left;
+}
+
+.property-fact .inline-edit-input {
+  max-width: 100%;
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
 }
 
 .table-compact th,

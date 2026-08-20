@@ -25,21 +25,16 @@
   </div>
 </div>
 
-<%# Server-rendered tabs: plain links carrying a ?tab= param, Turbo Drive does the rest %>
-<nav class="tab-nav">
-  <%= link_to t("views.balance_sheets.summary.tabs.general"),
-              summary_balance_sheet_path(@balance_sheet),
-              class: "tab-link#{" tab-link-active" if @tab == "general"}",
-              "aria-current" => ("page" if @tab == "general") %>
-  <%= link_to t("views.balance_sheets.summary.tabs.real_estate"),
-              summary_balance_sheet_path(@balance_sheet, tab: "real_estate"),
-              class: "tab-link#{" tab-link-active" if @tab == "real_estate"}",
-              "aria-current" => ("page" if @tab == "real_estate") %>
-  <%= link_to t("views.balance_sheets.summary.tabs.dashboard"),
-              summary_balance_sheet_path(@balance_sheet, tab: "dashboard"),
-              class: "tab-link#{" tab-link-active" if @tab == "dashboard"}",
-              "aria-current" => ("page" if @tab == "dashboard") %>
-</nav>
+<%= render "shared/tab_nav",
+           tabs: [
+             [t("views.balance_sheets.summary.tabs.general"),
+              summary_balance_sheet_path(@balance_sheet), "general"],
+             [t("views.balance_sheets.summary.tabs.real_estate"),
+              summary_balance_sheet_path(@balance_sheet, tab: "real_estate"), "real_estate"],
+             [t("views.balance_sheets.summary.tabs.dashboard"),
+              summary_balance_sheet_path(@balance_sheet, tab: "dashboard"), "dashboard"]
+           ],
+           current: @tab %>
 
 <% case @tab %>
 <% when "real_estate" %>

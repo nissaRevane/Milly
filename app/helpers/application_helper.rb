@@ -108,6 +108,20 @@ module ApplicationHelper
     value.frac.zero? ? value.to_i.to_s : value.to_s("F")
   end
 
+  # Les attributs data d'un champ qui s'édite sur place : Échap annule, quitter le champ
+  # enregistre si la valeur a changé (voir le contrôleur Stimulus inline-edit). Ils sont
+  # rendus par un helper parce que chaque fiche en pose une dizaine : recopiée à la main,
+  # la chaîne d'actions finissait par différer d'un champ à l'autre.
+  #
+  # +on_change+ pour un select : il se valide au choix d'une option, sans attendre un blur
+  # qui ne viendra pas.
+  def inline_edit_input_data(on_change: false)
+    actions = ["keydown.esc->inline-edit#cancel:prevent", "blur->inline-edit#blur"]
+    actions.unshift("change->inline-edit#submit") if on_change
+
+    { inline_edit_target: "input", action: actions.join(" ") }
+  end
+
   def owned_value_cell(total_value, owned_value, share)
     return number_to_currency(owned_value) if share.to_d == 100
 

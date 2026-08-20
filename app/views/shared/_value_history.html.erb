@@ -1,0 +1,53 @@
+<%#
+  L'histoire d'une ligne dans les bilans : ce qu'elle vaut au dernier, ce qu'elle a gagné ou
+  perdu depuis le précédent et depuis un an, et la courbe de ses montants bilan après bilan.
+
+  Rien n'est calculé ici : tout vient de Historizable::ValueHistory, qui lit les montants
+  DÉTENUS — quote-part appliquée — que les bilans affichent eux-mêmes. Une fiche et le bilan
+  qui la porte ne peuvent donc pas dire deux sommes différentes.
+
+  +favorable+ dit quel sens est la bonne nouvelle : une dette qui baisse en est une, et la
+  couleur de la variation suit cette lecture-là, pas le signe (voir variation_note).
+%>
+<% if history.any? %>
+  <div class="stat-grid">
+    <div class="stat-card stat-card-highlight">
+      <span class="stat-label"><%= value_label %></span>
+      <span class="stat-value"><%= number_to_currency(history.current.amount) %></span>
+      <span class="stat-hint">
+        <%= t("views.shared.value_history.as_of", date: l(history.current.closing_date, format: :long)) %>
+      </span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label"><%= t("views.shared.value_history.since_previous") %></span>
+      <span class="stat-value">
+        <%= variation_note(history.since_previous, favorable: favorable) || "—" %>
+      </span>
+      <span class="stat-hint">
+        <%= history.previous ? l(history.previous.closing_date, format: :long)
+                            : t("views.shared.value_history.no_previous") %>
+      </span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-label"><%= t("views.shared.value_history.over_a_year") %></span>
+      <span class="stat-value">
+        <%= variation_note(history.over_a_year, favorable: favorable) || "—" %>
+      </span>
+      <span class="stat-hint">
+        <% year_ago = history.year_ago %>
+        <%= year_ago ? l(year_ago.closing_date, format: :long)
+                     : t("views.shared.value_history.no_year_ago") %>
+      </span>
+    </div>
+  </div>
+
+  <section class="chart-card">
+    <h2 class="chart-title"><%= t("views.shared.value_history.chart_title") %></h2>
+    <p class="chart-hint"><%= t("views.shared.value_history.chart_hint") %></p>
+    <%= line_chart(history.series) %>
+  </section>
+<% else %>
+  <p class="empty-state"><%= empty %></p>
+<% end %>

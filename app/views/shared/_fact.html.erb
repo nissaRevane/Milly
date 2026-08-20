@@ -1,0 +1,11 @@
+<%#
+  Un fait de fiche que l'utilisateur ne saisit pas là où il le lit : le nom de l'actif d'un
+  bien, son type. +hint+ dit alors d'où il vient, et où le corriger.
+%>
+<div class="property-fact">
+  <dt><%= label %></dt>
+  <dd><%= value.presence || "—" %></dd>
+  <% if local_assigns[:hint].present? %>
+    <small class="form-hint"><%= hint %></small>
+  <% end %>
+</div>

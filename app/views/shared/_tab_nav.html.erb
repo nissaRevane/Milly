@@ -1,0 +1,14 @@
+<%#
+  Les onglets d'une fiche : de simples liens portant un ?tab=, Turbo Drive échange le corps
+  de la page — aucun JavaScript. Chaque onglet est une page entière rendue par le serveur,
+  qui ne calcule donc que ce que l'onglet actif montre.
+
+  +tabs+ est une liste de [libellé, adresse, clé], +current+ la clé de l'onglet lu.
+%>
+<nav class="tab-nav">
+  <% tabs.each do |label, url, key| %>
+    <%= link_to label, url,
+                class: "tab-link#{" tab-link-active" if key == current}",
+                "aria-current" => ("page" if key == current) %>
+  <% end %>
+</nav>

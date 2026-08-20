@@ -19,9 +19,8 @@
                     data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
                     html: { hidden: true } do |f| %>
         <%= f.date_field :closing_date, required: true,
-              class: "inline-edit-input inline-edit-input-date",
-              data: { inline_edit_target: "input",
-                      action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+              class: "inline-edit-input inline-edit-input-title",
+              data: inline_edit_input_data %>
       <% end %>
     </div>
   <% end %>
@@ -76,8 +75,7 @@
                           <%= f.number_field :value, step: "0.01", min: "0", required: true,
                                 value: suggested_value_attribute(bsa.value),
                                 class: "inline-edit-input",
-                                data: { inline_edit_target: "input",
-                                        action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+                                data: inline_edit_input_data %>
                         <% end %>
                       </div>
                     </td>
@@ -143,8 +141,7 @@
                           <%= f.number_field :remaining_capital, step: "0.01", min: "0", required: true,
                                 value: suggested_value_attribute(bsl.remaining_capital),
                                 class: "inline-edit-input",
-                                data: { inline_edit_target: "input",
-                                        action: "keydown.esc->inline-edit#cancel:prevent blur->inline-edit#blur" } %>
+                                data: inline_edit_input_data %>
                         <% end %>
                       </div>
                     </td>

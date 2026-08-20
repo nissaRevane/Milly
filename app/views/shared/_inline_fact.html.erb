@@ -1,0 +1,25 @@
+<%#
+  Un fait de fiche qui se corrige au clic : la valeur affichée cède la place à son champ, et
+  quitter le champ enregistre (voir le contrôleur Stimulus inline-edit). C'est le geste des
+  montants d'un bilan, appliqué à la fiche d'une ligne.
+
+  Le champ lui-même reste à l'appelant — un nom, un montant, une date et une liste ne se
+  saisissent pas de la même façon — et reçoit le constructeur du formulaire en paramètre de
+  son bloc. L'onglet voyage avec l'enregistrement : on revient sur la facette qu'on lisait.
+%>
+<div class="property-fact" data-controller="inline-edit">
+  <dt><%= label %></dt>
+  <dd>
+    <button type="button" class="inline-edit-trigger" data-inline-edit-target="display"
+            data-action="inline-edit#edit"
+            title="<%= t("views.shared.inline_edit.click_to_edit") %>">
+      <%= display.presence || "—" %>
+    </button>
+    <%= form_with model: record, class: "inline-edit-form",
+                  data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                  html: { hidden: true } do |form| %>
+      <%= hidden_field_tag :tab, tab, id: nil %>
+      <%= yield form %>
+    <% end %>
+  </dd>
+</div>
