@@ -70,7 +70,11 @@ class BalanceSheet < ApplicationRecord
   # du bien quand la catégorie est éclatée, nil sinon. Les deux restent séparés jusqu'au bout
   # parce que la légende les met sur deux lignes — recomposer puis recouper une chaîne
   # traduite ferait dépendre la mise en page d'un séparateur. Voir .assets_breakdown_for.
-  BreakdownSeries = Struct.new(:key, :label, :sublabel, :values, keyword_init: true) do
+  #
+  # +sublabel_short+ est le même usage abrégé — « RP », « RS » — celui que la légende affiche :
+  # sa colonne fait dix-neuf rems, « Résidence secondaire » y passait à la ligne. La forme
+  # longue reste celle des infobulles et des textes accessibles, où la place ne manque pas.
+  BreakdownSeries = Struct.new(:key, :label, :sublabel, :sublabel_short, :values, keyword_init: true) do
     def blank_everywhere?
       values.all?(&:zero?)
     end
@@ -212,9 +216,22 @@ class BalanceSheet < ApplicationRecord
     )
   end
 
+  # Les lignes de +source+ reprises sur ce bilan, et le nombre de celles qui ont été LAISSÉES
+  # de côté : un actif ou un passif qui n'existe pas à la date de clôture d'arrivée n'y entre
+  # pas (voir Lifespanable). Un PEE soldé en 2024 n'a rien à faire dans un bilan clos en 2026,
+  # et le modèle le refuserait de toute façon — les recopier en bloc faisait échouer la
+  # duplication entière sur la première ligne périmée.
+  #
+  # C'est bien un compte de lignes écartées qui remonte, et non un simple booléen : le
+  # contrôleur le dit à l'utilisateur, une duplication qui perd des lignes en silence étant
+  # indiscernable d'une duplication qui a raté.
   def copy_lines_from(source)
+    skipped = 0
+
     transaction do
-      source.balance_sheet_assets.each do |line|
+      source.balance_sheet_assets.includes(:asset).each do |line|
+        next skipped += 1 unless line.asset.available_on?(closing_date)
+
         balance_sheet_assets.create!(asset_id: line.asset_id, value: line.value)
       end
       # Un prêt qui porte un tableau d'amortissement n'est pas recopié tel quel : son
@@ -222,6 +239,8 @@ class BalanceSheet < ApplicationRecord
       # l'ancien montant figerait la dette à une date où elle ne vaut plus cela. Les
       # passifs sans tableau gardent le comportement d'origine, la copie verbatim.
       source.balance_sheet_liabilities.includes(:liability).each do |line|
+        next skipped += 1 unless line.liability.available_on?(closing_date)
+
         remaining_capital =
           if line.liability.amortizable?
             line.liability.suggested_remaining_capital(closing_date)
@@ -232,6 +251,8 @@ class BalanceSheet < ApplicationRecord
         balance_sheet_liabilities.create!(liability_id: line.liability_id, remaining_capital: remaining_capital)
       end
     end
+
+    skipped
   end
 
   def total_assets
@@ -445,7 +466,10 @@ class BalanceSheet < ApplicationRecord
 
     breakdown_labels(categories)
       .select { |key, _| amounts.key?(key) }
-      .map { |key, name, usage| BreakdownSeries.new(key: key, label: name, sublabel: usage, values: amounts[key]) }
+      .map { |key, name, usage, usage_short|
+        BreakdownSeries.new(key: key, label: name, sublabel: usage, sublabel_short: usage_short,
+                            values: amounts[key])
+      }
       .reject(&:blank_everywhere?)
   end
   private_class_method :breakdown_for
@@ -468,19 +492,25 @@ class BalanceSheet < ApplicationRecord
   end
   private_class_method :enum_name
 
-  # Les [clé, famille, usage] de chaque bande, dans l'ordre où elles s'empilent en partant de
-  # l'axe : celui des catégories, la catégorie éclatée laissant place à ses usages puis au
-  # bucket non rattaché. Un ordre figé, et surtout pas déduit des montants : une catégorie qui
-  # changerait de rang — donc de couleur — d'un bilan à l'autre rendrait la courbe illisible.
+  # Les [clé, famille, usage, usage abrégé] de chaque bande, dans l'ordre où elles s'empilent
+  # en partant de l'axe : celui des catégories, la catégorie éclatée laissant place à ses usages
+  # puis au bucket non rattaché. Un ordre figé, et surtout pas déduit des montants : une
+  # catégorie qui changerait de rang — donc de couleur — d'un bilan à l'autre rendrait la
+  # courbe illisible.
+  #
+  # Le bucket non rattaché n'a pas de forme courte à lui : son libellé sert des deux côtés.
   def self.breakdown_labels(categories)
     categories.flat_map do |category|
       label = I18n.t("views.shared.breakdown_categories.#{category[:key]}")
-      next [[category[:key], label, nil]] unless category[:split]
+      next [[category[:key], label, nil, nil]] unless category[:split]
 
-      usages = (BREAKDOWN_USAGE_ORDER | Property.usages.keys).map { |usage| [usage, Property.usage_label_for(usage)] }
-      usages << [UNASSIGNED_USAGE, I18n.t("views.shared.unassigned_property")]
-      usages.map do |usage, usage_label|
-        ["#{category[:key]}:#{usage}", label, usage_label]
+      usages = (BREAKDOWN_USAGE_ORDER | Property.usages.keys).map { |usage|
+        [usage, Property.usage_label_for(usage), Property.usage_short_label_for(usage)]
+      }
+      unassigned = I18n.t("views.shared.unassigned_property")
+      usages << [UNASSIGNED_USAGE, unassigned, unassigned]
+      usages.map do |usage, usage_label, usage_short_label|
+        ["#{category[:key]}:#{usage}", label, usage_label, usage_short_label]
       end
     end
   end

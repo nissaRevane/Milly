@@ -53,6 +53,16 @@ class Property < ApplicationRecord
     self.class.usage_label_for(usage)
   end
 
+  # La forme abrégée du même usage — « RP », « RS » — pour les endroits qui n'ont pas la
+  # largeur d'un libellé entier : une pastille sur écran étroit, une légende de graphique.
+  def self.usage_short_label_for(usage)
+    EnumLabel.for("property_usages_short", usage)
+  end
+
+  def usage_short_label
+    self.class.usage_short_label_for(usage)
+  end
+
   private
 
   # db/seeds.rb and AccountExport imports may already carry the actif of the bien; it is

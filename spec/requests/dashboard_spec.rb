@@ -203,8 +203,12 @@ RSpec.describe "Dashboard", type: :request do
 
         column = Nokogiri::HTML(response.body).at_css(".chart-legend-column-assets")
         expect(column.css(".chart-legend-group-title").map(&:text)).to eq(["Immobilier"])
+        # Les usages y sont abrégés : la colonne est étroite, « Résidence secondaire » y prenait
+        # deux lignes. Le nom complet reste sur la pastille, dans son libellé accessible.
         expect(column.css(".chart-legend-sublist .chart-legend-label").map(&:text))
-          .to eq(["Locatif", "Résidence secondaire", "Résidence principale"])
+          .to eq(%w[Locatif RS RP])
+        expect(column.css(".chart-legend-swatch").map { |swatch| swatch["aria-label"] })
+          .to include("Afficher ou masquer Immobilier · Résidence principale")
       end
 
       # Un titre pour une seule ligne n'apprendrait rien : la famille reste alors sur l'entrée,
@@ -219,7 +223,7 @@ RSpec.describe "Dashboard", type: :request do
 
         column = Nokogiri::HTML(response.body).at_css(".chart-legend-column-assets")
         expect(column.at_css(".chart-legend-group-title")).to be_nil
-        expect(column.at_css(".chart-legend-label").text.squish).to eq("Immobilier Résidence principale")
+        expect(column.at_css(".chart-legend-label").text.squish).to eq("Immobilier RP")
       end
 
       # Une légende dit un ordre de grandeur : la place manque dans la colonne, et le centime

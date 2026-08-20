@@ -635,6 +635,9 @@ RSpec.describe BalanceSheet, type: :model do
       expect(series.first.label).to eq("Immobilier")
       expect(series.first.sublabel).to eq("Résidence principale")
       expect(series.first.full_label).to eq("Immobilier · Résidence principale")
+      # La forme abrégée voyage à côté de la longue : la légende affiche l'une, l'infobulle
+      # et les textes accessibles gardent l'autre.
+      expect(series.first.sublabel_short).to eq("RP")
     end
 
     # Seul l'immobilier est éclaté : regrouper toutes les lignes d'un bien est le travail de

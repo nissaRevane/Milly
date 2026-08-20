@@ -25,9 +25,9 @@ class BalanceSheetsController < ApplicationController
   def create
     @source = source_balance_sheet
     @balance_sheet = current_user.balance_sheets.build(balance_sheet_params)
-    if @balance_sheet.save
-      @balance_sheet.copy_lines_from(@source) if @source
-      redirect_to @balance_sheet, notice: t("flash.balance_sheets.#{@source ? 'duplicated' : 'created'}")
+
+    if save_with_copied_lines
+      redirect_to @balance_sheet, notice: creation_notice
     else
       render :new, status: :unprocessable_entity
     end
@@ -104,6 +104,32 @@ class BalanceSheetsController < ApplicationController
     return if params[:source_id].blank?
 
     current_user.balance_sheets.find(params[:source_id])
+  end
+
+  # Le bilan et les lignes qu'il reprend de sa source tiennent dans UNE transaction : la copie
+  # échouant à mi-chemin, c'est un bilan vide qui restait en base — celui-là même que
+  # l'utilisateur venait de demander plein.
+  #
+  # Renvoie nil quand le bilan lui-même est refusé (date déjà prise), ce qui suffit à la
+  # branche 422 : rien n'a alors été écrit, et l'objet n'a pas d'id à traîner dans le
+  # formulaire réaffiché.
+  def save_with_copied_lines
+    BalanceSheet.transaction do
+      raise ActiveRecord::Rollback unless @balance_sheet.save
+
+      @skipped_lines = @source ? @balance_sheet.copy_lines_from(@source) : 0
+      true
+    end
+  end
+
+  # Une duplication qui a écarté des lignes le dit : celles dont l'actif ou le passif n'existe
+  # pas à la nouvelle date de clôture ne sont pas recopiées (voir BalanceSheet#copy_lines_from),
+  # et un bilan revenu plus court qu'attendu sans un mot ressemble à une duplication ratée.
+  def creation_notice
+    return t("flash.balance_sheets.created") if @source.nil?
+    return t("flash.balance_sheets.duplicated") if @skipped_lines.zero?
+
+    t("flash.balance_sheets.duplicated_partial", count: @skipped_lines)
   end
 
   def balance_sheet_params

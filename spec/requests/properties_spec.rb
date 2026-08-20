@@ -32,6 +32,38 @@ RSpec.describe "Properties", type: :request do
       expect(response.body).to include("Locatif")
     end
 
+    # La pastille porte les deux formes du libellé, le CSS choisissant laquelle se voit selon
+    # la largeur : le texte reste complet, l'abréviation attend dans son attribut.
+    it "carries the abbreviated usage alongside the full one" do
+      create(:property, user: user, name: "Maison", usage: :primary_residence)
+
+      get properties_path
+
+      badge = Nokogiri::HTML(response.body).at_css(".usage-badge")
+      expect(badge.text.squish).to eq("Résidence principale")
+      expect(badge["data-usage-short"]).to eq("RP")
+      expect(badge["title"]).to eq("Résidence principale")
+    end
+
+    # Un usage déjà court n'a rien à substituer : pastille ordinaire, sans attribut.
+    it "leaves an already short usage as a plain badge" do
+      create(:property, user: user, name: "Studio", usage: :rental)
+
+      get properties_path
+
+      expect(Nokogiri::HTML(response.body).at_css(".usage-badge")).to be_nil
+    end
+
+    # Le centime ne dit rien du prix d'un bien : la colonne s'arrête à l'euro.
+    it "rounds the purchase price to the euro" do
+      create(:property, user: user, name: "Maison", purchase_price: 320_499.67)
+
+      get properties_path
+
+      expect(response.body).to include("320 500 €")
+      expect(response.body).not_to include("320 499,67")
+    end
+
     it "does not list another user's properties" do
       create(:property, user: create(:user), name: "Villa du voisin")
 

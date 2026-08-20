@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1>
     <%= @property.name %>
-    <span class="badge badge-secondary"><%= @property.usage_label %></span>
+    <%= property_usage_badge(@property.usage) %>
   </h1>
   <div class="page-header-actions">
     <%= link_to t("views.properties.show.edit"), edit_property_path(@property), class: "btn btn-primary" %>
@@ -17,7 +17,7 @@
     </div>
     <div class="property-fact">
       <dt><%= t("views.properties.form.purchase_price") %></dt>
-      <dd><%= @property.purchase_price ? number_to_currency(@property.purchase_price) : "—" %></dd>
+      <dd><%= @property.purchase_price ? number_to_currency(@property.purchase_price, precision: 0) : "—" %></dd>
     </div>
     <div class="property-fact">
       <dt><%= t("views.properties.form.acquired_on") %></dt>

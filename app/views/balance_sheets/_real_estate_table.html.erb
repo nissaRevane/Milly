@@ -29,7 +29,7 @@
       <% positions.group_by { |position| position.property.usage }.each do |usage, usage_positions| %>
         <tr class="property-usage-row">
           <td>
-            <span class="badge badge-secondary"><%= property_usage_label(usage) %></span>
+            <%= property_usage_badge(usage) %>
           </td>
           <td class="text-right"><%= number_to_currency(totals.fetch(usage).gross) %></td>
           <td class="text-right"><%= number_to_currency(totals.fetch(usage).debt) %></td>

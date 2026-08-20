@@ -48,8 +48,23 @@ module ApplicationHelper
     Property.usages.keys.map { |key| [t("views.shared.property_usages.#{key}"), key] }
   end
 
-  def property_usage_label(usage)
-    Property.usage_label_for(usage)
+  # La pastille d'usage d'un bien. Elle porte les DEUX formes du libellé : le complet comme
+  # texte, l'abrégé en attribut, et c'est le CSS qui décide lequel se voit selon la largeur
+  # (voir .usage-badge) — « Résidence principale » débordait de la pastille sur un écran
+  # étroit, « RP » y tient.
+  #
+  # Le texte de l'élément reste le libellé complet à toute largeur, l'abréviation n'étant que
+  # du contenu généré : le nom accessible, la recherche dans la page et le copier-coller
+  # continuent de dire « Résidence principale » là où l'œil ne lit que « RP », et le title le
+  # rend au survol. Un usage dont la forme courte est déjà la longue — « Locatif » — sort en
+  # pastille ordinaire, il n'y a rien à substituer.
+  def property_usage_badge(usage)
+    full = Property.usage_label_for(usage)
+    short = Property.usage_short_label_for(usage)
+    return tag.span(full, class: "badge badge-secondary") if short == full
+
+    tag.span(full, class: "badge badge-secondary usage-badge", title: full,
+                   data: { usage_short: short })
   end
 
   # An LTV is nil only when there is no gross value to divide by — an em dash

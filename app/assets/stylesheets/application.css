@@ -469,6 +469,26 @@ a.nav-user-name:hover {
   color: var(--color-text-muted);
 }
 
+/* L'usage d'un bien dans une pastille : « Résidence principale » tant que la place y est,
+   « RP » dès qu'elle manque. Les deux formes viennent du serveur — le texte de l'élément et
+   son data-usage-short (voir ApplicationHelper#property_usage_badge).
+
+   La substitution est faite de font-size: 0 sur le texte et d'un ::before qui écrit
+   l'abréviation, plutôt que de deux éléments dont on cache l'un : le libellé complet reste
+   ainsi le seul TEXTE de la pastille à toute largeur, donc le seul que lisent l'arbre
+   d'accessibilité, la recherche dans la page et le copier-coller. Un contenu généré, lui, ne
+   se copie pas — l'abréviation ne peut pas se retrouver collée ailleurs à la place du nom. */
+@media (max-width: 768px) {
+  .usage-badge {
+    font-size: 0;
+  }
+
+  .usage-badge::before {
+    content: attr(data-usage-short);
+    font-size: 0.75rem;
+  }
+}
+
 /* Page Header */
 .page-header {
   display: flex;

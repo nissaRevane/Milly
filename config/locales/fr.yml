@@ -267,7 +267,7 @@ fr:
       new:
         title: Nouveau bilan
         duplicate_title: "Dupliquer le bilan au %{date}"
-        duplicate_hint: Les lignes d'actifs et de passifs seront recopiées avec leurs montants.
+        duplicate_hint: Les lignes d'actifs et de passifs seront recopiées avec leurs montants. Celles dont l'actif ou le passif n'existe pas à la nouvelle date de clôture sont laissées de côté.
       edit:
         title: Modifier le bilan
       show:
@@ -402,6 +402,13 @@ fr:
         primary_residence: Résidence principale
         rental: Locatif
         secondary_residence: Résidence secondaire
+      # La forme courte des mêmes usages, pour les endroits où la place manque : une pastille
+      # sur écran étroit, une légende de graphique. « Locatif » tient déjà, il ne s'abrège pas.
+      # Scope name pinned by Property.usage_short_label_for → EnumLabel.for("property_usages_short", …)
+      property_usages_short:
+        primary_residence: RP
+        rental: Locatif
+        secondary_residence: RS
       risk_levels:
         low: Faible
         medium: Moyen
@@ -434,6 +441,11 @@ fr:
     balance_sheets:
       created: Bilan créé avec succès.
       duplicated: Bilan dupliqué avec succès.
+      # Le pluriel des lignes écartées : celles dont l'actif ou le passif n'existait pas à la
+      # nouvelle date de clôture (voir BalanceSheet#copy_lines_from).
+      duplicated_partial:
+        one: "Bilan dupliqué. 1 ligne n'a pas été reprise : l'actif ou le passif n'existe pas à cette date."
+        other: "Bilan dupliqué. %{count} lignes n'ont pas été reprises : leur actif ou leur passif n'existe pas à cette date."
       updated: Bilan mis à jour avec succès.
       destroyed: Bilan supprimé avec succès.
     balance_sheet_assets:

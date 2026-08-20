@@ -146,7 +146,8 @@ module ChartsHelper
 
     ordered = reverse ? series.reverse : series
     chart_legend(ordered.map { |serie|
-      { key: serie.key, label: serie.label, sublabel: serie.sublabel, full_label: serie.full_label,
+      { key: serie.key, label: serie.label, sublabel: serie.sublabel,
+        sublabel_short: serie.sublabel_short, full_label: serie.full_label,
         amount: serie.values.last, tone: series_tone(serie.key) }
     }, total)
   end
@@ -254,8 +255,8 @@ module ChartsHelper
   # qu'une teinte nomme le même poste sur les deux écrans. L'anneau n'a rien à rejouer.
   def breakdown_slices(series)
     series.map { |serie|
-      { label: serie.label, sublabel: serie.sublabel, full_label: serie.full_label,
-        amount: serie.values.last, tone: series_tone(serie.key) }
+      { label: serie.label, sublabel: serie.sublabel, sublabel_short: serie.sublabel_short,
+        full_label: serie.full_label, amount: serie.values.last, tone: series_tone(serie.key) }
     }
   end
 
@@ -609,12 +610,18 @@ module ChartsHelper
   # section, les deux tiennent sur deux lignes courtes — l'espace n'y est pas décoratif, la
   # sous-catégorie est un bloc donc invisible à l'écran, mais sans lui le texte accessible
   # dirait « ImmobilierLocatif ».
+  #
+  # L'usage s'écrit ici sous sa forme ABRÉGÉE — « RP », « RS » : la colonne de la légende est
+  # étroite et « Résidence secondaire » y prenait deux lignes à lui seul. La forme longue reste
+  # portée par le title de la bande et par le nom accessible de la pastille (voir
+  # #legend_swatch), les deux endroits où l'on va chercher de quoi il s'agit vraiment.
   def legend_label(item, under_title)
-    return item[:sublabel] if under_title
+    usage = item[:sublabel_short] || item[:sublabel]
+    return usage if under_title
 
     safe_join([
       item[:label],
-      item[:sublabel] && tag.span(item[:sublabel], class: "chart-legend-sublabel")
+      usage && tag.span(usage, class: "chart-legend-sublabel")
     ].compact, " ")
   end
 

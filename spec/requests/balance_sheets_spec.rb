@@ -738,6 +738,42 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(plain_line.remaining_capital).to eq(90_000)
     end
 
+    # Le bug : une ligne périmée faisait échouer la copie entière, et le bilan — enregistré
+    # avant elle — restait en base, vide.
+    it "leaves behind the lines whose asset or liability is gone at the new closing date" do
+      # Les deux existent à la date de la SOURCE (2025-12-31) et plus à celle de la copie.
+      closed = create(:asset, user: user, name: "PEE soldé", ended_on: Date.new(2026, 1, 31))
+      create(:balance_sheet_asset, balance_sheet: source, asset: closed, value: 5_000)
+      repaid = create(:liability, user: user, name: "Prêt soldé", ended_on: Date.new(2026, 1, 31))
+      create(:balance_sheet_liability, balance_sheet: source, liability: repaid, remaining_capital: 1_000)
+
+      post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+
+      copy = BalanceSheet.order(:created_at).last
+      expect(response).to redirect_to(copy)
+      expect(copy.balance_sheet_assets.pluck(:asset_id)).to eq([asset.id])
+      expect(copy.balance_sheet_liabilities.pluck(:liability_id)).to eq([liability.id])
+      expect(flash[:notice]).to eq(I18n.t("flash.balance_sheets.duplicated_partial", count: 2))
+    end
+
+    it "says nothing about skipped lines when every line came across" do
+      post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+
+      expect(flash[:notice]).to eq(I18n.t("flash.balance_sheets.duplicated"))
+    end
+
+    # Le bilan et ses lignes tiennent dans une seule transaction : un échec au milieu de la
+    # copie ne doit pas laisser derrière lui le bilan vide qu'il venait de créer.
+    it "creates no balance sheet at all when the copy blows up" do
+      allow_any_instance_of(BalanceSheet).to receive(:copy_lines_from).and_raise(ActiveRecord::RecordInvalid)
+
+      expect {
+        expect {
+          post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+        }.to raise_error(ActiveRecord::RecordInvalid)
+      }.not_to change(BalanceSheet, :count)
+    end
+
     it "does not copy anything when the closing date is already taken" do
       expect {
         post balance_sheets_path, params: { balance_sheet: { closing_date: "2025-12-31" }, source_id: source.id }
