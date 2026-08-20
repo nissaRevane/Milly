@@ -91,7 +91,7 @@ fr:
         liability:
           attributes:
             liability_type:
-              amortization_reserved_for_real_estate_loans: "doit être « Crédit immobilier » pour porter un tableau d'amortissement"
+              amortization_reserved_for_credits: "doit être « Crédit immobilier » ou « Autres crédits » pour porter un tableau d'amortissement"
             property:
               not_linkable: "ne se rattache qu'à un crédit immobilier ou à un dépôt de garantie"
         balance_sheet_asset:
@@ -224,7 +224,7 @@ fr:
         ownership_share: "Quote-part détenue (%)"
         property: Bien immobilier rattaché
         property_none: Aucun bien
-        amortization_legend: "Tableau d'amortissement (prêts immobiliers)"
+        amortization_legend: "Tableau d'amortissement (crédits)"
         amortization_hint: "Tous les champs sont à renseigner ensemble. Laissez-les vides pour un passif sans tableau d'amortissement."
         borrowed_capital: Capital emprunté
         annual_rate: "Taux annuel (%)"
@@ -245,7 +245,7 @@ fr:
         principal: Capital
         remaining_capital: Capital restant dû
         no_schedule: "Aucun tableau d'amortissement défini pour ce passif. Renseignez les caractéristiques du prêt sur sa fiche pour l'obtenir."
-        no_schedule_unavailable: "Les tableaux d'amortissement ne concernent que les prêts immobiliers."
+        no_schedule_unavailable: "Les tableaux d'amortissement ne concernent que les crédits."
       edit:
         title: Modifier le passif
       new:
@@ -395,6 +395,7 @@ fr:
         real_estate: Immobilier
         financial_investment: Placements financiers
         short_term_debt: Dettes diverses
+        other_credit: Autres crédits
         security_deposit: Dépôts de garantie
         real_estate_loan: Crédit immobilier
       # Scope name pinned by Property.usage_label_for → EnumLabel.for("property_usages", …)
@@ -424,6 +425,7 @@ fr:
         real_estate_loan: Crédit immobilier
         short_term_debt: Dette court terme
         security_deposit: Dépôt de garantie
+        other_credit: Autres crédits
   flash:
     properties:
       created: Bien immobilier créé avec succès.

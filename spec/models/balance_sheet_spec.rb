@@ -714,6 +714,20 @@ RSpec.describe BalanceSheet, type: :model do
       expect(series.first.sublabel).to be_nil
     end
 
+    it "gives the autres crédits a band of their own, before the dépôts de garantie" do
+      sheet = create(:balance_sheet, user: user)
+      credit = create(:liability, user: user, liability_type: :other_credit)
+      deposit = create(:liability, user: user, liability_type: :security_deposit)
+      create(:balance_sheet_liability, balance_sheet: sheet, liability: credit, remaining_capital: 8_000)
+      create(:balance_sheet_liability, balance_sheet: sheet, liability: deposit, remaining_capital: 1_200)
+
+      series = BalanceSheet.liabilities_breakdown_for([sheet])
+
+      expect(series.map(&:key)).to eq(%w[other_credit security_deposit])
+      expect(series.first.full_label).to eq("Autres crédits")
+      expect(series.first.values).to eq([8_000])
+    end
+
     it "adds up to the total the balance sheet reports" do
       sheet = create(:balance_sheet, user: user)
       loan = create(:liability, user: user, liability_type: :real_estate_loan, ownership_share: 50)

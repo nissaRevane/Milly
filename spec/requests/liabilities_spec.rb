@@ -118,9 +118,19 @@ RSpec.describe "Liabilities", type: :request do
 
       expect(response).to have_http_status(:success)
       hint = Nokogiri::HTML(response.body).at_css(".empty-state")
-      expect(hint.text).to include("Les tableaux d'amortissement ne concernent que les prêts immobiliers.")
+      expect(hint.text).to include("Les tableaux d'amortissement ne concernent que les crédits.")
       expect(hint.text).not_to include("Renseignez les caractéristiques du prêt")
       expect(response.body).not_to include("amortization-table")
+    end
+
+    it "renders the amortization schedule of an autre crédit" do
+      liability = create(:liability, :amortizable, user: user, liability_type: :other_credit, name: "Prêt auto")
+
+      get liability_path(liability)
+
+      expect(response).to have_http_status(:success)
+      expect(Nokogiri::HTML(response.body).css(".amortization-table tbody tr").length)
+        .to eq(liability.amortization_schedule.rows.length)
     end
 
     it "does not show another user's liability" do
@@ -162,11 +172,19 @@ RSpec.describe "Liabilities", type: :request do
       expect(amortization_fieldset).not_to be_nil
       expect(amortization_fieldset.attribute("hidden")).to be_nil
       expect(response.body).to include('data-controller="conditional-fields"')
-      expect(amortization_fieldset["data-conditional-fields-show-when"]).to eq("real_estate_loan")
+      expect(amortization_fieldset["data-conditional-fields-show-when"]).to eq("real_estate_loan other_credit")
     end
 
     it "shows the fieldset when editing a real estate loan" do
       liability = create(:liability, user: user, liability_type: :real_estate_loan)
+
+      get edit_liability_path(liability)
+
+      expect(amortization_fieldset.attribute("hidden")).to be_nil
+    end
+
+    it "shows the fieldset when editing an autre crédit" do
+      liability = create(:liability, user: user, liability_type: :other_credit)
 
       get edit_liability_path(liability)
 

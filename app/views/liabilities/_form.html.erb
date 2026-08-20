@@ -49,12 +49,12 @@
   <%= render "shared/lifespan_fields", f: f %>
 
   <%#
-    Visible seulement pour un crédit immobilier (masqué côté serveur pour éviter tout
-    flash) ; la validation modèle reste le filet de sécurité côté serveur.
+    Visible seulement pour les types de crédits qui s'amortissent (masqué côté serveur pour
+    éviter tout flash) ; la validation modèle reste le filet de sécurité côté serveur.
   %>
   <fieldset class="form-fieldset" data-conditional-fields-target="fields"
-      data-conditional-fields-show-when="real_estate_loan"
-      <%= "hidden" unless liability.real_estate_loan? %>>
+      data-conditional-fields-show-when="<%= amortizable_liability_types %>"
+      <%= "hidden" unless liability.amortizable_type? %>>
     <legend><%= t("views.liabilities.form.amortization_legend") %></legend>
     <p class="form-hint"><%= t("views.liabilities.form.amortization_hint") %></p>
 

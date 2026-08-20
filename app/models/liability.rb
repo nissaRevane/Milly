@@ -4,9 +4,9 @@ class Liability < ApplicationRecord
   include RiskCategorizable
   include Shareable
 
-  # Les sept caractéristiques d'amortissement d'un crédit immobilier. Elles vont
-  # ensemble : sans l'une d'elles le tableau d'amortissement est incalculable, d'où le
-  # tout-ou-rien imposé par la validation ci-dessous.
+  # Les sept caractéristiques d'amortissement d'un crédit. Elles vont ensemble : sans
+  # l'une d'elles le tableau d'amortissement est incalculable, d'où le tout-ou-rien
+  # imposé par la validation ci-dessous.
   AMORTIZATION_FIELDS = %i[
     borrowed_capital
     annual_rate
@@ -23,7 +23,8 @@ class Liability < ApplicationRecord
   enum :liability_type, {
     real_estate_loan: 0,
     short_term_debt: 1,
-    security_deposit: 2
+    security_deposit: 2,
+    other_credit: 3
   }, validate: true
 
   # Les deux passifs qu'un bien porte réellement : le crédit qui l'a financé et le dépôt de
@@ -31,9 +32,16 @@ class Liability < ApplicationRecord
   # (voir PropertyLinkable).
   PROPERTY_LINKABLE_TYPES = %w[real_estate_loan security_deposit].freeze
 
+  # Les deux types de crédits qui s'amortissent par mensualités constantes : le prêt
+  # immobilier, porté par le bien qu'il finance, et l'« autre crédit » — auto, travaux,
+  # consommation — qu'aucun bien ne porte (voir PROPERTY_LINKABLE_TYPES). Les autres
+  # passifs, dette court terme et dépôt de garantie, n'ont pas d'échéancier : leur montant
+  # se saisit bilan par bilan.
+  AMORTIZABLE_TYPES = %w[real_estate_loan other_credit].freeze
+
   validates :name, presence: true
   validate :amortization_fields_all_or_nothing
-  validate :amortization_reserved_for_real_estate_loans
+  validate :amortization_reserved_for_credits
 
   with_options if: :any_amortization_field? do
     validates :borrowed_capital, numericality: { greater_than: 0 }, allow_nil: true
@@ -55,6 +63,13 @@ class Liability < ApplicationRecord
 
   def property_linkable?
     PROPERTY_LINKABLE_TYPES.include?(liability_type)
+  end
+
+  # Ce type de passif peut-il porter un tableau d'amortissement ? La question porte sur le
+  # TYPE seul — le formulaire s'en sert pour montrer ou masquer le bloc de saisie — là où
+  # #amortizable? répond sur les champs effectivement renseignés.
+  def amortizable_type?
+    AMORTIZABLE_TYPES.include?(liability_type)
   end
 
   def amortizable?
@@ -89,13 +104,13 @@ class Liability < ApplicationRecord
     (AMORTIZATION_FIELDS - filled).each { |field| errors.add(field, :blank) }
   end
 
-  # Seul un crédit immobilier s'amortit par mensualités constantes : les autres types
-  # de passifs ne portent pas de tableau d'amortissement.
-  def amortization_reserved_for_real_estate_loans
+  # Seul un crédit s'amortit par mensualités constantes : les autres types de passifs ne
+  # portent pas de tableau d'amortissement.
+  def amortization_reserved_for_credits
     return unless any_amortization_field?
-    return if real_estate_loan?
+    return if amortizable_type?
 
-    errors.add(:liability_type, :amortization_reserved_for_real_estate_loans)
+    errors.add(:liability_type, :amortization_reserved_for_credits)
   end
 
   def first_payment_principal_within_borrowed_capital

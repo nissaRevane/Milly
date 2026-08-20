@@ -106,11 +106,12 @@ class BalanceSheet < ApplicationRecord
     { key: "financial_investment", types: %w[financial_investment] }
   ].freeze
 
-  # Le passif garde ses catégories d'origine, ordonnées en partant de l'axe : le fourre-tout
-  # d'abord — ce qui n'est adossé à aucun bien — puis les dépôts de garantie, puis les crédits
-  # immobiliers et leur détail par usage.
+  # Le passif garde ses catégories d'origine, ordonnées en partant de l'axe : d'abord ce qui
+  # n'est adossé à aucun bien — les dettes diverses, puis les autres crédits — puis les
+  # dépôts de garantie, puis les crédits immobiliers et leur détail par usage.
   LIABILITY_CATEGORIES = [
     { key: "short_term_debt", types: %w[short_term_debt] },
+    { key: "other_credit", types: %w[other_credit] },
     { key: "security_deposit", types: %w[security_deposit] },
     { key: "real_estate_loan", types: %w[real_estate_loan], split: true }
   ].freeze

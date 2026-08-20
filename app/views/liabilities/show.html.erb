@@ -62,7 +62,7 @@
       </table>
     </div>
   </div>
-<% elsif @liability.real_estate_loan? %>
+<% elsif @liability.amortizable_type? %>
   <p class="empty-state"><%= t("views.liabilities.show.no_schedule") %></p>
 <% else %>
   <p class="empty-state"><%= t("views.liabilities.show.no_schedule_unavailable") %></p>

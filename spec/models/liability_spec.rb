@@ -34,6 +34,18 @@ RSpec.describe Liability, type: :model do
       expect(liability.errors[:property]).to eq(["n'est pas valide"])
     end
 
+    # Un autre crédit — auto, travaux, consommation — s'amortit comme un prêt immobilier
+    # mais aucun bien ne le porte.
+    it "rejects a property on an autre crédit" do
+      property = create(:property)
+      liability = build(:liability, user: property.user, property: property, liability_type: :other_credit)
+
+      expect(liability).not_to be_valid
+      expect(liability.errors[:property]).to eq(
+        ["ne se rattache qu'à un crédit immobilier ou à un dépôt de garantie"]
+      )
+    end
+
     # Une dette court terme — des travaux à payer, un découvert — n'est portée par aucun
     # bien : elle reste une dette de l'utilisateur.
     it "rejects a property on a dette court terme" do
@@ -126,7 +138,7 @@ RSpec.describe Liability, type: :model do
     it { is_expected.to define_enum_for(:risk_level).with_values(low: 0, medium: 1, high: 2).validating }
     it {
       is_expected.to define_enum_for(:liability_type).with_values(
-        real_estate_loan: 0, short_term_debt: 1, security_deposit: 2
+        real_estate_loan: 0, short_term_debt: 1, security_deposit: 2, other_credit: 3
       ).validating
     }
   end
@@ -155,11 +167,15 @@ RSpec.describe Liability, type: :model do
       end
     end
 
-    it "reserves the fields for real estate loans" do
+    it "accepts an autre crédit carrying the seven fields" do
+      expect(build(:liability, :amortizable, liability_type: :other_credit)).to be_valid
+    end
+
+    it "reserves the fields for credits" do
       liability = build(:liability, :amortizable, liability_type: :security_deposit).tap(&:valid?)
 
       expect(liability.errors[:liability_type])
-        .to include("doit être « Crédit immobilier » pour porter un tableau d'amortissement")
+        .to include("doit être « Crédit immobilier » ou « Autres crédits » pour porter un tableau d'amortissement")
     end
 
     it "rejects non-positive amounts and durations" do
@@ -188,6 +204,15 @@ RSpec.describe Liability, type: :model do
 
     it "accepts a zero rate" do
       expect(build(:liability, :amortizable, annual_rate: 0)).to be_valid
+    end
+  end
+
+  describe "#amortizable_type?" do
+    it "answers on the type alone, whatever the fields hold" do
+      expect(build(:liability, liability_type: :real_estate_loan)).to be_amortizable_type
+      expect(build(:liability, liability_type: :other_credit)).to be_amortizable_type
+      expect(build(:liability, liability_type: :short_term_debt)).not_to be_amortizable_type
+      expect(build(:liability, liability_type: :security_deposit)).not_to be_amortizable_type
     end
   end
 
@@ -234,6 +259,7 @@ RSpec.describe Liability, type: :model do
     it "returns the French label for the other types" do
       expect(build(:liability, liability_type: :short_term_debt).liability_type_label).to eq("Dette court terme")
       expect(build(:liability, liability_type: :security_deposit).liability_type_label).to eq("Dépôt de garantie")
+      expect(build(:liability, liability_type: :other_credit).liability_type_label).to eq("Autres crédits")
     end
   end
 

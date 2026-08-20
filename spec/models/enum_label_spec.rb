@@ -10,6 +10,7 @@ RSpec.describe EnumLabel do
     it "returns the French label for a known liability type key" do
       expect(described_class.for("liability_types", "real_estate_loan")).to eq("Crédit immobilier")
       expect(described_class.for("liability_types", "security_deposit")).to eq("Dépôt de garantie")
+      expect(described_class.for("liability_types", "other_credit")).to eq("Autres crédits")
     end
 
     it "accepts symbol values" do

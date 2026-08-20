@@ -40,6 +40,12 @@ module ApplicationHelper
     Liability::PROPERTY_LINKABLE_TYPES.join(" ")
   end
 
+  # Les types de passifs qui portent un tableau d'amortissement, dans la même forme lue par
+  # le contrôleur Stimulus : une liste séparée par des espaces.
+  def amortizable_liability_types
+    Liability::AMORTIZABLE_TYPES.join(" ")
+  end
+
   def liability_type_label(type)
     Liability.liability_type_label_for(type)
   end
