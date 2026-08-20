@@ -2,7 +2,6 @@ class Asset < ApplicationRecord
   include Historizable
   include Lifespanable
   include PropertyLinkable
-  include RiskCategorizable
   include Shareable
 
   belongs_to :user

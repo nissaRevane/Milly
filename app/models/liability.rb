@@ -2,7 +2,6 @@ class Liability < ApplicationRecord
   include Historizable
   include Lifespanable
   include PropertyLinkable
-  include RiskCategorizable
   include Shareable
 
   # Les sept caractéristiques d'amortissement d'un crédit. Elles vont ensemble : sans

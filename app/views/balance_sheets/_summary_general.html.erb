@@ -43,26 +43,6 @@
       <% end %>
     </div>
 
-    <div class="summary-risk-section">
-      <% if @assets_by_risk.any? %>
-        <div class="summary-risk-group">
-          <h3 class="summary-risk-title"><%= t("views.balance_sheets.summary.risk_breakdown") %></h3>
-          <table class="table table-compact">
-            <tbody>
-              <% %w[low medium high].each do |level| %>
-                <% items = @assets_by_risk.fetch(level, []) %>
-                <% next if items.empty? %>
-                <tr>
-                  <td><span class="badge <%= risk_level_badge_class(level) %>"><%= risk_level_label(level) %></span></td>
-                  <td class="text-right"><%= number_to_currency(items.sum(&:owned_value)) %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      <% end %>
-    </div>
-
     <div class="summary-total summary-total-assets">
       <span><%= t("views.balance_sheets.summary.total_assets") %></span>
       <span class="amount-with-variation">
@@ -106,26 +86,6 @@
             </tbody>
           </table>
         </details>
-      <% end %>
-    </div>
-
-    <div class="summary-risk-section">
-      <% if @liabilities_by_risk.any? %>
-        <div class="summary-risk-group">
-          <h3 class="summary-risk-title"><%= t("views.balance_sheets.summary.risk_breakdown") %></h3>
-          <table class="table table-compact">
-            <tbody>
-              <% %w[low medium high].each do |level| %>
-                <% items = @liabilities_by_risk.fetch(level, []) %>
-                <% next if items.empty? %>
-                <tr>
-                  <td><span class="badge <%= risk_level_badge_class(level) %>"><%= risk_level_label(level) %></span></td>
-                  <td class="text-right"><%= number_to_currency(items.sum(&:owned_remaining_capital)) %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
       <% end %>
     </div>
 

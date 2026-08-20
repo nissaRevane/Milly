@@ -37,14 +37,6 @@
           class: "inline-edit-input", data: inline_edit_input_data %>
   <% end %>
 
-  <%= render layout: "shared/inline_fact",
-             locals: { record: @asset, tab: @tab,
-                       label: t("views.assets.form.risk_level"),
-                       display: @asset.risk_level_label } do |f| %>
-    <%= f.select :risk_level, risk_level_options, {},
-          class: "inline-edit-input", data: inline_edit_input_data(on_change: true) %>
-  <% end %>
-
   <%# Les deux bornes de la période d'existence, facultatives : sans elles, l'actif peut
       entrer dans n'importe quel bilan (voir Lifespanable). %>
   <%= render layout: "shared/inline_fact",

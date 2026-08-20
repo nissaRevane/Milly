@@ -150,22 +150,19 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(cash_header.at_css(".table-group-amount").text.gsub(/\s+/, " ").strip).to eq(currency(1_500).gsub(/\s+/, " "))
     end
 
-    # Le type est déjà écrit sur l'en-tête du groupe : la ligne n'a plus qu'un nom, et c'est
-    # la couleur de sa pastille qui porte le risque. Le libellé reste en infobulle, une
-    # couleur seule ne disant rien à qui ne la voit pas.
-    it "colors each line by its risk level and names it in the tooltip" do
+    # Le type est déjà écrit sur l'en-tête du groupe : la ligne n'a plus qu'un nom, en clair.
+    it "names each line under the header of its type" do
       bs = create(:balance_sheet, user: user)
-      asset = create(:asset, user: user, name: "Livret A", asset_type: :cash, risk_level: :low)
+      asset = create(:asset, user: user, name: "Livret A", asset_type: :cash)
       create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 1_000)
 
       get balance_sheet_path(bs)
 
       doc = Nokogiri::HTML(response.body)
       row = doc.at_css(".balance-sheet-columns table.table tbody tr:not(.table-group-header)")
-      badge = row.at_css(".badge.badge-success")
 
-      expect(badge.text.strip).to eq("Livret A")
-      expect(badge["title"]).to eq("Faible")
+      expect(row.at_css(".cell-title").text.strip).to eq("Livret A")
+      expect(row.css(".cell-title .badge")).to be_empty
     end
 
     it "replaces the edit link with an inline value form on each line" do
@@ -408,16 +405,6 @@ RSpec.describe "BalanceSheets", type: :request do
           doc = Nokogiri::HTML(response.body)
           expect(doc.at_css(".chart-donut-total").text.strip).to eq(variation_currency(200_000))
           expect(doc.css(".chart-donut-note")).to be_empty
-        end
-
-        # Le détail par niveau de risque se lit dans la synthèse, qui le tient en toutes
-        # lettres : le répéter en barres ici allongeait la page sans rien y ajouter.
-        it "no longer breaks the actifs down by niveau de risque" do
-          bs = build_property_sheet
-
-          get summary_balance_sheet_path(bs, tab: "dashboard")
-
-          expect(response.body).not_to include("Actifs par niveau de risque")
         end
 
         # Les parts de l'anneau sont des cercles en pointillés : sans le trait d'union dans
@@ -841,20 +828,11 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "omits the risk breakdown headings when the balance sheet is empty" do
-      bs = create(:balance_sheet, user: user)
-
-      get summary_balance_sheet_path(bs)
-
-      expect(response).to have_http_status(:success)
-      expect(response.body).not_to include("Répartition par risque")
-    end
-
     it "groups assets and liabilities by type" do
       bs = create(:balance_sheet, user: user)
-      cash = create(:asset, user: user, name: "Espèces", asset_type: :cash, risk_level: :low)
-      immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate, risk_level: :medium)
-      debt = create(:liability, user: user, name: "Prêt", risk_level: :low, liability_type: :real_estate_loan)
+      cash = create(:asset, user: user, name: "Espèces", asset_type: :cash)
+      immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      debt = create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
       create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 1_000)
       create(:balance_sheet_asset, balance_sheet: bs, asset: immo, value: 200_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: debt, remaining_capital: 150_000)
@@ -866,7 +844,6 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response.body).to include("Immobilier")
       expect(response.body).to include("Prêt")
       expect(response.body).to include("Crédit immobilier")
-      expect(response.body).to include("Répartition par risque")
     end
 
     it "collapses each category behind its total amount" do

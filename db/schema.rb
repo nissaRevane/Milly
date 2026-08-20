@@ -10,14 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000017) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_01_000018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "assets", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
-    t.integer "risk_level", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "asset_type", default: 1, null: false
@@ -63,7 +62,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000017) do
   create_table "liabilities", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
-    t.integer "risk_level", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "liability_type", default: 0, null: false

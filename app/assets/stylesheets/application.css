@@ -8,7 +8,6 @@
   --color-primary: #2563eb;
   --color-primary-dark: #1d4ed8;
   --color-success: #16a34a;
-  --color-warning: #d97706;
   --color-danger: #dc2626;
   --color-bg: #f8fafc;
   --color-surface: #ffffff;
@@ -466,20 +465,6 @@ a.nav-user-name:hover {
   font-weight: 600;
 }
 
-.badge-success {
-  background: #dcfce7;
-  color: var(--color-success);
-}
-
-.badge-warning {
-  background: #fef3c7;
-  color: var(--color-warning);
-}
-
-.badge-danger {
-  background: #fee2e2;
-  color: var(--color-danger);
-}
 
 .badge-secondary {
   background: #f1f5f9;
@@ -786,10 +771,10 @@ a.summary-nav-arrow:hover {
 }
 
 /*
- * Both columns share the same four rows (title / categories / risk breakdown /
- * total) so the risk breakdowns and the totals line up horizontally whatever
- * the number of categories on each side. The flex rules above are the fallback
- * for browsers without subgrid: they only align the totals, at the bottom.
+ * Both columns share the same three rows (title / categories / total) so the
+ * totals line up horizontally whatever the number of categories on each side.
+ * The flex rules above are the fallback for browsers without subgrid: they only
+ * align the totals, at the bottom.
  */
 @media (min-width: 769px) {
   .summary-categories {
@@ -798,7 +783,7 @@ a.summary-nav-arrow:hover {
 
   @supports (grid-template-rows: subgrid) {
     .summary-grid {
-      grid-template-rows: auto 1fr auto auto;
+      grid-template-rows: auto 1fr auto;
       column-gap: 2rem;
       row-gap: 0;
     }
@@ -806,7 +791,7 @@ a.summary-nav-arrow:hover {
     .summary-column {
       display: grid;
       grid-template-rows: subgrid;
-      grid-row: span 4;
+      grid-row: span 3;
     }
   }
 }
@@ -896,14 +881,6 @@ a.summary-nav-arrow:hover {
 
 .summary-category .table tr:last-child td {
   border-bottom: none;
-}
-
-.summary-risk-group {
-  margin-bottom: 1.5rem;
-}
-
-.summary-risk-title {
-  margin-bottom: 0.5rem;
 }
 
 .summary-total {

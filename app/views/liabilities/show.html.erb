@@ -15,10 +15,7 @@
               title="<%= t("views.liabilities.show.click_to_edit_name") %>">
         <%= @liability.name %>
       </button>
-      <span class="badge <%= risk_level_badge_class(@liability.risk_level) %>"
-            title="<%= risk_level_label(@liability.risk_level) %>">
-        <%= @liability.liability_type_label %>
-      </span>
+      <span class="badge badge-secondary"><%= @liability.liability_type_label %></span>
     </h1>
     <%= form_with model: @liability, class: "inline-edit-form",
                   data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },

@@ -57,7 +57,6 @@ class AccountExport
   def asset_data(asset)
     {
       "name" => asset.name,
-      "risk_level" => asset.risk_level,
       "asset_type" => asset.asset_type,
       "ownership_share" => number(asset.ownership_share),
       "property" => asset.property&.name,
@@ -72,7 +71,6 @@ class AccountExport
   def liability_data(liability)
     data = {
       "name" => liability.name,
-      "risk_level" => liability.risk_level,
       "liability_type" => liability.liability_type,
       "ownership_share" => number(liability.ownership_share),
       "property" => liability.property&.name,

@@ -32,10 +32,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Features
 
-- **Assets management:** Create, edit, delete your assets with risk levels (low/medium/high)
-- **Liabilities management:** Create, edit, delete your liabilities with risk levels
+- **Assets management:** Create, edit, delete your assets
+- **Liabilities management:** Create, edit, delete your liabilities
 - **Balance Sheets:** Create balance sheets with a closing date, add asset/liability lines with values
-- **Summary view:** Two-column view organized by risk level showing assets vs liabilities, subtotals, and equity
+- **Summary view:** Two-column view organized by type showing assets vs liabilities, subtotals, and equity
 
 ## Running Tests
 
@@ -50,7 +50,7 @@ app/
 ├── controllers/        # All controllers (Assets, Liabilities, BalanceSheets, etc.)
 ├── models/             # ActiveRecord models with validations and associations
 ├── views/              # ERB templates with Hotwire
-├── helpers/            # View helpers (risk level labels, badges)
+├── helpers/            # View helpers (type labels, badges, amounts)
 ├── javascript/         # Stimulus controllers
 └── assets/             # CSS styles
 config/
@@ -69,8 +69,8 @@ spec/
 ## Data Model
 
 - **User** → has many Assets, Liabilities, BalanceSheets
-- **Asset** → belongs to User (name, risk_level)
-- **Liability** → belongs to User (name, risk_level)
+- **Asset** → belongs to User (name, asset_type)
+- **Liability** → belongs to User (name, liability_type)
 - **BalanceSheet** → belongs to User (closing_date)
 - **BalanceSheetAsset** → belongs to BalanceSheet + Asset (value)
 - **BalanceSheetLiability** → belongs to BalanceSheet + Liability (remaining_capital)

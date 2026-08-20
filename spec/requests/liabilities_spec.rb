@@ -11,24 +11,24 @@ RSpec.describe "Liabilities", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "orders liabilities by type, then risk level, then name" do
-      create(:liability, user: user, name: "Zeta", liability_type: :real_estate_loan, risk_level: :low)
-      create(:liability, user: user, name: "Aaa", liability_type: :real_estate_loan, risk_level: :low)
-      create(:liability, user: user, name: "Beta", liability_type: :real_estate_loan, risk_level: :high)
-      create(:liability, user: user, name: "Alpha", liability_type: :security_deposit, risk_level: :low)
+    it "orders liabilities by type, then name" do
+      create(:liability, user: user, name: "Zeta", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Aaa", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Beta", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Alpha", liability_type: :security_deposit)
 
       get liabilities_path
 
-      positions = ["Aaa", "Zeta", "Beta", "Alpha"].map { |name| response.body.index(name) }
+      positions = ["Aaa", "Beta", "Zeta", "Alpha"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
 
-    it "colors the liability type badge with the risk level" do
-      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan, risk_level: :low)
+    it "names the type of each liability on a badge" do
+      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
 
       get liabilities_path
 
-      expect(response.body).to include('<span class="badge badge-success" title="Faible">')
+      expect(response.body).to include('<span class="badge badge-secondary">')
       expect(response.body).to include("Crédit immobilier")
     end
 
@@ -93,9 +93,8 @@ RSpec.describe "Liabilities", type: :request do
       # propre formulaire vers l'update, et aucun ne mène à une page de saisie séparée.
       expect(doc.at_css("h1 .inline-edit-trigger").text.strip).to eq("Prêt maison")
       forms = doc.css("form.inline-edit-form[action='#{liability_path(liability)}']")
-      expect(forms.length).to be >= 6
+      expect(forms.length).to be >= 5
       expect(doc.at_css("select#liability_liability_type")).not_to be_nil
-      expect(doc.at_css("select#liability_risk_level")).not_to be_nil
       expect(doc.at_css("input#liability_ownership_share")).not_to be_nil
       expect(doc.at_css("input#liability_started_on")).not_to be_nil
       expect(doc.at_css("input#liability_ended_on")).not_to be_nil
@@ -295,7 +294,7 @@ RSpec.describe "Liabilities", type: :request do
   describe "POST /liabilities" do
     it "creates a new liability" do
       expect {
-        post liabilities_path, params: { liability: { name: "Prêt immobilier", risk_level: "low", liability_type: "real_estate_loan" } }
+        post liabilities_path, params: { liability: { name: "Prêt immobilier", liability_type: "real_estate_loan" } }
       }.to change(Liability, :count).by(1)
 
       expect(Liability.last.liability_type).to eq("real_estate_loan")
@@ -303,7 +302,7 @@ RSpec.describe "Liabilities", type: :request do
     end
 
     it "creates a liability with its lifespan" do
-      post liabilities_path, params: { liability: { name: "Prêt immobilier", risk_level: "low",
+      post liabilities_path, params: { liability: { name: "Prêt immobilier",
                                                    liability_type: "real_estate_loan",
                                                    started_on: "2020-02-01", ended_on: "2040-01-31" } }
 
@@ -314,7 +313,7 @@ RSpec.describe "Liabilities", type: :request do
 
     it "does not create with a lifespan ending before it starts" do
       expect {
-        post liabilities_path, params: { liability: { name: "Prêt", risk_level: "low",
+        post liabilities_path, params: { liability: { name: "Prêt",
                                                      liability_type: "real_estate_loan",
                                                      started_on: "2020-06-01", ended_on: "2020-05-31" } }
       }.not_to change(Liability, :count)
@@ -324,7 +323,7 @@ RSpec.describe "Liabilities", type: :request do
 
     it "does not create with an unknown liability type" do
       expect {
-        post liabilities_path, params: { liability: { name: "X", risk_level: "low", liability_type: "bogus" } }
+        post liabilities_path, params: { liability: { name: "X", liability_type: "bogus" } }
       }.not_to change(Liability, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -332,7 +331,7 @@ RSpec.describe "Liabilities", type: :request do
 
     it "does not create with invalid params" do
       expect {
-        post liabilities_path, params: { liability: { name: "", risk_level: "low" } }
+        post liabilities_path, params: { liability: { name: "" } }
       }.not_to change(Liability, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -341,7 +340,7 @@ RSpec.describe "Liabilities", type: :request do
     it "creates a liability with the submitted ownership share" do
       expect {
         post liabilities_path, params: {
-          liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", ownership_share: "60" }
+          liability: { name: "Prêt", liability_type: "real_estate_loan", ownership_share: "60" }
         }
       }.to change(Liability, :count).by(1)
 
@@ -353,7 +352,7 @@ RSpec.describe "Liabilities", type: :request do
       expect {
         post liabilities_path, params: {
           liability: {
-            name: "Prêt maison", risk_level: "low", liability_type: "real_estate_loan",
+            name: "Prêt maison", liability_type: "real_estate_loan",
             borrowed_capital: "200000", annual_rate: "3.125", duration_months: "240",
             monthly_payment: "1109.20", first_payment_on: "2024-03-05",
             first_payment_principal: "650", first_payment_interest: "312.50"
@@ -372,7 +371,7 @@ RSpec.describe "Liabilities", type: :request do
       expect {
         post liabilities_path, params: {
           liability: {
-            name: "Prêt maison", risk_level: "low", liability_type: "real_estate_loan",
+            name: "Prêt maison", liability_type: "real_estate_loan",
             borrowed_capital: "200000"
           }
         }
@@ -384,7 +383,7 @@ RSpec.describe "Liabilities", type: :request do
     it "does not create with an ownership share above 100" do
       expect {
         post liabilities_path, params: {
-          liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", ownership_share: "150" }
+          liability: { name: "Prêt", liability_type: "real_estate_loan", ownership_share: "150" }
         }
       }.not_to change(Liability, :count)
 
@@ -442,7 +441,7 @@ RSpec.describe "Liabilities", type: :request do
       property = create(:property, user: user)
 
       post liabilities_path, params: {
-        liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", property_id: property.id }
+        liability: { name: "Prêt", liability_type: "real_estate_loan", property_id: property.id }
       }
 
       expect(Liability.last.property).to eq(property)
@@ -453,7 +452,7 @@ RSpec.describe "Liabilities", type: :request do
       property = create(:property, user: user, usage: :rental)
 
       post liabilities_path, params: {
-        liability: { name: "Dépôt Studio", risk_level: "low", liability_type: "security_deposit",
+        liability: { name: "Dépôt Studio", liability_type: "security_deposit",
                      property_id: property.id }
       }
 
@@ -467,7 +466,7 @@ RSpec.describe "Liabilities", type: :request do
       property = create(:property, user: user)
 
       post liabilities_path, params: {
-        liability: { name: "Travaux", risk_level: "low", liability_type: "short_term_debt",
+        liability: { name: "Travaux", liability_type: "short_term_debt",
                      property_id: property.id }
       }
 
@@ -504,7 +503,7 @@ RSpec.describe "Liabilities", type: :request do
       foreign = create(:property, user: create(:user), name: "Villa du voisin")
 
       post liabilities_path, params: {
-        liability: { name: "Prêt", risk_level: "low", liability_type: "real_estate_loan", property_id: foreign.id }
+        liability: { name: "Prêt", liability_type: "real_estate_loan", property_id: foreign.id }
       }
 
       expect(Liability.last.property_id).to be_nil

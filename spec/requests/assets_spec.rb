@@ -11,24 +11,24 @@ RSpec.describe "Assets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "orders assets by type, then risk level, then name" do
-      create(:asset, user: user, name: "Zeta", asset_type: :checking_account, risk_level: :low)
-      create(:asset, user: user, name: "Aaa", asset_type: :checking_account, risk_level: :low)
-      create(:asset, user: user, name: "Beta", asset_type: :checking_account, risk_level: :high)
-      create(:asset, user: user, name: "Alpha", asset_type: :real_estate, risk_level: :low)
+    it "orders assets by type, then name" do
+      create(:asset, user: user, name: "Zeta", asset_type: :checking_account)
+      create(:asset, user: user, name: "Aaa", asset_type: :checking_account)
+      create(:asset, user: user, name: "Beta", asset_type: :checking_account)
+      create(:asset, user: user, name: "Alpha", asset_type: :real_estate)
 
       get assets_path
 
-      positions = ["Aaa", "Zeta", "Beta", "Alpha"].map { |name| response.body.index(name) }
+      positions = ["Aaa", "Beta", "Zeta", "Alpha"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
 
-    it "colors the asset type badge with the risk level" do
-      create(:asset, user: user, name: "Maison", asset_type: :real_estate, risk_level: :high)
+    it "names the type of each asset on a badge" do
+      create(:asset, user: user, name: "Maison", asset_type: :real_estate)
 
       get assets_path
 
-      expect(response.body).to include('<span class="badge badge-danger" title="Élevé">')
+      expect(response.body).to include('<span class="badge badge-secondary">')
       expect(response.body).to include("Immobilier")
     end
 
@@ -93,9 +93,8 @@ RSpec.describe "Assets", type: :request do
       # propre formulaire vers l'update, et aucun ne mène à une page de saisie séparée.
       expect(doc.at_css("h1 .inline-edit-trigger").text.strip).to eq("Livret A")
       forms = doc.css("form.inline-edit-form[action='#{asset_path(asset)}']")
-      expect(forms.length).to be >= 6
+      expect(forms.length).to be >= 5
       expect(doc.at_css("select#asset_asset_type")).not_to be_nil
-      expect(doc.at_css("select#asset_risk_level")).not_to be_nil
       expect(doc.at_css("input#asset_ownership_share")).not_to be_nil
       expect(doc.at_css("input#asset_started_on")).not_to be_nil
       expect(doc.at_css("input#asset_ended_on")).not_to be_nil
@@ -175,7 +174,7 @@ RSpec.describe "Assets", type: :request do
   describe "POST /assets" do
     it "creates a new asset" do
       expect {
-        post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account" } }
+        post assets_path, params: { asset: { name: "Livret A", asset_type: "savings_account" } }
       }.to change(Asset, :count).by(1)
 
       expect(Asset.last.asset_type).to eq("savings_account")
@@ -183,7 +182,7 @@ RSpec.describe "Assets", type: :request do
     end
 
     it "creates an asset with its lifespan" do
-      post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account",
+      post assets_path, params: { asset: { name: "Livret A", asset_type: "savings_account",
                                           started_on: "2020-01-05", ended_on: "2023-09-30" } }
 
       asset = Asset.last
@@ -193,7 +192,7 @@ RSpec.describe "Assets", type: :request do
 
     it "does not create with a lifespan ending before it starts" do
       expect {
-        post assets_path, params: { asset: { name: "Livret A", risk_level: "low", asset_type: "savings_account",
+        post assets_path, params: { asset: { name: "Livret A", asset_type: "savings_account",
                                             started_on: "2020-06-01", ended_on: "2020-05-31" } }
       }.not_to change(Asset, :count)
 
@@ -202,7 +201,7 @@ RSpec.describe "Assets", type: :request do
 
     it "does not create with an unknown asset type" do
       expect {
-        post assets_path, params: { asset: { name: "X", risk_level: "low", asset_type: "bogus" } }
+        post assets_path, params: { asset: { name: "X", asset_type: "bogus" } }
       }.not_to change(Asset, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -210,7 +209,7 @@ RSpec.describe "Assets", type: :request do
 
     it "does not create with invalid params" do
       expect {
-        post assets_path, params: { asset: { name: "", risk_level: "low" } }
+        post assets_path, params: { asset: { name: "" } }
       }.not_to change(Asset, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -219,7 +218,7 @@ RSpec.describe "Assets", type: :request do
     it "creates an asset with the submitted ownership share" do
       expect {
         post assets_path, params: {
-          asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", ownership_share: "60" }
+          asset: { name: "Maison", asset_type: "savings_account", ownership_share: "60" }
         }
       }.to change(Asset, :count).by(1)
 
@@ -230,7 +229,7 @@ RSpec.describe "Assets", type: :request do
     it "does not create with an ownership share above 100" do
       expect {
         post assets_path, params: {
-          asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", ownership_share: "150" }
+          asset: { name: "Maison", asset_type: "savings_account", ownership_share: "150" }
         }
       }.not_to change(Asset, :count)
 
@@ -260,7 +259,7 @@ RSpec.describe "Assets", type: :request do
 
     it "refuses a submitted immobilier type instead of saving another one" do
       expect {
-        post assets_path, params: { asset: { name: "Maison", risk_level: "low", asset_type: "real_estate" } }
+        post assets_path, params: { asset: { name: "Maison", asset_type: "real_estate" } }
       }.not_to change(Asset, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -272,7 +271,7 @@ RSpec.describe "Assets", type: :request do
 
       expect {
         post assets_path, params: {
-          asset: { name: "Autre", risk_level: "low", asset_type: "real_estate", property_id: property.id }
+          asset: { name: "Autre", asset_type: "real_estate", property_id: property.id }
         }
       }.not_to change(Asset, :count)
 
@@ -306,15 +305,13 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).to include("Maison")
       # Ce qui reste modifiable l'est sur place.
       expect(doc.at_css("input#asset_ownership_share")).not_to be_nil
-      expect(doc.at_css("select#asset_risk_level")).not_to be_nil
       expect(doc.at_css("input#asset_started_on")).not_to be_nil
     end
 
-    it "updates its risk level and ownership share" do
-      patch asset_path(asset), params: { asset: { risk_level: "high", ownership_share: "50" } }
+    it "updates its ownership share" do
+      patch asset_path(asset), params: { asset: { ownership_share: "50" } }
 
-      expect(asset.reload.risk_level).to eq("high")
-      expect(asset.ownership_share).to eq(50)
+      expect(asset.reload.ownership_share).to eq(50)
       expect(response).to redirect_to(asset_path(asset))
     end
 
@@ -395,7 +392,7 @@ RSpec.describe "Assets", type: :request do
       property = create(:property, user: user)
 
       post assets_path, params: {
-        asset: { name: "Travaux", risk_level: "low", asset_type: "receivable", property_id: property.id }
+        asset: { name: "Travaux", asset_type: "receivable", property_id: property.id }
       }
 
       expect(response).to redirect_to(assets_path)
@@ -418,7 +415,7 @@ RSpec.describe "Assets", type: :request do
       foreign = create(:property, user: create(:user), name: "Villa du voisin")
 
       post assets_path, params: {
-        asset: { name: "Maison", risk_level: "low", asset_type: "savings_account", property_id: foreign.id }
+        asset: { name: "Maison", asset_type: "savings_account", property_id: foreign.id }
       }
 
       created = user.assets.sole

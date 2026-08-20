@@ -33,7 +33,7 @@
           <td><%= link_to asset.name, asset_path(asset), class: "row-link" %></td>
           <td>
             <%= link_to asset_path(asset), class: "row-link" do %>
-              <span class="badge <%= risk_level_badge_class(asset.risk_level) %>" title="<%= risk_level_label(asset.risk_level) %>">
+              <span class="badge badge-secondary">
                 <%= asset.asset_type_label %>
               </span>
             <% end %>

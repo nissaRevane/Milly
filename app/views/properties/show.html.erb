@@ -53,9 +53,7 @@
           <tr>
             <td>
               <div class="cell-title"><%= asset.name %></div>
-              <span class="badge <%= risk_level_badge_class(asset.risk_level) %>" title="<%= risk_level_label(asset.risk_level) %>">
-                <%= asset.asset_type_label %>
-              </span>
+              <span class="badge badge-secondary"><%= asset.asset_type_label %></span>
             </td>
             <td class="text-right">
               <% line = @asset_lines[asset.id] %>
@@ -83,9 +81,7 @@
             <td>
               <%= link_to liability_path(liability), class: "row-link" do %>
                 <div class="cell-title"><%= liability.name %></div>
-                <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
-                  <%= liability.liability_type_label %>
-                </span>
+                <span class="badge badge-secondary"><%= liability.liability_type_label %></span>
               <% end %>
             </td>
             <td class="text-right">

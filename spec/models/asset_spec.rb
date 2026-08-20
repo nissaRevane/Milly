@@ -54,19 +54,6 @@ RSpec.describe Asset, type: :model do
       expect(asset.errors[:asset_type]).to be_present
     end
 
-    it "is invalid with an unknown risk level" do
-      asset = build(:asset)
-      asset.risk_level = "bogus"
-      expect(asset).not_to be_valid
-      expect(asset.errors[:risk_level]).to be_present
-    end
-
-    it "is invalid without a risk level" do
-      asset = build(:asset, risk_level: nil)
-      expect(asset).not_to be_valid
-      expect(asset.errors[:risk_level]).to be_present
-    end
-
     it "is invalid with an ownership share above 100" do
       asset = build(:asset, ownership_share: 101).tap(&:valid?)
       expect(asset).not_to be_valid
@@ -114,7 +101,6 @@ RSpec.describe Asset, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:risk_level).with_values(low: 0, medium: 1, high: 2).validating }
     it {
       is_expected.to define_enum_for(:asset_type).with_values(
         cash: 0, checking_account: 1, savings_account: 2, financial_investment: 3, real_estate: 4, receivable: 5
@@ -155,7 +141,7 @@ RSpec.describe Asset, type: :model do
     it "survives an update that leaves the type alone" do
       asset = create(:property).real_estate_asset
 
-      expect(asset.update(risk_level: :high, ownership_share: 50)).to be true
+      expect(asset.update(ownership_share: 50)).to be true
       expect(asset.reload.asset_type).to eq("real_estate")
     end
   end
@@ -218,13 +204,6 @@ RSpec.describe Asset, type: :model do
 
     it "is nil for any other asset" do
       expect(build(:asset, asset_type: :checking_account).suggested_value).to be_nil
-    end
-  end
-
-  describe "#risk_level_label" do
-    it "returns the French label for the risk level" do
-      asset = build(:asset, risk_level: :medium)
-      expect(asset.risk_level_label).to eq("Moyen")
     end
   end
 

@@ -86,9 +86,7 @@ class BalanceSheetsController < ApplicationController
       @year_ago = @balance_sheet.year_ago
       @yearly_variations = @year_ago && @balance_sheet.variations_against(@year_ago)
     else
-      @assets_by_risk = @balance_sheet.assets_by_risk_level
       @assets_by_type = @balance_sheet.assets_by_type
-      @liabilities_by_risk = @balance_sheet.liabilities_by_risk_level
       @liabilities_by_type = @balance_sheet.liabilities_by_type
       @variations = @previous && @balance_sheet.variations_against(@previous)
     end

@@ -31,7 +31,7 @@
           <td><%= link_to liability.name, liability_path(liability), class: "row-link" %></td>
           <td>
             <%= link_to liability_path(liability), class: "row-link" do %>
-              <span class="badge <%= risk_level_badge_class(liability.risk_level) %>" title="<%= risk_level_label(liability.risk_level) %>">
+              <span class="badge badge-secondary">
                 <%= liability.liability_type_label %>
               </span>
             <% end %>

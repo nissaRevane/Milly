@@ -10,7 +10,7 @@ class AssetsController < ApplicationController
 
   def index
     @asset_type_filter = params[:asset_type].presence_in(Asset.asset_types.keys)
-    @assets = current_user.assets.order(:asset_type, :risk_level, :name)
+    @assets = current_user.assets.order(:asset_type, :name)
     @assets = @assets.where(asset_type: @asset_type_filter) if @asset_type_filter
   end
 
@@ -106,9 +106,9 @@ class AssetsController < ApplicationController
   # qu'un défaut (voir Lifespanable).
   def permitted_asset_attributes
     lifespan = [:started_on, :ended_on]
-    return [:name, :risk_level, :asset_type, :ownership_share, *lifespan] unless @asset&.real_estate?
+    return [:name, :asset_type, :ownership_share, *lifespan] unless @asset&.real_estate?
 
     editable_name = @asset.owned_by_property? ? [] : [:name]
-    [*editable_name, :risk_level, :ownership_share, *lifespan]
+    [*editable_name, :ownership_share, *lifespan]
   end
 end

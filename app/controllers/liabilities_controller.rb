@@ -11,7 +11,7 @@ class LiabilitiesController < ApplicationController
 
   def index
     @liability_type_filter = params[:liability_type].presence_in(Liability.liability_types.keys)
-    @liabilities = current_user.liabilities.order(:liability_type, :risk_level, :name)
+    @liabilities = current_user.liabilities.order(:liability_type, :name)
     @liabilities = @liabilities.where(liability_type: @liability_type_filter) if @liability_type_filter
   end
 
@@ -89,7 +89,7 @@ class LiabilitiesController < ApplicationController
     drop_property_link_unless_linkable(
       scope_property_id(
         params.require(:liability).permit(
-          :name, :risk_level, :liability_type, :ownership_share, :property_id,
+          :name, :liability_type, :ownership_share, :property_id,
           :started_on, :ended_on,
           *Liability::AMORTIZATION_FIELDS
         )

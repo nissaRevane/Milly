@@ -24,20 +24,20 @@ RSpec.describe AccountExport do
     end
 
     it "exports assets and liabilities in creation order" do
-      create(:asset, user: user, name: "Liquidités", risk_level: :low, asset_type: :cash)
-      create(:asset, user: user, name: "Immobilier", risk_level: :medium, asset_type: :real_estate, ownership_share: 50)
-      create(:liability, user: user, name: "Dettes LT", risk_level: :low, liability_type: :real_estate_loan, ownership_share: 50)
+      create(:asset, user: user, name: "Liquidités", asset_type: :cash)
+      create(:asset, user: user, name: "Immobilier", asset_type: :real_estate, ownership_share: 50)
+      create(:liability, user: user, name: "Dettes LT", liability_type: :real_estate_loan, ownership_share: 50)
 
       data = described_class.new(user).to_h
 
       expect(data["assets"]).to eq([
-        { "name" => "Liquidités", "risk_level" => "low", "asset_type" => "cash", "ownership_share" => 100,
+        { "name" => "Liquidités", "asset_type" => "cash", "ownership_share" => 100,
           "property" => nil, "started_on" => nil, "ended_on" => nil },
-        { "name" => "Immobilier", "risk_level" => "medium", "asset_type" => "real_estate", "ownership_share" => 50,
+        { "name" => "Immobilier", "asset_type" => "real_estate", "ownership_share" => 50,
           "property" => nil, "started_on" => nil, "ended_on" => nil }
       ])
       expect(data["liabilities"]).to eq([
-        { "name" => "Dettes LT", "risk_level" => "low", "liability_type" => "real_estate_loan", "ownership_share" => 50,
+        { "name" => "Dettes LT", "liability_type" => "real_estate_loan", "ownership_share" => 50,
           "property" => nil, "started_on" => nil, "ended_on" => nil }
       ])
     end
@@ -96,7 +96,7 @@ RSpec.describe AccountExport do
       create(:liability, user: user, name: "Dette simple")
 
       expect(described_class.new(user).to_h["liabilities"].sole.keys).to eq(
-        %w[name risk_level liability_type ownership_share property started_on ended_on]
+        %w[name liability_type ownership_share property started_on ended_on]
       )
     end
 

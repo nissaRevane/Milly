@@ -129,12 +129,12 @@ class BalanceSheet < ApplicationRecord
     { key: "financial_investment", types: %w[financial_investment] }
   ].freeze
 
-  # Le passif garde ses catégories d'origine, ordonnées en partant de l'axe : d'abord ce qui
-  # n'est adossé à aucun bien — les dettes diverses, puis les autres crédits — puis les
-  # dépôts de garantie, puis les crédits immobiliers et leur détail par usage.
+  # Le passif s'ordonne en partant de l'axe : d'abord ce qui n'est adossé à aucun bien — les
+  # dettes diverses, qui rassemblent la dette court terme et les autres crédits, ces deux
+  # dettes du quotidien qu'aucun bien ne porte — puis les dépôts de garantie, puis les
+  # crédits immobiliers et leur détail par usage.
   LIABILITY_CATEGORIES = [
-    { key: "short_term_debt", types: %w[short_term_debt] },
-    { key: "other_credit", types: %w[other_credit] },
+    { key: "short_term_debt", types: %w[short_term_debt other_credit] },
     { key: "security_deposit", types: %w[security_deposit] },
     { key: "real_estate_loan", types: %w[real_estate_loan], split: true }
   ].freeze
@@ -308,28 +308,12 @@ class BalanceSheet < ApplicationRecord
     total_assets - total_liabilities
   end
 
-  def assets_by_risk_level
-    balance_sheet_assets
-      .includes(:asset)
-      .joins(:asset)
-      .order("assets.risk_level ASC, assets.name ASC")
-      .group_by { |bsa| bsa.asset.risk_level }
-  end
-
   def assets_by_type
     balance_sheet_assets
       .includes(:asset)
       .joins(:asset)
       .order("assets.asset_type ASC, assets.name ASC")
       .group_by { |bsa| bsa.asset.asset_type }
-  end
-
-  def liabilities_by_risk_level
-    balance_sheet_liabilities
-      .includes(:liability)
-      .joins(:liability)
-      .order("liabilities.risk_level ASC, liabilities.name ASC")
-      .group_by { |bsl| bsl.liability.risk_level }
   end
 
   def liabilities_by_type
