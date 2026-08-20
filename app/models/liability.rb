@@ -69,6 +69,15 @@ class Liability < ApplicationRecord
     self.class.liability_type_label_for(liability_type)
   end
 
+  # Voir Asset#category_key : la même catégorie, côté dette.
+  def category_key
+    BreakdownCategory.for_liability(self)
+  end
+
+  def self.ordered_by_category
+    BreakdownCategory.sort(includes(:property), BreakdownCategory::LIABILITIES)
+  end
+
   def property_linkable?
     PROPERTY_LINKABLE_TYPES.include?(liability_type)
   end

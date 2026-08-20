@@ -49,7 +49,18 @@ RSpec.describe "Properties", type: :request do
       expect(badge["title"]).to eq("Résidence principale")
     end
 
-    # Un usage déjà court n'a rien à substituer : pastille ordinaire, sans attribut.
+    # La nuance du carré est celle que le graphique donne à l'immobilier de cet usage : un bien
+    # se lit de la même couleur sur sa liste que sur sa bande.
+    it "colours the usage badge with the nuance of its bande" do
+      create(:property, user: user, name: "Studio", usage: :rental)
+
+      get properties_path
+
+      swatch = Nokogiri::HTML(response.body).at_css(".badge-category .badge-swatch")
+      expect(swatch["class"]).to include("chart-series-real-estate-rental")
+    end
+
+    # Un usage déjà court n'a rien à substituer : pastille sans attribut.
     it "leaves an already short usage as a plain badge" do
       create(:property, user: user, name: "Studio", usage: :rental)
 

@@ -8,8 +8,8 @@ class BalanceSheetsController < ApplicationController
   end
 
   def show
-    @assets_by_type = @balance_sheet.assets_by_type
-    @liabilities_by_type = @balance_sheet.liabilities_by_type
+    @assets_by_category = @balance_sheet.assets_by_category
+    @liabilities_by_category = @balance_sheet.liabilities_by_category
 
     # Navigation only: the header steps to the neighbouring bilans. Either is nil at the
     # ends of the série, and the arrow on that side renders disabled.
@@ -72,7 +72,7 @@ class BalanceSheetsController < ApplicationController
       # positions immobilières viennent en plus, une barre par bien.
       #
       # Les anneaux sont découpés sur les catégories du tableau de bord — mêmes regroupements,
-      # mêmes clés, donc mêmes couleurs (voir BalanceSheet::ASSET_CATEGORIES) : une teinte doit
+      # mêmes clés, donc mêmes couleurs (voir BreakdownCategory) : une teinte doit
       # nommer le même poste d'un écran à l'autre. Le miroir d'accueil lit l'historique entier,
       # l'anneau ne lit qu'un bilan, d'où la série d'un seul élément.
       @assets_breakdown = BalanceSheet.assets_breakdown_for([@balance_sheet])
@@ -86,8 +86,8 @@ class BalanceSheetsController < ApplicationController
       @year_ago = @balance_sheet.year_ago
       @yearly_variations = @year_ago && @balance_sheet.variations_against(@year_ago)
     else
-      @assets_by_type = @balance_sheet.assets_by_type
-      @liabilities_by_type = @balance_sheet.liabilities_by_type
+      @assets_by_category = @balance_sheet.assets_by_category
+      @liabilities_by_category = @balance_sheet.liabilities_by_category
       @variations = @previous && @balance_sheet.variations_against(@previous)
     end
   end

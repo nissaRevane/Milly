@@ -10,9 +10,15 @@ class LiabilitiesController < ApplicationController
   before_action :set_properties, only: [:new, :create, :show, :update]
 
   def index
-    @liability_type_filter = params[:liability_type].presence_in(Liability.liability_types.keys)
-    @liabilities = current_user.liabilities.order(:liability_type, :name)
-    @liabilities = @liabilities.where(liability_type: @liability_type_filter) if @liability_type_filter
+    # Voir AssetsController#index : la liste se range par grande catégorie, le filtre aussi.
+    @category_filter = params[:category].presence_in(BreakdownCategory.family_keys(BreakdownCategory::LIABILITIES))
+    liabilities = current_user.liabilities
+    if @category_filter
+      liabilities = liabilities.where(
+        liability_type: BreakdownCategory.types_for(BreakdownCategory::LIABILITIES, @category_filter)
+      )
+    end
+    @liabilities = liabilities.ordered_by_category
   end
 
   # La fiche : elle est aussi le formulaire du passif, chaque champ s'y corrigeant sur place.

@@ -9,9 +9,15 @@ class AssetsController < ApplicationController
   before_action :refuse_reserved_asset_type, only: [:create]
 
   def index
-    @asset_type_filter = params[:asset_type].presence_in(Asset.asset_types.keys)
-    @assets = current_user.assets.order(:asset_type, :name)
-    @assets = @assets.where(asset_type: @asset_type_filter) if @asset_type_filter
+    # La liste se lit par grande catégorie, comme le bilan et le miroir (voir
+    # BreakdownCategory) : le filtre porte donc sur la famille, et non sur le type précis de la
+    # ligne — qui reste sa donnée, modifiable sur sa fiche.
+    @category_filter = params[:category].presence_in(BreakdownCategory.family_keys(BreakdownCategory::ASSETS))
+    assets = current_user.assets
+    if @category_filter
+      assets = assets.where(asset_type: BreakdownCategory.types_for(BreakdownCategory::ASSETS, @category_filter))
+    end
+    @assets = assets.ordered_by_category
   end
 
   # La fiche : elle est aussi le formulaire de l'actif, chaque champ s'y corrigeant sur place.

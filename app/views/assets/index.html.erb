@@ -3,12 +3,12 @@
   <%= link_to t("views.assets.index.new"), new_asset_path, class: "btn btn-primary" %>
 </div>
 
-<% if @assets.any? || @asset_type_filter %>
+<% if @assets.any? || @category_filter %>
   <%= form_with url: assets_path, method: :get, class: "filters",
       data: { controller: "auto-submit", action: "change->auto-submit#submit" } do |f| %>
     <div class="form-group">
-      <%= f.label :asset_type, t("views.assets.index.filter_type") %>
-      <%= f.select :asset_type, asset_type_options, { include_blank: t("views.assets.index.filter_all"), selected: @asset_type_filter },
+      <%= f.label :category, t("views.assets.index.filter_category") %>
+      <%= f.select :category, asset_category_options, { include_blank: t("views.assets.index.filter_all"), selected: @category_filter },
           class: "form-control" %>
     </div>
     <noscript><%= f.submit t("views.assets.index.filter_submit"), class: "btn btn-outline" %></noscript>
@@ -20,7 +20,7 @@
     <thead>
       <tr>
         <th><%= t("views.assets.form.name") %></th>
-        <th><%= t("views.assets.form.asset_type") %></th>
+        <th><%= t("views.assets.index.category") %></th>
         <th class="text-right"><%= t("views.assets.index.ownership_share") %></th>
         <th class="table-actions"></th>
       </tr>
@@ -33,9 +33,7 @@
           <td><%= link_to asset.name, asset_path(asset), class: "row-link" %></td>
           <td>
             <%= link_to asset_path(asset), class: "row-link" do %>
-              <span class="badge badge-secondary">
-                <%= asset.asset_type_label %>
-              </span>
+              <%= category_badge(asset.category_key) %>
             <% end %>
           </td>
           <td class="text-right">
@@ -53,5 +51,5 @@
     </tbody>
   </table>
 <% else %>
-  <p class="empty-state"><%= t(@asset_type_filter ? "views.assets.index.empty_filtered" : "views.assets.index.empty") %></p>
+  <p class="empty-state"><%= t(@category_filter ? "views.assets.index.empty_filtered" : "views.assets.index.empty") %></p>
 <% end %>

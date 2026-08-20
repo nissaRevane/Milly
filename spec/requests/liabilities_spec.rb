@@ -11,25 +11,40 @@ RSpec.describe "Liabilities", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "orders liabilities by type, then name" do
+    # Voir la liste des actifs : l'ordre est celui des catégories du graphique, la dette du
+    # quotidien d'abord, les crédits immobiliers en dernier.
+    it "orders liabilities by category, then name" do
       create(:liability, user: user, name: "Zeta", liability_type: :real_estate_loan)
       create(:liability, user: user, name: "Aaa", liability_type: :real_estate_loan)
-      create(:liability, user: user, name: "Beta", liability_type: :real_estate_loan)
+      create(:liability, user: user, name: "Beta", liability_type: :other_credit)
       create(:liability, user: user, name: "Alpha", liability_type: :security_deposit)
 
       get liabilities_path
 
-      positions = ["Aaa", "Beta", "Zeta", "Alpha"].map { |name| response.body.index(name) }
+      positions = ["Beta", "Alpha", "Aaa", "Zeta"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
 
-    it "names the type of each liability on a badge" do
-      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
+    it "names the category of each liability on a badge, in the colour of the graph" do
+      studio = create(:property, user: user, name: "Studio", usage: :rental)
+      create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan, property: studio)
 
       get liabilities_path
 
-      expect(response.body).to include('<span class="badge badge-secondary">')
-      expect(response.body).to include("Crédit immobilier")
+      badge = Nokogiri::HTML(response.body).at_css("table .badge-category")
+      expect(badge.text.squish).to eq("Crédit immobilier · Locatif")
+      expect(badge.at_css(".badge-swatch")["class"]).to include("chart-series-real-estate-loan-rental")
+    end
+
+    # Les deux dettes du quotidien qu'aucun bien ne porte tombent sous la même pastille.
+    it "gathers la dette court terme and les autres crédits under les dettes diverses" do
+      create(:liability, user: user, name: "Découvert", liability_type: :short_term_debt)
+      create(:liability, user: user, name: "Crédit auto", liability_type: :other_credit)
+
+      get liabilities_path
+
+      badges = Nokogiri::HTML(response.body).css("table .badge-category").map { |badge| badge.text.squish }
+      expect(badges).to eq(["Dettes diverses", "Dettes diverses"])
     end
 
     it "renders the ownership share" do
@@ -40,11 +55,11 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).to include("60 %")
     end
 
-    it "filters the liabilities by type" do
+    it "filters the liabilities by category" do
       create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
       create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
 
-      get liabilities_path, params: { liability_type: "real_estate_loan" }
+      get liabilities_path, params: { category: "real_estate_loan" }
 
       expect(response.body).to include("Prêt")
       expect(response.body).not_to include("Caution")
@@ -60,23 +75,23 @@ RSpec.describe "Liabilities", type: :request do
       expect(response.body).not_to include("onchange=")
     end
 
-    it "ignores an unknown type filter" do
+    it "ignores an unknown category filter" do
       create(:liability, user: user, name: "Prêt", liability_type: :real_estate_loan)
       create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
 
-      get liabilities_path, params: { liability_type: "not_a_type" }
+      get liabilities_path, params: { category: "not_a_category" }
 
       expect(response.body).to include("Prêt")
       expect(response.body).to include("Caution")
     end
 
-    it "shows a filtered empty state when no liability matches the type" do
+    it "shows a filtered empty state when no liability matches the category" do
       create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
 
-      get liabilities_path, params: { liability_type: "real_estate_loan" }
+      get liabilities_path, params: { category: "real_estate_loan" }
 
-      expect(response.body).to include("Aucun passif pour ce type.")
-      expect(response.body).to include("Filtrer par type")
+      expect(response.body).to include("Aucun passif pour cette catégorie.")
+      expect(response.body).to include("Filtrer par catégorie")
     end
   end
 

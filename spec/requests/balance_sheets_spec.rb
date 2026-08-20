@@ -127,7 +127,7 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(cell.at_css(".owned-value-detail")).to be_nil
     end
 
-    it "groups the lines by type under a single header row per type" do
+    it "groups the lines by category under a single header row per category" do
       bs = create(:balance_sheet, user: user)
       livret = create(:asset, user: user, name: "Livret A", asset_type: :cash)
       compte = create(:asset, user: user, name: "Compte courant", asset_type: :cash)
@@ -144,7 +144,8 @@ RSpec.describe "BalanceSheets", type: :request do
       doc = Nokogiri::HTML(response.body)
       headers = doc.css(".balance-sheet-columns .table-group-header")
 
-      expect(headers.map { |row| row.at_css(".badge").text.strip }).to eq(["Cash", "Immobilier", "Crédit immobilier"])
+      expect(headers.map { |row| row.at_css(".badge").text.squish })
+        .to eq(["Liquidités", "Immobilier · Non rattaché", "Crédit immobilier · Non rattaché"])
       expect(headers.map { |row| row.at_css(".summary-category-count").text.strip }).to eq(["2", "1", "1"])
       cash_header = headers.first
       expect(cash_header.at_css(".table-group-amount").text.gsub(/\s+/, " ").strip).to eq(currency(1_500).gsub(/\s+/, " "))
@@ -571,6 +572,7 @@ RSpec.describe "BalanceSheets", type: :request do
 
           usage_row = rows.first
           expect(usage_row.at_css(".badge").text.strip).to eq("Locatif")
+          expect(usage_row.at_css(".badge .badge-swatch")["class"]).to include("chart-series-real-estate-rental")
           expect(cells.call(usage_row)).to eq(["Locatif"] + amounts)
           expect(cells.call(rows[1])).to eq(["Appartement Lyon"] + amounts)
         end
@@ -828,7 +830,7 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "groups assets and liabilities by type" do
+    it "groups assets and liabilities by category" do
       bs = create(:balance_sheet, user: user)
       cash = create(:asset, user: user, name: "Espèces", asset_type: :cash)
       immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate)
@@ -840,7 +842,7 @@ RSpec.describe "BalanceSheets", type: :request do
       get summary_balance_sheet_path(bs)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Cash")
+      expect(response.body).to include("Liquidités")
       expect(response.body).to include("Immobilier")
       expect(response.body).to include("Prêt")
       expect(response.body).to include("Crédit immobilier")

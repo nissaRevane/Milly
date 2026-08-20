@@ -308,7 +308,7 @@ module ChartsHelper
   # L'ordre du DOM est celui de la lecture : dette, bien, valeur. La grille place les cinq
   # cellules, le CSS les replie sur deux lignes quand la largeur manque.
   def property_balance_row(position, high)
-    usage = position.property&.usage || BalanceSheet::UNASSIGNED_USAGE
+    usage = position.property&.usage || BreakdownCategory::UNASSIGNED_USAGE
 
     tag.li(class: "property-balance-row") do
       safe_join([

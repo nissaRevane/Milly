@@ -39,17 +39,16 @@
         <%= link_to t("views.balance_sheets.show.add_asset"), new_balance_sheet_balance_sheet_asset_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
       </div>
 
-      <% if @assets_by_type.any? %>
+      <%# Les groupes sont les grandes catégories du graphique, dans son ordre et ses teintes
+          (voir BreakdownCategory) : un poste se nomme et se colore de la même façon partout. %>
+      <% if @assets_by_category.any? %>
         <div class="table-scroll">
           <table class="table">
             <tbody>
-              <% Asset.asset_types.keys.each do |type| %>
-                <% items = @assets_by_type.fetch(type, []) %>
-                <% next if items.empty? %>
-
+              <% @assets_by_category.each do |key, items| %>
                 <tr class="table-group-header">
                   <td>
-                    <span class="badge badge-secondary"><%= asset_type_label(type) %></span>
+                    <%= category_badge(key) %>
                     <span class="summary-category-count"><%= items.size %></span>
                   </td>
                   <td class="text-right table-group-amount"><%= number_to_currency(items.sum(&:owned_value)) %></td>
@@ -103,17 +102,14 @@
         <%= link_to t("views.balance_sheets.show.add_liability"), new_balance_sheet_balance_sheet_liability_path(@balance_sheet), class: "btn btn-sm btn-primary" %>
       </div>
 
-      <% if @liabilities_by_type.any? %>
+      <% if @liabilities_by_category.any? %>
         <div class="table-scroll">
           <table class="table">
             <tbody>
-              <% Liability.liability_types.keys.each do |type| %>
-                <% items = @liabilities_by_type.fetch(type, []) %>
-                <% next if items.empty? %>
-
+              <% @liabilities_by_category.each do |key, items| %>
                 <tr class="table-group-header">
                   <td>
-                    <span class="badge badge-secondary"><%= liability_type_label(type) %></span>
+                    <%= category_badge(key) %>
                     <span class="summary-category-count"><%= items.size %></span>
                   </td>
                   <td class="text-right table-group-amount"><%= number_to_currency(items.sum(&:owned_remaining_capital)) %></td>

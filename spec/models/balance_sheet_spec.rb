@@ -122,43 +122,51 @@ RSpec.describe BalanceSheet, type: :model do
     end
   end
 
-  describe "#assets_by_type" do
-    it "groups assets under their type key, ordered by type" do
+  # Les groupes d'un bilan sont ceux du graphique : les grandes catégories, dans leur ordre,
+  # l'immobilier éclaté par usage du bien (voir BreakdownCategory).
+  describe "#assets_by_category" do
+    it "groups assets under their category, in the order the graph stacks them" do
       bs = create(:balance_sheet)
       user = bs.user
-      immo = create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+      studio = create(:property, user: user, name: "Studio", usage: :rental)
       cash = create(:asset, user: user, name: "Espèces", asset_type: :cash)
       livret = create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
-      create(:balance_sheet_asset, balance_sheet: bs, asset: immo, value: 100_000)
+      pea = create(:asset, user: user, name: "PEA", asset_type: :financial_investment)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: studio.real_estate_asset, value: 100_000)
       create(:balance_sheet_asset, balance_sheet: bs, asset: cash, value: 500)
       create(:balance_sheet_asset, balance_sheet: bs, asset: livret, value: 2_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: pea, value: 7_000)
 
-      grouped = bs.assets_by_type
+      grouped = bs.assets_by_category
 
-      expect(grouped.keys).to eq(["cash", "savings_account", "real_estate"])
-      expect(grouped["cash"].map { |bsa| bsa.asset.name }).to eq(["Espèces"])
-      expect(grouped["savings_account"].map { |bsa| bsa.asset.name }).to eq(["Livret A"])
-      expect(grouped["real_estate"].map { |bsa| bsa.asset.name }).to eq(["Maison"])
+      expect(grouped.keys).to eq(["liquidity", "real_estate:rental", "financial_investment"])
+      expect(grouped["liquidity"].map { |bsa| bsa.asset.name }).to eq(["Espèces", "Livret A"])
+      expect(grouped["real_estate:rental"].map { |bsa| bsa.asset.name }).to eq(["Studio"])
+      expect(grouped["financial_investment"].map { |bsa| bsa.asset.name }).to eq(["PEA"])
     end
   end
 
-  describe "#liabilities_by_type" do
-    it "groups liabilities under their type key, ordered by type" do
+  describe "#liabilities_by_category" do
+    it "groups liabilities under their category, in the order the graph stacks them" do
       bs = create(:balance_sheet)
       user = bs.user
+      studio = create(:property, user: user, name: "Studio", usage: :rental)
       deposit = create(:liability, user: user, name: "Caution", liability_type: :security_deposit)
-      loan = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan)
+      loan = create(:liability, user: user, name: "Prêt Studio", liability_type: :real_estate_loan,
+                                property: studio)
       short = create(:liability, user: user, name: "Découvert", liability_type: :short_term_debt)
+      credit = create(:liability, user: user, name: "Crédit auto", liability_type: :other_credit)
       create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 800)
       create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 150_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: short, remaining_capital: 1_200)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: credit, remaining_capital: 4_000)
 
-      grouped = bs.liabilities_by_type
+      grouped = bs.liabilities_by_category
 
-      expect(grouped.keys).to eq(["real_estate_loan", "short_term_debt", "security_deposit"])
-      expect(grouped["real_estate_loan"].map { |bsl| bsl.liability.name }).to eq(["Prêt maison"])
-      expect(grouped["short_term_debt"].map { |bsl| bsl.liability.name }).to eq(["Découvert"])
+      expect(grouped.keys).to eq(["short_term_debt", "security_deposit", "real_estate_loan:rental"])
+      expect(grouped["short_term_debt"].map { |bsl| bsl.liability.name }).to eq(["Crédit auto", "Découvert"])
       expect(grouped["security_deposit"].map { |bsl| bsl.liability.name }).to eq(["Caution"])
+      expect(grouped["real_estate_loan:rental"].map { |bsl| bsl.liability.name }).to eq(["Prêt Studio"])
     end
   end
 

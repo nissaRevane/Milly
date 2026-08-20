@@ -24,6 +24,10 @@ class BalanceSheetAsset < ApplicationRecord
     (value * asset.share_ratio).round(2)
   end
 
+  # La catégorie d'une ligne est celle de l'actif qu'elle chiffre : c'est par elle que le bilan
+  # groupe ses lignes (voir BalanceSheet#assets_by_category).
+  delegate :category_key, to: :asset
+
   private
 
   def asset_within_its_lifespan

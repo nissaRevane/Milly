@@ -11,25 +11,40 @@ RSpec.describe "Assets", type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it "orders assets by type, then name" do
+    # L'ordre est celui des grandes catégories, pas celui de l'enum : un placement se lit après
+    # l'immobilier, comme la légende du graphique l'empile.
+    it "orders assets by category, then name" do
       create(:asset, user: user, name: "Zeta", asset_type: :checking_account)
-      create(:asset, user: user, name: "Aaa", asset_type: :checking_account)
-      create(:asset, user: user, name: "Beta", asset_type: :checking_account)
+      create(:asset, user: user, name: "Aaa", asset_type: :savings_account)
+      create(:asset, user: user, name: "Beta", asset_type: :financial_investment)
       create(:asset, user: user, name: "Alpha", asset_type: :real_estate)
 
       get assets_path
 
-      positions = ["Aaa", "Beta", "Zeta", "Alpha"].map { |name| response.body.index(name) }
+      positions = ["Aaa", "Zeta", "Alpha", "Beta"].map { |name| response.body.index(name) }
       expect(positions).to eq(positions.compact.sort)
     end
 
-    it "names the type of each asset on a badge" do
-      create(:asset, user: user, name: "Maison", asset_type: :real_estate)
+    # La pastille nomme la grande catégorie et porte la teinte que le graphique donne au même
+    # poste : une couleur doit dire la même chose d'un écran à l'autre.
+    it "names the category of each asset on a badge, in the colour of the graph" do
+      create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
 
       get assets_path
 
-      expect(response.body).to include('<span class="badge badge-secondary">')
-      expect(response.body).to include("Immobilier")
+      badge = Nokogiri::HTML(response.body).at_css("table .badge-category")
+      expect(badge.text.squish).to eq("Liquidités")
+      expect(badge.at_css(".badge-swatch")["class"]).to include("chart-series-liquidity")
+    end
+
+    it "hangs the usage of the bien behind the immobilier category" do
+      create(:property, user: user, name: "Studio", usage: :rental)
+
+      get assets_path
+
+      badge = Nokogiri::HTML(response.body).at_css("table .badge-category")
+      expect(badge.text.squish).to eq("Immobilier · Locatif")
+      expect(badge.at_css(".badge-swatch")["class"]).to include("chart-series-real-estate-rental")
     end
 
     it "renders the ownership share" do
@@ -40,14 +55,18 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).to include("60 %")
     end
 
-    it "filters the assets by type" do
+    # Le filtre porte sur la famille entière : « Liquidités » retient le livret comme la
+    # créance, que rien d'autre ne rapprocherait.
+    it "filters the assets by category" do
       create(:asset, user: user, name: "Maison", asset_type: :real_estate)
       create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
+      create(:asset, user: user, name: "Travaux", asset_type: :receivable)
 
-      get assets_path, params: { asset_type: "real_estate" }
+      get assets_path, params: { category: "liquidity" }
 
-      expect(response.body).to include("Maison")
-      expect(response.body).not_to include("Livret A")
+      expect(response.body).to include("Livret A")
+      expect(response.body).to include("Travaux")
+      expect(response.body).not_to include("Maison")
     end
 
     it "wires the filter to auto-submit without an inline handler" do
@@ -60,23 +79,23 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).not_to include("onchange=")
     end
 
-    it "ignores an unknown type filter" do
+    it "ignores an unknown category filter" do
       create(:asset, user: user, name: "Maison", asset_type: :real_estate)
       create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
 
-      get assets_path, params: { asset_type: "not_a_type" }
+      get assets_path, params: { category: "not_a_category" }
 
       expect(response.body).to include("Maison")
       expect(response.body).to include("Livret A")
     end
 
-    it "shows a filtered empty state when no asset matches the type" do
+    it "shows a filtered empty state when no asset matches the category" do
       create(:asset, user: user, name: "Livret A", asset_type: :savings_account)
 
-      get assets_path, params: { asset_type: "real_estate" }
+      get assets_path, params: { category: "real_estate" }
 
-      expect(response.body).to include("Aucun actif pour ce type.")
-      expect(response.body).to include("Filtrer par type")
+      expect(response.body).to include("Aucun actif pour cette catégorie.")
+      expect(response.body).to include("Filtrer par catégorie")
     end
   end
 
@@ -254,7 +273,7 @@ RSpec.describe "Assets", type: :request do
       get assets_path
 
       doc = Nokogiri::HTML(response.body)
-      expect(doc.css("select#asset_type option").map { |option| option.text.strip }).to include("Immobilier")
+      expect(doc.css("select#category option").map { |option| option.text.strip }).to include("Immobilier")
     end
 
     it "refuses a submitted immobilier type instead of saving another one" do

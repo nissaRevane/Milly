@@ -41,6 +41,18 @@ class Asset < ApplicationRecord
     self.class.asset_type_label_for(asset_type)
   end
 
+  # La grande catégorie de l'actif — celle qui l'organise partout : sa liste, les groupes d'un
+  # bilan, les bandes du miroir. Voir BreakdownCategory, qui la nomme et la colore.
+  def category_key
+    BreakdownCategory.for_asset(self)
+  end
+
+  # La liste rangée comme les écrans la lisent : par catégorie dans l'ordre du graphique, puis
+  # par nom. Le bien est chargé avec, la catégorie de l'immobilier dépendant de son usage.
+  def self.ordered_by_category
+    BreakdownCategory.sort(includes(:property), BreakdownCategory::ASSETS)
+  end
+
   # Seul l'actif immobilier se rattache à un bien : c'est le bien lui-même, vu du bilan.
   # Un compte courant dédié à un bien, un placement, une créance restent des actifs à part
   # — le bien ne les porte pas (voir PropertyLinkable).

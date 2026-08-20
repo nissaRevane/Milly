@@ -3,12 +3,12 @@
   <%= link_to t("views.liabilities.index.new"), new_liability_path, class: "btn btn-primary" %>
 </div>
 
-<% if @liabilities.any? || @liability_type_filter %>
+<% if @liabilities.any? || @category_filter %>
   <%= form_with url: liabilities_path, method: :get, class: "filters",
       data: { controller: "auto-submit", action: "change->auto-submit#submit" } do |f| %>
     <div class="form-group">
-      <%= f.label :liability_type, t("views.liabilities.index.filter_type") %>
-      <%= f.select :liability_type, liability_type_options, { include_blank: t("views.liabilities.index.filter_all"), selected: @liability_type_filter },
+      <%= f.label :category, t("views.liabilities.index.filter_category") %>
+      <%= f.select :category, liability_category_options, { include_blank: t("views.liabilities.index.filter_all"), selected: @category_filter },
           class: "form-control" %>
     </div>
     <noscript><%= f.submit t("views.liabilities.index.filter_submit"), class: "btn btn-outline" %></noscript>
@@ -31,9 +31,7 @@
           <td><%= link_to liability.name, liability_path(liability), class: "row-link" %></td>
           <td>
             <%= link_to liability_path(liability), class: "row-link" do %>
-              <span class="badge badge-secondary">
-                <%= liability.liability_type_label %>
-              </span>
+              <%= category_badge(liability.category_key) %>
             <% end %>
           </td>
           <td class="text-right"><%= link_to ownership_share_label(liability.ownership_share), liability_path(liability), class: "row-link" %></td>
@@ -46,5 +44,5 @@
     </tbody>
   </table>
 <% else %>
-  <p class="empty-state"><%= t(@liability_type_filter ? "views.liabilities.index.empty_filtered" : "views.liabilities.index.empty") %></p>
+  <p class="empty-state"><%= t(@category_filter ? "views.liabilities.index.empty_filtered" : "views.liabilities.index.empty") %></p>
 <% end %>

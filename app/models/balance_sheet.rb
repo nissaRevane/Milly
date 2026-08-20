@@ -105,51 +105,9 @@ class BalanceSheet < ApplicationRecord
     # Le libellé d'un seul tenant, là où il n'y a qu'une ligne à donner : l'infobulle d'une
     # bande du graphique.
     def full_label
-      return label if sublabel.nil?
-
-      I18n.t("views.shared.breakdown_split", type: label, usage: sublabel)
+      BreakdownCategory.full_label(key)
     end
   end
-
-  # Les catégories de la ventilation dans le temps, dans l'ordre où elles s'empilent en
-  # partant de l'axe. Trois familles à l'actif, et non une bande par type d'enum : un compte
-  # courant, un livret et une créance répondent tous à la même question — de quoi dispose-t-on
-  # tout de suite — et six bandes fines encombraient la courbe plus qu'elles ne la disaient.
-  #
-  # +split+ marque la seule catégorie qui garde son détail : l'immobilier, éclaté par usage du
-  # bien, parce qu'une résidence principale, une secondaire et un locatif ne se pilotent pas
-  # de la même façon. Le détail s'y lit à la nuance, jamais à la teinte.
-  #
-  # Seule cette catégorie-là est éclatée. Un compte courant rattaché à un bien reste une
-  # liquidité : regrouper toutes les lignes d'un bien est le travail de l'onglet Immobilier
-  # (voir #property_positions), pas celui d'une ventilation par catégorie.
-  ASSET_CATEGORIES = [
-    { key: "liquidity", types: %w[cash checking_account savings_account receivable] },
-    { key: "real_estate", types: %w[real_estate], split: true },
-    { key: "financial_investment", types: %w[financial_investment] }
-  ].freeze
-
-  # Le passif s'ordonne en partant de l'axe : d'abord ce qui n'est adossé à aucun bien — les
-  # dettes diverses, qui rassemblent la dette court terme et les autres crédits, ces deux
-  # dettes du quotidien qu'aucun bien ne porte — puis les dépôts de garantie, puis les
-  # crédits immobiliers et leur détail par usage.
-  LIABILITY_CATEGORIES = [
-    { key: "short_term_debt", types: %w[short_term_debt other_credit] },
-    { key: "security_deposit", types: %w[security_deposit] },
-    { key: "real_estate_loan", types: %w[real_estate_loan], split: true }
-  ].freeze
-
-  # L'ordre des usages à l'intérieur de l'immobilier. Il ne suit pas celui de l'enum mais celui
-  # du dégradé qui les colore, de la résidence principale au locatif : la nuance ne peut dire
-  # de quel usage il s'agit que si le rang, lui, ne bouge jamais.
-  #
-  # La liste ordonne, elle ne filtre pas (voir .breakdown_labels) : un usage ajouté à l'enum
-  # sans passer par ici se range en queue, sans teinte attitrée, plutôt que de disparaître en
-  # silence d'une courbe qui prétend montrer tout le patrimoine.
-  BREAKDOWN_USAGE_ORDER = %w[primary_residence secondary_residence rental].freeze
-
-  # La sous-catégorie des lignes immobilières qu'aucun bien ne porte encore.
-  UNASSIGNED_USAGE = "unassigned".freeze
 
   # Liability types that belong to a property even when none is linked yet — les mêmes que
   # ceux qu'un bien peut porter, une seule liste pour les deux côtés du rattachement.
@@ -241,7 +199,7 @@ class BalanceSheet < ApplicationRecord
       type_column: "assets.asset_type",
       amount_sql: BalanceSheetAsset::OWNED_VALUE_SQL,
       types: Asset.asset_types,
-      categories: ASSET_CATEGORIES
+      categories: BreakdownCategory::ASSETS
     )
   end
 
@@ -253,7 +211,7 @@ class BalanceSheet < ApplicationRecord
       type_column: "liabilities.liability_type",
       amount_sql: BalanceSheetLiability::OWNED_REMAINING_CAPITAL_SQL,
       types: Liability.liability_types,
-      categories: LIABILITY_CATEGORIES
+      categories: BreakdownCategory::LIABILITIES
     )
   end
 
@@ -308,20 +266,22 @@ class BalanceSheet < ApplicationRecord
     total_assets - total_liabilities
   end
 
-  def assets_by_type
-    balance_sheet_assets
-      .includes(:asset)
-      .joins(:asset)
-      .order("assets.asset_type ASC, assets.name ASC")
-      .group_by { |bsa| bsa.asset.asset_type }
+  # Les lignes d'actif groupées par grande catégorie : les mêmes groupes, dans le même ordre et
+  # avec les mêmes teintes que la légende du miroir (voir BreakdownCategory). Le bilan et le
+  # tableau de bord découpent ainsi le patrimoine de la même façon — sinon un même poste
+  # changerait de nom et de couleur d'un onglet à l'autre.
+  def assets_by_category
+    BreakdownCategory.group(
+      balance_sheet_assets.includes(asset: :property).joins(:asset).order("assets.name ASC"),
+      BreakdownCategory::ASSETS
+    )
   end
 
-  def liabilities_by_type
-    balance_sheet_liabilities
-      .includes(:liability)
-      .joins(:liability)
-      .order("liabilities.liability_type ASC, liabilities.name ASC")
-      .group_by { |bsl| bsl.liability.liability_type }
+  def liabilities_by_category
+    BreakdownCategory.group(
+      balance_sheet_liabilities.includes(liability: :property).joins(:liability).order("liabilities.name ASC"),
+      BreakdownCategory::LIABILITIES
+    )
   end
 
   # Every property holding at least one line on this balance sheet, ordered by usage
@@ -473,10 +433,6 @@ class BalanceSheet < ApplicationRecord
     sheets = sheets.to_a
     return [] if sheets.empty?
 
-    # Chaque type d'enum tombe dans une catégorie et une seule. Le .fetch plus bas n'a pas de
-    # repli : un type ajouté à l'enum sans être rangé ici doit casser la suite de tests, pas
-    # disparaître en silence d'une courbe qui prétend montrer tout le patrimoine.
-    category_of = categories.flat_map { |category| category[:types].map { |type| [type, category] } }.to_h
     index_of = sheets.each_with_index.to_h { |sheet, index| [sheet.id, index] }
     amounts = Hash.new { |hash, key| hash[key] = Array.new(sheets.size, 0) }
 
@@ -484,12 +440,12 @@ class BalanceSheet < ApplicationRecord
       .group(:balance_sheet_id, type_column, "properties.usage")
       .sum(amount_sql)
       .each do |(sheet_id, type_value, usage_value), amount|
-        category = category_of.fetch(enum_name(types, type_value))
-        key = breakdown_key(category, enum_name(Property.usages, usage_value))
+        key = BreakdownCategory.key_for(categories, enum_name(types, type_value),
+                                        enum_name(Property.usages, usage_value))
         amounts[key][index_of.fetch(sheet_id)] += amount
       end
 
-    breakdown_labels(categories)
+    BreakdownCategory.rows(categories)
       .select { |key, _| amounts.key?(key) }
       .map { |key, name, usage, usage_short|
         BreakdownSeries.new(key: key, label: name, sublabel: usage, sublabel_short: usage_short,
@@ -498,13 +454,6 @@ class BalanceSheet < ApplicationRecord
       .reject(&:blank_everywhere?)
   end
   private_class_method :breakdown_for
-
-  def self.breakdown_key(category, usage)
-    return category[:key] unless category[:split]
-
-    "#{category[:key]}:#{usage || UNASSIGNED_USAGE}"
-  end
-  private_class_method :breakdown_key
 
   # Le nom d'une valeur d'enum, quelle que soit la forme sous laquelle elle revient du
   # regroupement : ActiveRecord la déserialise quand il sait rattacher la colonne groupée à
@@ -516,30 +465,6 @@ class BalanceSheet < ApplicationRecord
     values.key?(value.to_s) ? value.to_s : values.key(value)
   end
   private_class_method :enum_name
-
-  # Les [clé, famille, usage, usage abrégé] de chaque bande, dans l'ordre où elles s'empilent
-  # en partant de l'axe : celui des catégories, la catégorie éclatée laissant place à ses usages
-  # puis au bucket non rattaché. Un ordre figé, et surtout pas déduit des montants : une
-  # catégorie qui changerait de rang — donc de couleur — d'un bilan à l'autre rendrait la
-  # courbe illisible.
-  #
-  # Le bucket non rattaché n'a pas de forme courte à lui : son libellé sert des deux côtés.
-  def self.breakdown_labels(categories)
-    categories.flat_map do |category|
-      label = I18n.t("views.shared.breakdown_categories.#{category[:key]}")
-      next [[category[:key], label, nil, nil]] unless category[:split]
-
-      usages = (BREAKDOWN_USAGE_ORDER | Property.usages.keys).map { |usage|
-        [usage, Property.usage_label_for(usage), Property.usage_short_label_for(usage)]
-      }
-      unassigned = I18n.t("views.shared.unassigned_property")
-      usages << [UNASSIGNED_USAGE, unassigned, unassigned]
-      usages.map do |usage, usage_label, usage_short_label|
-        ["#{category[:key]}:#{usage}", label, usage_label, usage_short_label]
-      end
-    end
-  end
-  private_class_method :breakdown_labels
 
   def usage_total(positions)
     gross = positions.sum(&:gross)

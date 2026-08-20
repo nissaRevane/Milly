@@ -18,6 +18,8 @@ class BalanceSheetLiability < ApplicationRecord
     (remaining_capital * liability.share_ratio).round(2)
   end
 
+  delegate :category_key, to: :liability
+
   private
 
   def liability_within_its_lifespan

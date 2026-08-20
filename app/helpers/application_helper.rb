@@ -1,16 +1,35 @@
 module ApplicationHelper
-  # Every type, for the index filter: immobilier lines exist and must be filterable.
-  def asset_type_options
-    Asset.asset_types.keys.map { |key| [t("views.shared.asset_types.#{key}"), key] }
+  # La pastille d'une grande catégorie : le carré de couleur du graphique, puis le nom de la
+  # catégorie — « Immobilier · Locatif » quand elle est éclatée par usage. La teinte est celle
+  # que la légende du miroir donne au même poste (voir ChartsHelper#series_tone) : une même
+  # couleur doit nommer la même chose d'un écran à l'autre.
+  #
+  # C'est le carré qui porte la couleur, et non le fond de la pastille : les teintes des
+  # ventilations vont du presque-noir au gris très clair, et aucune couleur de texte ne serait
+  # lisible sur toutes. Le carré est celui de la légende, à la même taille.
+  def category_badge(key)
+    tag.span(class: "badge badge-category") do
+      safe_join([tag.span(class: "badge-swatch #{series_tone(key)}"), BreakdownCategory.full_label(key)])
+    end
+  end
+
+  # Les grandes catégories qu'un filtre de liste propose : les familles seules, sans leur détail
+  # par usage — filtrer « Immobilier » retient tout l'immobilier, quel qu'en soit l'usage.
+  def asset_category_options
+    category_options(BreakdownCategory::ASSETS)
+  end
+
+  def liability_category_options
+    category_options(BreakdownCategory::LIABILITIES)
+  end
+
+  def category_options(categories)
+    BreakdownCategory.family_keys(categories).map { |key| [BreakdownCategory.label(key), key] }
   end
 
   # What the form offers: immobilier is left out, it comes from creating a bien.
   def selectable_asset_type_options
     Asset.selectable_asset_types.map { |key| [t("views.shared.asset_types.#{key}"), key] }
-  end
-
-  def asset_type_label(type)
-    Asset.asset_type_label_for(type)
   end
 
   def liability_type_options
@@ -29,10 +48,6 @@ module ApplicationHelper
     Liability::AMORTIZABLE_TYPES.join(" ")
   end
 
-  def liability_type_label(type)
-    Liability.liability_type_label_for(type)
-  end
-
   def property_usage_options
     Property.usages.keys.map { |key| [t("views.shared.property_usages.#{key}"), key] }
   end
@@ -45,15 +60,21 @@ module ApplicationHelper
   # Le texte de l'élément reste le libellé complet à toute largeur, l'abréviation n'étant que
   # du contenu généré : le nom accessible, la recherche dans la page et le copier-coller
   # continuent de dire « Résidence principale » là où l'œil ne lit que « RP », et le title le
-  # rend au survol. Un usage dont la forme courte est déjà la longue — « Locatif » — sort en
-  # pastille ordinaire, il n'y a rien à substituer.
+  # rend au survol. Un usage dont la forme courte est déjà la longue — « Locatif » — n'a pas
+  # de substitution à faire et sort sans l'attribut.
+  #
+  # Le carré porte la nuance que le graphique donne à l'immobilier de cet usage : un bien est
+  # un actif immobilier, et sa pastille doit se lire de la même couleur que sa bande. La
+  # famille, elle, n'est pas répétée — sur ces écrans tout est immobilier, seul l'usage
+  # distingue (voir #category_badge, qui nomme les deux là où la famille varie).
   def property_usage_badge(usage)
     full = Property.usage_label_for(usage)
     short = Property.usage_short_label_for(usage)
-    return tag.span(full, class: "badge badge-secondary") if short == full
+    abbreviated = short == full ? {} : { title: full, data: { usage_short: short } }
 
-    tag.span(full, class: "badge badge-secondary usage-badge", title: full,
-                   data: { usage_short: short })
+    tag.span(class: "badge badge-category #{"usage-badge" unless abbreviated.empty?}".strip, **abbreviated) do
+      safe_join([tag.span(class: "badge-swatch #{series_tone("real_estate:#{usage}")}"), full])
+    end
   end
 
   # An LTV is nil only when there is no gross value to divide by — an em dash

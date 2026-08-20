@@ -188,10 +188,11 @@ fr:
         title: Mes Actifs
         new: Nouvel actif
         empty: Aucun actif enregistré.
-        empty_filtered: Aucun actif pour ce type.
+        empty_filtered: Aucun actif pour cette catégorie.
         ownership_share: Quote-part
-        filter_type: Filtrer par type
-        filter_all: Tous les types
+        category: Catégorie
+        filter_category: Filtrer par catégorie
+        filter_all: Toutes les catégories
         filter_submit: Filtrer
       form:
         name: Nom de l'actif
@@ -215,10 +216,11 @@ fr:
         title: Mes Passifs
         new: Nouveau passif
         empty: Aucun passif enregistré.
-        empty_filtered: Aucun passif pour ce type.
+        empty_filtered: Aucun passif pour cette catégorie.
         ownership_share: Quote-part
-        filter_type: Filtrer par type
-        filter_all: Tous les types
+        category: Catégorie
+        filter_category: Filtrer par catégorie
+        filter_all: Toutes les catégories
         filter_submit: Filtrer
       form:
         name: Nom du passif
@@ -406,9 +408,9 @@ fr:
       # Le nom accessible de la pastille de légende du miroir, qui n'a aucun texte à elle.
       toggle_series: Afficher ou masquer %{label}
       unassigned_property: Non rattaché
-      # Les grandes familles du graphique miroir du tableau de bord. Elles regroupent
-      # plusieurs types d'enum et portent donc leur propre vocabulaire — voir
-      # BalanceSheet::ASSET_CATEGORIES et ::LIABILITY_CATEGORIES.
+      # Les grandes catégories qui rangent tout le patrimoine — les listes, les groupes d'un
+      # bilan, les bandes du miroir. Elles regroupent plusieurs types d'enum et portent donc
+      # leur propre vocabulaire — voir BreakdownCategory.
       breakdown_categories:
         liquidity: Liquidités
         real_estate: Immobilier

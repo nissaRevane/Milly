@@ -12,7 +12,7 @@
   <% if @asset.owned_by_property? %>
     <h1>
       <%= @asset.name %>
-      <span class="badge badge-secondary"><%= @asset.asset_type_label %></span>
+      <%= category_badge(@asset.category_key) %>
     </h1>
     <p class="page-header-hint"><%= t("views.assets.form.name_from_property") %></p>
   <% else %>
@@ -23,7 +23,7 @@
                 title="<%= t("views.assets.show.click_to_edit_name") %>">
           <%= @asset.name %>
         </button>
-        <span class="badge badge-secondary"><%= @asset.asset_type_label %></span>
+        <%= category_badge(@asset.category_key) %>
       </h1>
       <%= form_with model: @asset, class: "inline-edit-form",
                     data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },

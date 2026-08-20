@@ -471,21 +471,46 @@ a.nav-user-name:hover {
   color: var(--color-text-muted);
 }
 
+/* La pastille d'une grande catégorie : un carré de couleur, puis le nom de la catégorie. La
+   teinte arrive par --series-color, que la classe de catégorie pose (voir .chart-series-*) —
+   c'est le carré qui la porte, et non le fond de la pastille : les teintes des ventilations
+   vont du presque-noir au gris très clair, aucune couleur de texte ne serait lisible sur
+   toutes. Le carré est celui de la légende du graphique, à la même taille. */
+.badge-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #f1f5f9;
+  color: var(--color-text);
+}
+
+.badge-swatch {
+  flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--series-color, var(--color-border));
+}
+
 /* L'usage d'un bien dans une pastille : « Résidence principale » tant que la place y est,
    « RP » dès qu'elle manque. Les deux formes viennent du serveur — le texte de l'élément et
    son data-usage-short (voir ApplicationHelper#property_usage_badge).
 
-   La substitution est faite de font-size: 0 sur le texte et d'un ::before qui écrit
+   La substitution est faite de font-size: 0 sur le texte et d'un ::after qui écrit
    l'abréviation, plutôt que de deux éléments dont on cache l'un : le libellé complet reste
    ainsi le seul TEXTE de la pastille à toute largeur, donc le seul que lisent l'arbre
    d'accessibilité, la recherche dans la page et le copier-coller. Un contenu généré, lui, ne
-   se copie pas — l'abréviation ne peut pas se retrouver collée ailleurs à la place du nom. */
+   se copie pas — l'abréviation ne peut pas se retrouver collée ailleurs à la place du nom.
+
+   ::after et non ::before : le carré de couleur est le premier enfant de la pastille, et une
+   abréviation écrite avant lui passerait devant. Le carré, lui, garde sa taille en rem — le
+   font-size: 0 qui efface le texte ne l'atteint pas. */
 @media (max-width: 768px) {
   .usage-badge {
     font-size: 0;
   }
 
-  .usage-badge::before {
+  .usage-badge::after {
     content: attr(data-usage-short);
     font-size: 0.75rem;
   }
