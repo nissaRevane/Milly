@@ -11,8 +11,19 @@ class BalanceSheet < ApplicationRecord
       asset_lines.sum(&:owned_value)
     end
 
+    # La dette qui pèse sur la valeur du bien : ses crédits, et eux seuls. Un dépôt de
+    # garantie est bien une dette rattachée au bien, mais couverte par une trésorerie du
+    # même montant que le bien ne porte pas (voir Liability::CASH_BACKED_TYPES) — d'où
+    # #deposits, tenu à côté.
     def debt
-      liability_lines.sum(&:owned_remaining_capital)
+      financing_lines.sum(&:owned_remaining_capital)
+    end
+
+    # Les dépôts de garantie du bien. Ils restent affichés — c'est une somme à rendre au
+    # locataire, et le bien est le seul endroit où elle se lit — mais n'entrent ni dans la
+    # valeur nette ni dans la LTV.
+    def deposits
+      deposit_lines.sum(&:owned_remaining_capital)
     end
 
     def net
@@ -26,11 +37,23 @@ class BalanceSheet < ApplicationRecord
     def unassigned?
       property.nil?
     end
+
+    private
+
+    def financing_lines
+      liability_lines.reject { |line| line.liability.cash_backed? }
+    end
+
+    def deposit_lines
+      liability_lines.select { |line| line.liability.cash_backed? }
+    end
   end
 
   # One row of the real-estate summary: an usage bucket or the overall total.
   # +ltv+ is derived once at build time (see #usage_total) rather than lazily.
-  UsageTotal = Struct.new(:gross, :debt, :net, :ltv, keyword_init: true)
+  # +deposits+ is carried beside the three amounts and enters none of them, exactly as on
+  # a single position (see PropertyPosition#deposits).
+  UsageTotal = Struct.new(:gross, :debt, :net, :deposits, :ltv, keyword_init: true)
 
   # How one amount moved from the previous balance sheet to this one: the gain or loss in
   # euros, and the rate it represents. +rate+ is nil when the previous amount was zero —
@@ -521,6 +544,7 @@ class BalanceSheet < ApplicationRecord
     gross = positions.sum(&:gross)
     debt = positions.sum(&:debt)
 
-    UsageTotal.new(gross: gross, debt: debt, net: gross - debt, ltv: self.class.ltv_for(gross, debt))
+    UsageTotal.new(gross: gross, debt: debt, net: gross - debt,
+                   deposits: positions.sum(&:deposits), ltv: self.class.ltv_for(gross, debt))
   end
 end

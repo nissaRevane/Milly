@@ -216,6 +216,17 @@ RSpec.describe Liability, type: :model do
     end
   end
 
+  # Seul le dépôt de garantie est couvert par une trésorerie du même montant : c'est ce qui
+  # le tient hors de la valeur nette du bien qui le porte.
+  describe "#cash_backed?" do
+    it "holds for the dépôt de garantie alone" do
+      expect(build(:liability, liability_type: :security_deposit)).to be_cash_backed
+      expect(build(:liability, liability_type: :real_estate_loan)).not_to be_cash_backed
+      expect(build(:liability, liability_type: :short_term_debt)).not_to be_cash_backed
+      expect(build(:liability, liability_type: :other_credit)).not_to be_cash_backed
+    end
+  end
+
   describe "#amortizable?" do
     it "is true only when the seven fields are present" do
       expect(build(:liability, :amortizable)).to be_amortizable

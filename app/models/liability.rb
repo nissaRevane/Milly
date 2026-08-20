@@ -39,6 +39,14 @@ class Liability < ApplicationRecord
   # se saisit bilan par bilan.
   AMORTIZABLE_TYPES = %w[real_estate_loan other_credit].freeze
 
+  # Les passifs adossés à une trésorerie du même montant, qu'aucun actif ne nomme : le dépôt
+  # de garantie d'un locataire est bien une dette — elle sera rendue — mais l'argent qui la
+  # couvre dort sur un compte courant, mélangé au reste, sans ligne à lui. Cette dette pèse
+  # donc sur le patrimoine global, où le compte courant qui la détient est compté lui aussi,
+  # mais pas sur la valeur nette du bien qui la porte : la retrancher de la valeur du bien
+  # ferait perdre au bien une somme qu'il ne paie pas (voir BalanceSheet::PropertyPosition).
+  CASH_BACKED_TYPES = %w[security_deposit].freeze
+
   validates :name, presence: true
   validate :amortization_fields_all_or_nothing
   validate :amortization_reserved_for_credits
@@ -70,6 +78,11 @@ class Liability < ApplicationRecord
   # #amortizable? répond sur les champs effectivement renseignés.
   def amortizable_type?
     AMORTIZABLE_TYPES.include?(liability_type)
+  end
+
+  # Ce passif est-il couvert par une trésorerie de même montant ? Voir CASH_BACKED_TYPES.
+  def cash_backed?
+    CASH_BACKED_TYPES.include?(liability_type)
   end
 
   def amortizable?

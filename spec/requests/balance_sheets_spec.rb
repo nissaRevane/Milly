@@ -645,6 +645,44 @@ RSpec.describe "BalanceSheets", type: :request do
           )
         end
 
+        # Le dépôt de garantie est une dette du bien, mais couverte par la trésorerie qui la
+        # détient : le tableau lui donne une colonne à lui, après la LTV, et ni la dette, ni la
+        # valeur nette, ni la LTV ne bougent de ce qu'elles valaient sans lui.
+        it "gives the dépôt de garantie a column of its own, out of the dette and of the valeur nette" do
+          bs = build_property_sheet
+          property = user.properties.find_by!(name: "Appartement Lyon")
+          deposit = create(:liability, user: user, name: "Caution locataire",
+                           liability_type: :security_deposit, property: property)
+          create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 900)
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          expect(response).to have_http_status(:success)
+          doc = Nokogiri::HTML(response.body)
+          text = ->(node) { node.text.gsub(/\s+/, " ").strip }
+
+          expect(doc.css(".real-estate-table thead th").map(&text)).to eq(
+            ["Usage", "Brut", "Dette", "Valeur nette", "LTV", "Dépôts de garantie"]
+          )
+          expect(doc.at_css(".property-bien-row").css("td").map(&text)).to eq(
+            ["Appartement Lyon", currency(200_000), currency(150_000), currency(50_000), "75,0 %", currency(900)]
+              .map { |value| value.gsub(/\s+/, " ") }
+          )
+          expect(doc.at_css(".property-totals-row").css("td").map(&text).last).to eq(currency(900).gsub(/\s+/, " "))
+        end
+
+        # Une colonne de zéros n'apprendrait rien à un propriétaire occupant, et éloignerait la
+        # valeur nette du brut dont elle se déduit.
+        it "leaves the dépôt de garantie column out when no bien carries one" do
+          bs = build_property_sheet
+
+          get summary_balance_sheet_path(bs, tab: "real_estate")
+
+          doc = Nokogiri::HTML(response.body)
+          expect(doc.css(".real-estate-table thead th").size).to eq(5)
+          expect(response.body).not_to include("Dépôts de garantie")
+        end
+
         it "shows the empty state when only unassigned lines exist" do
           bs = create(:balance_sheet, user: user)
           orphan = create(:asset, user: user, name: "Terrain orphelin", asset_type: :real_estate)

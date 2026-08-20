@@ -329,6 +329,8 @@ fr:
         gross: Brut
         debt: Dette
         ltv: LTV
+        deposits: Dépôts de garantie
+        deposits_hint: "Une somme à rendre au locataire, couverte par la trésorerie qui la détient : elle n'entre ni dans la valeur nette du bien ni dans sa LTV."
         total: Total immobilier
         empty: Aucun bien immobilier sur ce bilan.
     balance_sheet_assets:

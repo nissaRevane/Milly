@@ -10,10 +10,16 @@
   +totals+ always carries its :total row, even on a sheet without a single real
   estate line, so emptiness is decided on +positions+ instead (in summary.html.erb).
 
+  La colonne des dépôts de garantie n'apparaît que lorsqu'un bien en porte un : elle ne dit
+  rien au propriétaire occupant, et une colonne de zéros ne ferait qu'éloigner la valeur nette
+  du brut dont elle se déduit. Elle ferme le tableau, après la LTV, parce qu'elle n'entre dans
+  aucun des trois montants qui la précèdent (voir BalanceSheet::PropertyPosition#deposits).
+
   +variation+ qualifies the overall valeur nette and it alone — the tab reports the move
   of the patrimoine immobilier as a whole, not of each usage or of each bien. It is nil on
   the very first bilan of the user, which has nothing to be compared to.
 %>
+<% deposits = totals[:total].deposits.nonzero? %>
 <div class="table-scroll real-estate-table">
   <table class="table table-compact">
     <thead>
@@ -23,6 +29,11 @@
         <th class="text-right"><%= t("views.balance_sheets.properties.debt") %></th>
         <th class="text-right"><%= t("views.balance_sheets.properties.net") %></th>
         <th class="text-right"><%= t("views.balance_sheets.properties.ltv") %></th>
+        <% if deposits %>
+          <th class="text-right" title="<%= t("views.balance_sheets.properties.deposits_hint") %>">
+            <%= t("views.balance_sheets.properties.deposits") %>
+          </th>
+        <% end %>
       </tr>
     </thead>
     <tbody>
@@ -35,6 +46,9 @@
           <td class="text-right"><%= number_to_currency(totals.fetch(usage).debt) %></td>
           <td class="text-right"><%= number_to_currency(totals.fetch(usage).net) %></td>
           <td class="text-right"><%= ltv_label(totals.fetch(usage).ltv) %></td>
+          <% if deposits %>
+            <td class="text-right"><%= number_to_currency(totals.fetch(usage).deposits) %></td>
+          <% end %>
         </tr>
 
         <% usage_positions.each do |position| %>
@@ -44,6 +58,9 @@
             <td class="text-right"><%= number_to_currency(position.debt) %></td>
             <td class="text-right"><%= number_to_currency(position.net) %></td>
             <td class="text-right"><%= ltv_label(position.ltv) %></td>
+            <% if deposits %>
+              <td class="text-right"><%= number_to_currency(position.deposits) %></td>
+            <% end %>
           </tr>
         <% end %>
       <% end %>
@@ -59,6 +76,9 @@
           </span>
         </td>
         <td class="text-right"><%= ltv_label(totals[:total].ltv) %></td>
+        <% if deposits %>
+          <td class="text-right"><%= number_to_currency(totals[:total].deposits) %></td>
+        <% end %>
       </tr>
     </tbody>
   </table>

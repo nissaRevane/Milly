@@ -283,8 +283,9 @@ RSpec.describe BalanceSheet, type: :model do
       expect(unassigned.asset_lines.map { |line| line.asset.name }).to eq(["Terrain"])
       expect(unassigned.liability_lines.map { |line| line.liability.name }).to eq(["Caution", "Prêt terrain"])
       expect(unassigned.gross).to eq(80_000)
-      expect(unassigned.debt).to eq(21_000)
-      expect(unassigned.net).to eq(59_000)
+      expect(unassigned.debt).to eq(20_000)
+      expect(unassigned.deposits).to eq(1_000)
+      expect(unassigned.net).to eq(60_000)
     end
 
     it "ignores unlinked lines that are not about real estate" do
@@ -299,19 +300,36 @@ RSpec.describe BalanceSheet, type: :model do
     end
 
     # Un bien ne porte que son actif immobilier, ses crédits immobiliers et les dépôts de
-    # garantie de ses locataires (voir PropertyLinkable) : le dépôt compte dans sa dette.
-    it "counts the dépôt de garantie of the bien in its debt" do
+    # garantie de ses locataires (voir PropertyLinkable). Le dépôt se lit sur le bien, mais
+    # à côté de sa dette : la trésorerie qui le couvre n'est pas rattachée au bien, et le
+    # retrancher de la valeur du bien lui ferait perdre une somme qu'il ne paie pas.
+    it "holds the dépôt de garantie of the bien beside its debt, out of the valeur nette" do
       bs = create(:balance_sheet)
       user = bs.user
       property = create(:property, user: user, usage: :rental)
+      loan = create(:liability, user: user, property: property, liability_type: :real_estate_loan)
       deposit = create(:liability, user: user, property: property, liability_type: :security_deposit)
       create(:balance_sheet_asset, balance_sheet: bs, asset: property.real_estate_asset, value: 200_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 150_000)
       create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 900)
 
       position = bs.property_positions.sole
 
+      expect(position.liability_lines.size).to eq(2)
       expect(position.gross).to eq(200_000)
-      expect(position.debt).to eq(900)
+      expect(position.debt).to eq(150_000)
+      expect(position.deposits).to eq(900)
+      expect(position.net).to eq(50_000)
+      expect(position.ltv).to eq(75.0)
+    end
+
+    it "carries no dépôt de garantie on a bien that has none" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      property = create(:property, user: user)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: property.real_estate_asset, value: 200_000)
+
+      expect(bs.property_positions.sole.deposits).to eq(0)
     end
 
     it "returns no LTV when the position has no gross value" do
@@ -356,6 +374,25 @@ RSpec.describe BalanceSheet, type: :model do
       expect(totals[:total]).to have_attributes(gross: 700_000, debt: 380_000, net: 320_000, ltv: 54.3)
     end
 
+    # Les dépôts de garantie remontent avec les autres montants, sans entrer dans aucun : la
+    # ligne d'un usage et le total les additionnent comme le reste (voir PropertyPosition).
+    it "sums the dépôts de garantie beside the amounts they do not enter" do
+      bs = create(:balance_sheet)
+      user = bs.user
+      studio = build_property(bs, name: "Studio", usage: :rental, value: 100_000, debt: 60_000)
+      appartement = build_property(bs, name: "Appartement", usage: :rental, value: 200_000)
+      [[studio, 800], [appartement, 1_200]].each do |property, amount|
+        deposit = create(:liability, user: user, property: property, liability_type: :security_deposit)
+        create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: amount)
+      end
+
+      totals = bs.real_estate_totals_by_usage
+
+      expect(totals["rental"]).to have_attributes(gross: 300_000, debt: 60_000, net: 240_000,
+                                                  deposits: 2_000, ltv: 20.0)
+      expect(totals[:total]).to have_attributes(net: 240_000, deposits: 2_000)
+    end
+
     it "derives the overall LTV from the combined gross and debt" do
       bs = create(:balance_sheet)
       build_property(bs, name: "Maison", usage: :primary_residence, value: 400_000, debt: 300_000)
@@ -383,7 +420,7 @@ RSpec.describe BalanceSheet, type: :model do
       totals = bs.real_estate_totals_by_usage
 
       expect(totals.keys).to eq([:total])
-      expect(totals[:total]).to have_attributes(gross: 0, debt: 0, net: 0, ltv: nil)
+      expect(totals[:total]).to have_attributes(gross: 0, debt: 0, net: 0, deposits: 0, ltv: nil)
     end
   end
 

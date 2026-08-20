@@ -1,6 +1,10 @@
 require "rails_helper"
 
 RSpec.describe "Properties", type: :request do
+  def currency(amount)
+    ActionController::Base.helpers.number_to_currency(amount).gsub(/\s+/, " ")
+  end
+
   let(:user) { create(:user) }
 
   before { sign_in user }
@@ -129,6 +133,40 @@ RSpec.describe "Properties", type: :request do
       expect(response.body).to include("170 000,00")
       expect(response.body).not_to include("300 000,00")
       expect(response.body).to include("31 décembre 2024")
+    end
+
+    # Le dépôt de garantie se lit sur la fiche du bien — c'est une somme à rendre au
+    # locataire — mais reste hors de sa dette, de sa valeur nette et de sa LTV : la
+    # trésorerie qui le couvre n'est pas rattachée au bien.
+    it "shows the dépôt de garantie beside the dette, out of the valeur nette" do
+      loan = create(:liability, user: user, name: "Prêt maison", liability_type: :real_estate_loan,
+                    property: property, ownership_share: 100)
+      deposit = create(:liability, user: user, name: "Caution locataire", liability_type: :security_deposit,
+                       property: property, ownership_share: 100)
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      create(:balance_sheet_asset, balance_sheet: bs, asset: property.real_estate_asset, value: 300_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: loan, remaining_capital: 200_000)
+      create(:balance_sheet_liability, balance_sheet: bs, liability: deposit, remaining_capital: 900)
+
+      get property_path(property)
+
+      facts = Nokogiri::HTML(response.body).css(".property-fact")
+        .to_h { |fact| [fact.at_css("dt").text.gsub(/\s+/, " ").strip, fact.at_css("dd").text.gsub(/\s+/, " ").strip] }
+
+      expect(facts["Dette"]).to eq(currency(200_000))
+      expect(facts["Dépôts de garantie"]).to eq(currency(900))
+      # Brut 300 000 − dette 200 000, la caution laissée de côté : 100 000, et une LTV de 66,7 %.
+      expect(facts["Valeur nette"]).to eq(currency(100_000))
+      expect(facts["LTV"]).to eq("66,7 %")
+    end
+
+    it "leaves the dépôt de garantie line out when the bien carries none" do
+      bs = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
+      create(:balance_sheet_asset, balance_sheet: bs, asset: property.real_estate_asset, value: 300_000)
+
+      get property_path(property)
+
+      expect(response.body).not_to include("Dépôts de garantie")
     end
 
     it "renders a bien no bilan values yet" do

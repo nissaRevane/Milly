@@ -118,6 +118,19 @@
         <dt><%= t("views.balance_sheets.properties.ltv") %></dt>
         <dd><%= ltv_label(@position.ltv) %></dd>
       </div>
+      <%#
+        Le dépôt de garantie ne se montre que lorsque le bien en porte un, et à côté des trois
+        montants plutôt que dedans : la somme est à rendre au locataire, mais la trésorerie qui
+        la couvre n'est pas rattachée au bien (voir BalanceSheet::PropertyPosition#deposits).
+      %>
+      <% if @position.deposits.nonzero? %>
+        <div class="property-fact">
+          <dt title="<%= t("views.balance_sheets.properties.deposits_hint") %>">
+            <%= t("views.balance_sheets.properties.deposits") %>
+          </dt>
+          <dd><%= number_to_currency(@position.deposits) %></dd>
+        </div>
+      <% end %>
       <div class="property-fact property-fact-net">
         <dt><%= t("views.balance_sheets.properties.net") %></dt>
         <dd><%= number_to_currency(@position.net) %></dd>
