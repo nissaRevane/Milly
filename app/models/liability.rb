@@ -1,4 +1,5 @@
 class Liability < ApplicationRecord
+  include Historizable
   include Lifespanable
   include PropertyLinkable
   include RiskCategorizable
@@ -103,6 +104,15 @@ class Liability < ApplicationRecord
   end
 
   private
+
+  # Voir Historizable : les lignes de bilan de ce passif, et le capital détenu qu'elles portent.
+  def historized_lines
+    balance_sheet_liabilities
+  end
+
+  def historized_amount(line)
+    line.owned_remaining_capital
+  end
 
   def any_amortization_field?
     AMORTIZATION_FIELDS.any? { |field| self[field].present? }

@@ -183,6 +183,23 @@ class BalanceSheet < ApplicationRecord
     Variation.new(amount: amount, rate: before.zero? ? nil : (amount.to_d / before.abs * 100).round(1))
   end
 
+  # Le point de +points+ sur lequel se lit une variation « sur un an » : le plus récent qui ait
+  # au moins un an de recul sur +reference+. Une année calendaire et non 365 jours, pour qu'un
+  # bilan au 31/12 se compare au 31/12 précédent même quand une année bissextile s'intercale.
+  #
+  # nil tant que l'historique ne remonte pas à un an : l'appelant affiche alors un tiret plutôt
+  # qu'une progression mesurée sur trois mois qu'il annoncerait comme annuelle.
+  #
+  # Tout point sachant dire sa date de clôture convient : la série du tableau de bord
+  # (TimelinePoint) comme l'histoire d'une ligne (Historizable::ValuePoint). Une seule
+  # définition pour les deux, sans quoi « sur un an » ne voudrait pas dire la même chose d'une
+  # page à l'autre.
+  def self.a_year_before(points, reference)
+    threshold = reference.closing_date - 1.year
+
+    points.reverse.find { |point| point.closing_date <= threshold }
+  end
+
   # Les trois totaux de chaque bilan de +sheets+, dans l'ordre où +sheets+ arrive.
   #
   # Deux requêtes agrégées pour toute la série, là où lire #total_assets / #total_liabilities

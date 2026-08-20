@@ -1,4 +1,5 @@
 class Asset < ApplicationRecord
+  include Historizable
   include Lifespanable
   include PropertyLinkable
   include RiskCategorizable
@@ -63,6 +64,15 @@ class Asset < ApplicationRecord
   end
 
   private
+
+  # Voir Historizable : les lignes de bilan de cet actif, et le montant détenu qu'elles portent.
+  def historized_lines
+    balance_sheet_assets
+  end
+
+  def historized_amount(line)
+    line.owned_value
+  end
 
   def adopt_property_name
     self.name = property.name

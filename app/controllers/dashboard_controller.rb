@@ -10,7 +10,7 @@ class DashboardController < ApplicationController
     return if @current.nil?
 
     @previous = @timeline[-2]
-    @year_ago = point_a_year_before(@current)
+    @year_ago = BalanceSheet.a_year_before(@timeline, @current)
 
     @equity_variation = @previous && BalanceSheet.variation_between(@previous.equity, @current.equity)
     @yearly_variation = @year_ago && BalanceSheet.variation_between(@year_ago.equity, @current.equity)
@@ -26,19 +26,5 @@ class DashboardController < ApplicationController
     @dates = @timeline.map(&:closing_date)
     @assets_breakdown = BalanceSheet.assets_breakdown_for(sheets)
     @liabilities_breakdown = BalanceSheet.liabilities_breakdown_for(sheets)
-  end
-
-  private
-
-  # Le bilan sur lequel se lit la variation « sur un an » : le plus récent qui ait au moins
-  # un an de recul sur le dernier. Une année calendaire et non 365 jours, pour qu'un bilan au
-  # 31/12 se compare au 31/12 précédent même quand une année bissextile s'intercale.
-  #
-  # nil tant que l'historique ne remonte pas à un an : la carte affiche alors un tiret plutôt
-  # qu'une progression mesurée sur trois mois qu'elle annoncerait comme annuelle.
-  def point_a_year_before(current)
-    threshold = current.closing_date - 1.year
-
-    @timeline.reverse.find { |point| point.closing_date <= threshold }
   end
 end
