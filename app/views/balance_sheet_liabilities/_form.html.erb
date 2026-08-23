@@ -10,7 +10,7 @@
   <% end %>
 
   <%#
-    Chaque option porte le montant à proposer pour ce passif : le capital restant dû
+    Chaque option porte le montant à proposer pour cette dette : le capital restant dû
     dérivé du tableau d'amortissement à la date de clôture du bilan
     (Liability#suggested_remaining_capital). Le contrôleur suggested-value le recopie
     dans le champ montant à la sélection.
@@ -19,7 +19,7 @@
     <%= f.label :liability_id, t("views.balance_sheet_liabilities.form.liability") %>
     <%= f.select :liability_id,
                  @available_liabilities.map { |liability| [liability.name, liability.id, { data: { suggested_value: suggested_value_attribute(liability.suggested_remaining_capital(@balance_sheet.closing_date)) } }] },
-                 { prompt: "-- Sélectionner un passif --" },
+                 { prompt: "-- Sélectionner une dette --" },
                  class: "form-control",
                  data: { suggested_value_target: "source", action: "change->suggested-value#apply" } %>
   </div>

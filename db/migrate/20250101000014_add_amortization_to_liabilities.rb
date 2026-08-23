@@ -1,6 +1,6 @@
 class AddAmortizationToLiabilities < ActiveRecord::Migration[8.0]
   # Caractéristiques d'amortissement d'un crédit immobilier, toutes optionnelles : les
-  # passifs déjà créés n'en portent aucune, et un passif reste utilisable au bilan sans
+  # dettes déjà créées n'en portent aucune, et une dette reste utilisable au bilan sans
   # elles. Le modèle impose le tout-ou-rien : soit les sept champs, soit aucun.
   def change
     add_column :liabilities, :borrowed_capital, :decimal, precision: 15, scale: 2

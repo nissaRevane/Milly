@@ -1,5 +1,5 @@
 <%#
-  Ce que le passif est. Chaque fait se corrige au clic (voir shared/_inline_fact) : c'est
+  Ce que la dette est. Chaque fait se corrige au clic (voir shared/_inline_fact) : c'est
   cette liste qui remplace l'ancien formulaire de modification.
 
   Le rattachement à un bien n'apparaît que pour les types qu'un bien porte réellement, et
@@ -35,7 +35,7 @@
           class: "inline-edit-input", data: inline_edit_input_data %>
   <% end %>
 
-  <%# Les deux bornes de la période d'existence, facultatives : sans elles, le passif peut
+  <%# Les deux bornes de la période d'existence, facultatives : sans elles, la dette peut
       entrer dans n'importe quel bilan (voir Lifespanable). %>
   <%= render layout: "shared/inline_fact",
              locals: { record: @liability, tab: @tab,

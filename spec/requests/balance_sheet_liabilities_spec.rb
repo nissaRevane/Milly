@@ -52,7 +52,7 @@ RSpec.describe "BalanceSheetLiabilities", type: :request do
       expect(field["value"]).to be_nil
     end
 
-    # Un passif éteint ou pas encore né ne pèse pas sur ce bilan-là.
+    # Une dette éteinte ou pas encore née ne pèse pas sur ce bilan-là.
     it "excludes a liability outside its lifespan at the closing date" do
       future_loan = create(:liability, user: user, name: "Prêt futur",
                            started_on: balance_sheet.closing_date + 2.months)

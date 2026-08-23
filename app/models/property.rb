@@ -14,7 +14,7 @@ class Property < ApplicationRecord
           inverse_of: :property
 
   # Les deux bornes de la vie d'un bien et les deux bornes qu'elles donnent, par défaut,
-  # à chacun de ses actifs et passifs (voir Lifespanable).
+  # à chacun de ses actifs et à chacune de ses dettes (voir Lifespanable).
   LIFESPAN_MIRROR = { "acquired_on" => :started_on, "sold_on" => :ended_on }.freeze
 
   # Runs inside the save transaction: a bien that cannot get its actif is not created.
@@ -83,7 +83,7 @@ class Property < ApplicationRecord
     errors.add(:sold_on, :sold_before_acquired)
   end
 
-  # Les actifs et passifs rattachés suivent le bien quand il corrige sa date d'achat ou
+  # Les actifs et les dettes rattachés suivent le bien quand il corrige sa date d'achat ou
   # déclare sa vente : la période du bien est leur période par défaut, et un défaut qui ne
   # bougerait qu'à la création laisserait la ligne sur une date que le bien a démentie.
   #

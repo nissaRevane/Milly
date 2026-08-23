@@ -11,7 +11,7 @@ class BalanceSheetLiability < ApplicationRecord
   validates :liability_id, uniqueness: { scope: :balance_sheet_id }
 
   # Le pendant de BalanceSheetAsset#asset_within_its_lifespan, pour les mêmes raisons :
-  # un passif éteint ou pas encore né n'entre pas dans un bilan clos hors de sa période.
+  # une dette éteinte ou pas encore née n'entre pas dans un bilan clos hors de sa période.
   validate :liability_within_its_lifespan, on: :create
 
   def owned_remaining_capital

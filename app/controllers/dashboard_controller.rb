@@ -20,7 +20,7 @@ class DashboardController < ApplicationController
     # même positions filtrées, mêmes totaux, donc jamais deux chiffres pour un même bilan.
     @real_estate_total = sheet.real_estate_totals_by_usage(sheet.real_estate_positions)[:total]
 
-    # Les deux aires empilées. Elles portent le même axe que la courbe des fonds propres, et
+    # Les deux aires empilées. Elles portent le même axe que la courbe du patrimoine net, et
     # coûtent une requête agrégée chacune : le nombre de bilans ne change pas la charge.
     sheets = @timeline.map(&:balance_sheet)
     @dates = @timeline.map(&:closing_date)

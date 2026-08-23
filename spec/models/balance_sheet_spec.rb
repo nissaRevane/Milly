@@ -721,7 +721,7 @@ RSpec.describe BalanceSheet, type: :model do
     end
 
     # La somme des bandes est le haut de la pile : elle doit tomber sur le total du bilan,
-    # sinon la courbe des fonds propres et l'aire empilée ne raconteraient pas la même chose.
+    # sinon la courbe du patrimoine net et l'aire empilée ne raconteraient pas la même chose.
     it "adds up to the total the balance sheet reports" do
       sheet = create(:balance_sheet, user: user)
       property = create(:property, user: user, name: "Maison", usage: :primary_residence)

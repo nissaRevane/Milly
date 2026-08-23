@@ -254,7 +254,7 @@ RSpec.describe Liability, type: :model do
   end
 
   # La période d'existence est partagée avec Asset (Lifespanable), qui la couvre en détail ;
-  # ce qui est vérifié ici, c'est qu'un passif la porte bel et bien.
+  # ce qui est vérifié ici, c'est qu'une dette la porte bel et bien.
   describe "la période d'existence" do
     it "is valid without any date at all" do
       expect(build(:liability, started_on: nil, ended_on: nil)).to be_valid

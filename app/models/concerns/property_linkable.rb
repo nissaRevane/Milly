@@ -1,4 +1,4 @@
-# A line (actif or passif) that may be rattachée to one of its owner's biens.
+# A line (actif or dette) that may be rattachée to one of its owner's biens.
 #
 # The link is optional, and two things bound it.
 #

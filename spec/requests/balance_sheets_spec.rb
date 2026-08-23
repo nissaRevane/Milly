@@ -246,7 +246,7 @@ RSpec.describe "BalanceSheets", type: :request do
     end
 
     describe "on the show page" do
-      # The bilan lists the lines once, in its actifs and passifs columns. Regrouping them
+      # The bilan lists the lines once, in its actifs and dettes columns. Regrouping them
       # per bien belongs to the synthèse, which is where that reading lives now.
       it "does not repeat the lines regrouped per bien" do
         bs = build_property_sheet(with_unassigned: true)
@@ -361,8 +361,8 @@ RSpec.describe "BalanceSheets", type: :request do
         end
 
         # L'onglet ne recalcule rien : il doit dire exactement ce que la synthèse dit. Les
-        # deux totaux que découpent les anneaux se lisent au CENTRE de ceux-ci ; seuls les
-        # fonds propres, que ni l'un ni l'autre ne totalise, gardent leur tuile.
+        # deux totaux que découpent les anneaux se lisent au CENTRE de ceux-ci ; seul le
+        # patrimoine net, que ni l'un ni l'autre ne totalise, garde sa tuile.
         it "headlines the same three totals as the synthèse" do
           bs = build_property_sheet
 
@@ -527,7 +527,7 @@ RSpec.describe "BalanceSheets", type: :request do
       end
 
       describe "on the immobilier tab" do
-        it "shows the immobilier table instead of the actifs/passifs columns" do
+        it "shows the immobilier table instead of the actifs/dettes columns" do
           bs = build_property_sheet
 
           get summary_balance_sheet_path(bs, tab: "real_estate")
@@ -760,7 +760,7 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(copied_loan_line.remaining_capital).not_to eq(123_456)
       expect(copied_loan_line.remaining_capital).to be_between(0, 200_000)
 
-      # Le passif sans tableau d'amortissement reste copié tel quel.
+      # La dette sans tableau d'amortissement reste copiée telle quelle.
       plain_line = copy.balance_sheet_liabilities.find_by(liability_id: liability.id)
       expect(plain_line.remaining_capital).to eq(90_000)
     end
@@ -879,7 +879,7 @@ RSpec.describe "BalanceSheets", type: :request do
 
   describe "the évolution against the previous balance sheet" do
     # 100k of actifs and 60k of dettes last year, 120k and 50k this year: +20k of actifs,
-    # -10k of dettes, and fonds propres from 40k to 70k.
+    # -10k of dettes, and patrimoine net from 40k to 70k.
     def build_two_sheets
       previous = create(:balance_sheet, user: user, closing_date: Date.new(2024, 12, 31))
       bs = create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
@@ -898,7 +898,7 @@ RSpec.describe "BalanceSheets", type: :request do
     end
 
     describe "on the synthèse tab" do
-      it "hangs the gain and its rate under each total, and under the fonds propres" do
+      it "hangs the gain and its rate under each total, and under the patrimoine net" do
         get summary_balance_sheet_path(build_two_sheets)
 
         expect(response).to have_http_status(:success)

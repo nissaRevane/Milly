@@ -1,6 +1,6 @@
 class LiabilitiesController < ApplicationController
   # Les facettes de la fiche, dans l'ordre des onglets. « general » est celle qu'on obtient
-  # sans ?tab= : c'est le passif lui-même, et c'est là qu'on revient d'un onglet disparu.
+  # sans ?tab= : c'est la dette elle-même, et c'est là qu'on revient d'un onglet disparu.
   TABS = %w[general history schedule].freeze
   DEFAULT_TAB = "general".freeze
 
@@ -21,7 +21,7 @@ class LiabilitiesController < ApplicationController
     @liabilities = liabilities.ordered_by_category
   end
 
-  # La fiche : elle est aussi le formulaire du passif, chaque champ s'y corrigeant sur place.
+  # La fiche : elle est aussi le formulaire de la dette, chaque champ s'y corrigeant sur place.
   def show
     load_tab
   end
@@ -40,7 +40,7 @@ class LiabilitiesController < ApplicationController
   end
 
   # Un enregistrement ne renvoie pas à la liste mais à la fiche, sur l'onglet où l'on était :
-  # on corrige un champ pour continuer à lire le passif, pas pour le quitter. Un refus
+  # on corrige un champ pour continuer à lire la dette, pas pour la quitter. Un refus
   # réaffiche cette même fiche, ses erreurs en tête et la valeur refusée dans son champ.
   def update
     if @liability.update(liability_params)
@@ -66,7 +66,7 @@ class LiabilitiesController < ApplicationController
     @properties = current_user.properties.order(:usage, :name)
   end
 
-  # L'onglet demandé, ramené à la fiche quand il n'existe pas — ou plus : un passif qui quitte
+  # L'onglet demandé, ramené à la fiche quand il n'existe pas — ou plus : une dette qui quitte
   # les types amortissables perd son échéancier, et l'enregistrement doit alors renvoyer vers
   # un onglet qui est toujours là.
   def current_tab

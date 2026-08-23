@@ -120,7 +120,7 @@ class BalanceSheetsController < ApplicationController
     end
   end
 
-  # Une duplication qui a écarté des lignes le dit : celles dont l'actif ou le passif n'existe
+  # Une duplication qui a écarté des lignes le dit : celles dont l'actif ou la dette n'existe
   # pas à la nouvelle date de clôture ne sont pas recopiées (voir BalanceSheet#copy_lines_from),
   # et un bilan revenu plus court qu'attendu sans un mot ressemble à une duplication ratée.
   def creation_notice

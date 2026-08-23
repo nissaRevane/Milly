@@ -1,5 +1,5 @@
 class RemoveRiskLevelFromAssetsAndLiabilities < ActiveRecord::Migration[8.0]
-  # Le niveau de risque disparaît : il se saisissait sur chaque actif et chaque passif, mais
+  # Le niveau de risque disparaît : il se saisissait sur chaque actif et chaque dette, mais
   # rien ne s'en servait — ni un calcul, ni une décision. Il ne colorait qu'une pastille et
   # une ligne de la synthèse, là où le type dit déjà ce qu'est la ligne.
   #

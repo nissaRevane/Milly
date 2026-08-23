@@ -16,10 +16,10 @@ fr:
       user: Utilisateur
       property: Bien immobilier
       asset: Actif
-      liability: Passif
+      liability: Dette
       balance_sheet: Bilan
       balance_sheet_asset: Ligne d'actif
-      balance_sheet_liability: Ligne de passif
+      balance_sheet_liability: Ligne de dette
     attributes:
       user:
         firstname: Prénom
@@ -65,7 +65,7 @@ fr:
         asset: Actif
       balance_sheet_liability:
         remaining_capital: Capital restant dû
-        liability: Passif
+        liability: Dette
     errors:
       messages:
         record_invalid: "La validation a échoué : %{errors}"
@@ -103,7 +103,7 @@ fr:
   errors:
     messages:
       blank: doit être rempli(e)
-      # La borne de fin d'un actif ou d'un passif (voir Lifespanable), partagée par les deux
+      # La borne de fin d'un actif ou d'une dette (voir Lifespanable), partagée par les deux
       # modèles : un seul message, une seule formulation.
       ended_before_started: ne peut pas précéder la date de début
       inclusion: n'est pas inclus(e) dans la liste
@@ -140,7 +140,7 @@ fr:
       dashboard: Tableau de bord
       properties: Biens
       assets: Actifs
-      liabilities: Passifs
+      liabilities: Dettes
       balance_sheets: Bilans
       sign_out: Déconnexion
       sign_in: Connexion
@@ -154,7 +154,7 @@ fr:
         password_hint: "%{count} caractères minimum"
         update_password: Changer mon mot de passe
         data: Mes données
-        export_hint: Téléchargez l'intégralité de votre compte (biens, actifs, passifs et bilans) dans un fichier JSON réutilisable pour ré-alimenter Milly.
+        export_hint: Téléchargez l'intégralité de votre compte (biens, actifs, dettes et bilans) dans un fichier JSON réutilisable pour ré-alimenter Milly.
         export: Exporter mes données
     properties:
       index:
@@ -169,7 +169,7 @@ fr:
         purchase_price_hint: Prix payé pour le bien entier, quote-part non appliquée.
         acquired_on: Date d'acquisition
         sold_on: Date de vente
-        sold_on_hint: Laissez vide pour un bien encore détenu. Une fois renseignée, les actifs et passifs du bien ne sont plus proposés aux bilans clos après la vente.
+        sold_on_hint: Laissez vide pour un bien encore détenu. Une fois renseignée, les actifs et dettes du bien ne sont plus proposés aux bilans clos après la vente.
         asset_hint: Un actif de type « Immobilier » portant le nom du bien sera créé automatiquement.
       show:
         edit: Modifier
@@ -213,23 +213,23 @@ fr:
         title: Nouvel actif
     liabilities:
       index:
-        title: Mes Passifs
-        new: Nouveau passif
-        empty: Aucun passif enregistré.
-        empty_filtered: Aucun passif pour cette catégorie.
+        title: Mes Dettes
+        new: Nouvelle dette
+        empty: Aucune dette enregistrée.
+        empty_filtered: Aucune dette pour cette catégorie.
         ownership_share: Quote-part
         category: Catégorie
         filter_category: Filtrer par catégorie
         filter_all: Toutes les catégories
         filter_submit: Filtrer
       form:
-        name: Nom du passif
-        liability_type: Type de passif
+        name: Nom de la dette
+        liability_type: Type de dette
         ownership_share: "Quote-part détenue (%)"
         property: Bien immobilier rattaché
         property_none: Aucun bien
         amortization_legend: "Tableau d'amortissement (crédits)"
-        amortization_hint: "Tous les champs sont à renseigner ensemble. Laissez-les vides pour un passif sans tableau d'amortissement."
+        amortization_hint: "Tous les champs sont à renseigner ensemble. Laissez-les vides pour une dette sans tableau d'amortissement."
         borrowed_capital: Capital emprunté
         annual_rate: "Taux annuel (%)"
         duration_months: "Durée (mois)"
@@ -239,10 +239,10 @@ fr:
         first_payment_principal: Capital de la première échéance
         first_payment_interest: Intérêts de la première échéance
       show:
-        back: Retour aux passifs
+        back: Retour aux dettes
         click_to_edit_name: Cliquer pour modifier le nom
         owned_remaining_capital: Capital détenu restant dû
-        no_history: "Ce passif ne figure dans aucun bilan pour l'instant."
+        no_history: "Cette dette ne figure dans aucun bilan pour l'instant."
         tabs:
           general: Fiche
           history: Évolution
@@ -257,7 +257,7 @@ fr:
         remaining_capital: Capital restant dû
         no_schedule: "Aucun tableau d'amortissement pour l'instant : renseignez les sept caractéristiques ci-dessus pour l'obtenir."
       new:
-        title: Nouveau passif
+        title: Nouvelle dette
     balance_sheets:
       index:
         title: Mes Bilans
@@ -265,8 +265,8 @@ fr:
         empty: Aucun bilan enregistré.
         closing_date: "Date de clôture :"
         total_assets: "Total actifs :"
-        total_liabilities: "Total passifs :"
-        equity: "Fonds propres :"
+        total_liabilities: "Total dettes :"
+        equity: "Patrimoine net :"
         view: Voir
         summary: Synthèse
         duplicate: Dupliquer
@@ -275,7 +275,7 @@ fr:
       new:
         title: Nouveau bilan
         duplicate_title: "Dupliquer le bilan au %{date}"
-        duplicate_hint: Les lignes d'actifs et de passifs seront recopiées avec leurs montants. Celles dont l'actif ou le passif n'existe pas à la nouvelle date de clôture sont laissées de côté.
+        duplicate_hint: Les lignes d'actifs et de dettes seront recopiées avec leurs montants. Celles dont l'actif ou la dette n'existe pas à la nouvelle date de clôture sont laissées de côté.
       edit:
         title: Modifier le bilan
       show:
@@ -285,12 +285,12 @@ fr:
         no_previous_sheet: "Aucun bilan antérieur"
         no_next_sheet: "Aucun bilan postérieur"
         assets: Actifs
-        liabilities: Passifs
+        liabilities: Dettes
         add_asset: Ajouter un actif
-        add_liability: Ajouter un passif
+        add_liability: Ajouter une dette
         total_assets: Total des actifs
-        total_liabilities: Total des passifs
-        equity: Fonds propres
+        total_liabilities: Total des dettes
+        equity: Patrimoine net
         value: Valeur
         remaining_capital: Capital restant dû
         ownership_share: Quote-part
@@ -310,10 +310,10 @@ fr:
         no_previous_sheet: "Aucun bilan antérieur"
         no_next_sheet: "Aucun bilan postérieur"
         assets_column: Actifs
-        liabilities_column: Passifs
+        liabilities_column: Dettes
         total_assets: Total Actifs
-        total_liabilities: Total Passifs
-        equity: Fonds Propres
+        total_liabilities: Total Dettes
+        equity: Patrimoine Net
         edit: Modifier le détail du bilan
         tabs:
           general: Synthèse
@@ -329,7 +329,7 @@ fr:
           real_estate: Patrimoine immobilier
           real_estate_hint: "Pour chaque bien : sa dette à gauche, la valeur de l'actif à droite, et au centre la valeur nette qu'elles laissent."
           no_assets: Aucun actif sur ce bilan.
-          no_liabilities: Aucun passif sur ce bilan.
+          no_liabilities: Aucune dette sur ce bilan.
       properties:
         usage: Usage
         net: Valeur nette
@@ -351,13 +351,13 @@ fr:
         title: Modifier la ligne d'actif
     balance_sheet_liabilities:
       form:
-        liability: Passif
+        liability: Dette
         remaining_capital: Capital restant dû
-        remaining_capital_hint: "Saisissez le capital restant dû total. La quote-part définie sur le passif sera appliquée automatiquement."
+        remaining_capital_hint: "Saisissez le capital restant dû total. La quote-part définie sur la dette sera appliquée automatiquement."
       new:
-        title: Ajouter un passif au bilan
+        title: Ajouter une dette au bilan
       edit:
-        title: Modifier la ligne de passif
+        title: Modifier la ligne de dette
     dashboard:
       title: Tableau de bord
       empty: Aucun bilan pour l'instant. Le tableau de bord se remplira dès le premier.
@@ -393,7 +393,7 @@ fr:
       owned_value_detail: "%{share} de %{total}"
       inline_edit:
         click_to_edit: Cliquer pour modifier
-      # L'onglet Évolution d'une fiche d'actif ou de passif : les mêmes intitulés des deux
+      # L'onglet Évolution d'une fiche d'actif ou de dette : les mêmes intitulés des deux
       # côtés du bilan, seul le montant lu change de nom.
       value_history:
         as_of: "au %{date}"
@@ -453,17 +453,17 @@ fr:
       destroyed: Actif supprimé avec succès.
       property_owned: "Cet actif appartient à un bien immobilier : supprimez le bien pour le supprimer."
     liabilities:
-      created: Passif créé avec succès.
-      updated: Passif mis à jour avec succès.
-      destroyed: Passif supprimé avec succès.
+      created: Dette créée avec succès.
+      updated: Dette mise à jour avec succès.
+      destroyed: Dette supprimée avec succès.
     balance_sheets:
       created: Bilan créé avec succès.
       duplicated: Bilan dupliqué avec succès.
-      # Le pluriel des lignes écartées : celles dont l'actif ou le passif n'existait pas à la
+      # Le pluriel des lignes écartées : celles dont l'actif ou la dette n'existait pas à la
       # nouvelle date de clôture (voir BalanceSheet#copy_lines_from).
       duplicated_partial:
-        one: "Bilan dupliqué. 1 ligne n'a pas été reprise : l'actif ou le passif n'existe pas à cette date."
-        other: "Bilan dupliqué. %{count} lignes n'ont pas été reprises : leur actif ou leur passif n'existe pas à cette date."
+        one: "Bilan dupliqué. 1 ligne n'a pas été reprise : l'actif ou la dette n'existe pas à cette date."
+        other: "Bilan dupliqué. %{count} lignes n'ont pas été reprises : leur actif ou leur dette n'existe pas à cette date."
       updated: Bilan mis à jour avec succès.
       destroyed: Bilan supprimé avec succès.
     balance_sheet_assets:
@@ -471,9 +471,9 @@ fr:
       updated: Ligne d'actif mise à jour avec succès.
       destroyed: Ligne d'actif supprimée avec succès.
     balance_sheet_liabilities:
-      created: Ligne de passif ajoutée avec succès.
-      updated: Ligne de passif mise à jour avec succès.
-      destroyed: Ligne de passif supprimée avec succès.
+      created: Ligne de dette ajoutée avec succès.
+      updated: Ligne de dette mise à jour avec succès.
+      destroyed: Ligne de dette supprimée avec succès.
     errors:
       not_found: La ressource demandée est introuvable.
   number:

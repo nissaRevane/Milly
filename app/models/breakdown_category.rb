@@ -1,7 +1,7 @@
-# Les grandes catégories qui rangent le patrimoine : trois familles à l'actif, trois au passif.
+# Les grandes catégories qui rangent le patrimoine : trois familles côté actifs, trois côté dettes.
 # Ce ne sont pas les types d'enum — un compte courant, un livret et une créance répondent tous
 # à la même question, de quoi dispose-t-on tout de suite — mais le vocabulaire par lequel Milly
-# organise TOUS ses écrans : la liste des actifs, celle des passifs, les groupes d'un bilan et
+# organise TOUS ses écrans : la liste des actifs, celle des dettes, les groupes d'un bilan et
 # les bandes du miroir du tableau de bord parlent de ces catégories-là, dans cet ordre et avec
 # ces couleurs (voir .chart-series-* dans application.css). Le type précis d'une ligne reste sa
 # donnée, modifiable sur sa fiche ; c'est la catégorie qui l'organise partout ailleurs.
@@ -24,7 +24,7 @@ module BreakdownCategory
     { key: "financial_investment", types: %w[financial_investment] }
   ].freeze
 
-  # Le passif s'ordonne en partant de l'axe : d'abord ce qui n'est adossé à aucun bien — les
+  # Les dettes s'ordonnent en partant de l'axe : d'abord ce qui n'est adossé à aucun bien — les
   # dettes diverses, qui rassemblent la dette court terme et les autres crédits, ces deux
   # dettes du quotidien qu'aucun bien ne porte — puis les dépôts de garantie, puis les
   # crédits immobiliers et leur détail par usage.
@@ -46,8 +46,8 @@ module BreakdownCategory
   # La sous-catégorie des lignes immobilières qu'aucun bien ne porte encore.
   UNASSIGNED_USAGE = "unassigned".freeze
 
-  # La catégorie d'un actif, d'un passif : la famille de son type, suivie de l'usage du bien
-  # qu'il porte quand cette famille est éclatée.
+  # La catégorie d'un actif, d'une dette : la famille de son type, suivie de l'usage du bien
+  # rattaché quand cette famille est éclatée.
   def self.for_asset(asset)
     key_for(ASSETS, asset.asset_type, asset.property&.usage)
   end

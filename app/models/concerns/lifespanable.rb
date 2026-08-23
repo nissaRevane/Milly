@@ -1,5 +1,5 @@
-# Un actif ou un passif qui n'existe qu'entre deux dates, l'une et l'autre facultatives :
-# sans borne de début il a toujours existé, sans borne de fin il existe encore. Un bilan
+# Une ligne, actif ou dette, qui n'existe qu'entre deux dates, l'une et l'autre facultatives :
+# sans borne de début elle a toujours existé, sans borne de fin elle existe encore. Un bilan
 # ne se voit proposer que les lignes qui existaient à sa date de clôture — voir
 # BalanceSheetAssetsController#set_available_assets.
 #
@@ -22,8 +22,8 @@ module Lifespanable
 
     validate :ended_on_after_started_on
 
-    # Rattacher une ligne à un bien lui donne la période du bien : un actif ou un passif
-    # adossé à un immeuble naît avec l'achat et meurt avec la vente. Ce n'est qu'un défaut,
+    # Rattacher une ligne à un bien lui donne la période du bien : un actif ou une dette
+    # adossés à un immeuble naissent avec l'achat et meurent avec la vente. Ce n'est qu'un défaut,
     # posé à la création et sur les bornes laissées vides — un compte courant ouvert deux ans
     # après l'achat garde la date que l'utilisateur y écrit. Property propage ensuite ses
     # propres changements de dates aux bornes restées d'origine (voir Property).

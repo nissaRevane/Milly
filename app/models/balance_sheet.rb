@@ -216,7 +216,7 @@ class BalanceSheet < ApplicationRecord
   end
 
   # Les lignes de +source+ reprises sur ce bilan, et le nombre de celles qui ont été LAISSÉES
-  # de côté : un actif ou un passif qui n'existe pas à la date de clôture d'arrivée n'y entre
+  # de côté : un actif ou une dette qui n'existe pas à la date de clôture d'arrivée n'y entre
   # pas (voir Lifespanable). Un PEE soldé en 2024 n'a rien à faire dans un bilan clos en 2026,
   # et le modèle le refuserait de toute façon — les recopier en bloc faisait échouer la
   # duplication entière sur la première ligne périmée.
@@ -236,7 +236,7 @@ class BalanceSheet < ApplicationRecord
       # Un prêt qui porte un tableau d'amortissement n'est pas recopié tel quel : son
       # capital restant dû est projeté à la date de clôture du nouveau bilan — recopier
       # l'ancien montant figerait la dette à une date où elle ne vaut plus cela. Les
-      # passifs sans tableau gardent le comportement d'origine, la copie verbatim.
+      # dettes sans tableau gardent le comportement d'origine, la copie verbatim.
       source.balance_sheet_liabilities.includes(:liability).each do |line|
         next skipped += 1 unless line.liability.available_on?(closing_date)
 

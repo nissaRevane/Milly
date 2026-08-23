@@ -1,5 +1,5 @@
 # Tableau d'amortissement d'un crédit immobilier, calculé à partir des sept
-# caractéristiques portées par le passif (Liability::AMORTIZATION_FIELDS).
+# caractéristiques portées par la dette (Liability::AMORTIZATION_FIELDS).
 #
 # La première échéance est reprise TELLE QUELLE de la saisie utilisateur : dans la
 # pratique elle est presque toujours arbitraire (prorata du mois de déblocage, différé

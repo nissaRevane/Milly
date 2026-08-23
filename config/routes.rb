@@ -18,7 +18,7 @@ Milly::Application.routes.draw do
   resource :export, only: [:show]
 
   resources :properties
-  # La fiche d'un actif ou d'un passif EST son formulaire : on y corrige chaque champ sur
+  # La fiche d'un actif ou d'une dette EST son formulaire : on y corrige chaque champ sur
   # place, et il n'y a donc pas de page « Modifier » derrière (voir assets#show).
   resources :assets, except: [:edit]
   resources :liabilities, except: [:edit]

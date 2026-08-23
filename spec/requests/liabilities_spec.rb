@@ -90,7 +90,7 @@ RSpec.describe "Liabilities", type: :request do
 
       get liabilities_path, params: { category: "real_estate_loan" }
 
-      expect(response.body).to include("Aucun passif pour cette catégorie.")
+      expect(response.body).to include("Aucune dette pour cette catégorie.")
       expect(response.body).to include("Filtrer par catégorie")
     end
   end
@@ -258,7 +258,7 @@ RSpec.describe "Liabilities", type: :request do
       get liability_path(liability, tab: "history")
 
       expect(Nokogiri::HTML(response.body).at_css(".empty-state").text)
-        .to include("Ce passif ne figure dans aucun bilan")
+        .to include("Cette dette ne figure dans aucun bilan")
     end
   end
 
@@ -540,7 +540,7 @@ RSpec.describe "Liabilities", type: :request do
     let(:liability) { create(:liability, user: user, name: "Old Name") }
 
     # La fiche est le formulaire : on revient dessus, sur l'onglet où l'on était, plutôt que
-    # sur la liste — on corrige un champ pour continuer à lire le passif, pas pour le quitter.
+    # sur la liste — on corrige un champ pour continuer à lire la dette, pas pour la quitter.
     it "updates the ownership share and comes back to the fiche" do
       patch liability_path(liability), params: { liability: { ownership_share: "33.33" } }
       expect(liability.reload.ownership_share).to eq(BigDecimal("33.33"))

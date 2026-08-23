@@ -150,7 +150,7 @@ RSpec.describe Property, type: :model do
     end
   end
 
-  # Les dates du bien sont la période par défaut de ses actifs et de ses passifs
+  # Les dates du bien sont la période par défaut de ses actifs et de ses dettes
   # (voir Lifespanable) : elles doivent donc les suivre quand le bien les corrige.
   describe "when its dates change" do
     it "moves the lines that still carry the dates of the bien" do

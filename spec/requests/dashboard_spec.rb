@@ -338,7 +338,7 @@ RSpec.describe "Dashboard", type: :request do
 
       # Sous l'axe, les bandes s'empilent en s'éloignant de lui : le fourre-tout d'abord, les
       # crédits immobiliers en dernier, chacun avec son usage.
-      it "splits the crédits immobiliers by usage and keeps the other passifs whole" do
+      it "splits the crédits immobiliers by usage and keeps the other dettes whole" do
         property = create(:property, user: user, name: "Locatif Lyon", usage: :rental)
         loan = create(:liability, user: user, liability_type: :real_estate_loan, property: property)
         deposit = create(:liability, user: user, liability_type: :security_deposit)

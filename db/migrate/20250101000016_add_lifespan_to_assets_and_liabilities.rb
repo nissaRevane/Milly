@@ -1,5 +1,5 @@
 class AddLifespanToAssetsAndLiabilities < ActiveRecord::Migration[8.0]
-  # La période d'existence d'un actif ou d'un passif, les deux bornes optionnelles : une
+  # La période d'existence d'un actif ou d'une dette, les deux bornes optionnelles : une
   # ligne sans bornes existe de tout temps, et c'est le cas de toutes celles déjà
   # enregistrées. Elle décide des lignes qu'un bilan peut se voir proposer
   # (voir Lifespanable#available_on?).

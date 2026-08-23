@@ -36,13 +36,13 @@ module ApplicationHelper
     Liability.liability_types.keys.map { |key| [t("views.shared.liability_types.#{key}"), key] }
   end
 
-  # Les types de passifs qu'un bien porte réellement, tels que le contrôleur Stimulus les
+  # Les types de dettes qu'un bien porte réellement, tels que le contrôleur Stimulus les
   # lit : une liste séparée par des espaces, dans l'attribut data du bloc à montrer.
   def property_linkable_liability_types
     Liability::PROPERTY_LINKABLE_TYPES.join(" ")
   end
 
-  # Les types de passifs qui portent un tableau d'amortissement, dans la même forme lue par
+  # Les types de dettes qui portent un tableau d'amortissement, dans la même forme lue par
   # le contrôleur Stimulus : une liste séparée par des espaces.
   def amortizable_liability_types
     Liability::AMORTIZABLE_TYPES.join(" ")
@@ -90,7 +90,7 @@ module ApplicationHelper
   # nil — the very first balance sheet has no predecessor to read an evolution against.
   #
   # +favorable+ says which direction reads as good news, because the sign alone does not:
-  # the passifs column passes :down, a dette going down being the favourable move there.
+  # the dettes column passes :down, a dette going down being the favourable move there.
   # The colour follows that reading, the sign always follows the actual amount.
   def variation_note(variation, favorable: :up)
     return nil if variation.nil?

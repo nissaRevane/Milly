@@ -1,4 +1,4 @@
-# Un actif ou un passif lu dans le temps : son montant, bilan par bilan.
+# Une ligne, actif ou dette, lue dans le temps : son montant, bilan par bilan.
 #
 # La fiche d'une ligne pose une question que le bilan ne pose pas — celle-ci, prise seule,
 # monte-t-elle ou descend-elle ? — et il n'y a qu'une chose à lire pour y répondre : la suite

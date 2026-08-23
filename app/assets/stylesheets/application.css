@@ -401,8 +401,8 @@ a.nav-user-name:hover {
   text-align: right;
 }
 
-/* Ce qui s'édite dans un titre — la date de clôture d'un bilan, le nom d'un actif ou d'un
-   passif : contrairement aux montants du tableau, le déclencheur et le champ se lisent de
+/* Ce qui s'édite dans un titre — la date de clôture d'un bilan, le nom d'un actif ou d'une
+   dette : contrairement aux montants du tableau, le déclencheur et le champ se lisent de
    gauche à droite, et le champ prend la taille du titre qu'il remplace. */
 .inline-edit-trigger-title {
   text-align: left;
@@ -928,7 +928,7 @@ a.summary-nav-arrow:hover {
  *
  * The note hangs under the amount it qualifies, right-aligned with it. Its colour says
  * whether the move is good news, not whether it is positive: see #variation_note, the
- * passifs column reads a dette qui baisse as a gain.
+ * dettes column reads a dette qui baisse as a gain.
  */
 .amount-with-variation {
   display: inline-flex;
@@ -1628,7 +1628,7 @@ button.chart-legend-swatch:hover {
 .chart-series-real-estate-rental { --series-color: var(--chart-re-3); }
 .chart-series-real-estate-unassigned { --series-color: var(--chart-re-4); }
 
-/* Sous l'axe : le fourre-tout du passif, puis les dépôts de garantie */
+/* Sous l'axe : le fourre-tout de la dette, puis les dépôts de garantie */
 .chart-series-short-term-debt { --series-color: var(--chart-short-term); }
 .chart-series-security-deposit { --series-color: var(--chart-deposit); }
 

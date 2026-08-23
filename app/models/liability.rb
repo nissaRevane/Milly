@@ -27,7 +27,7 @@ class Liability < ApplicationRecord
     other_credit: 3
   }, validate: true
 
-  # Les deux passifs qu'un bien porte réellement : le crédit qui l'a financé et le dépôt de
+  # Les deux dettes qu'un bien porte réellement : le crédit qui l'a financé et le dépôt de
   # garantie versé par son locataire. Une dette court terme n'est portée par aucun bien
   # (voir PropertyLinkable).
   PROPERTY_LINKABLE_TYPES = %w[real_estate_loan security_deposit].freeze
@@ -35,11 +35,11 @@ class Liability < ApplicationRecord
   # Les deux types de crédits qui s'amortissent par mensualités constantes : le prêt
   # immobilier, porté par le bien qu'il finance, et l'« autre crédit » — auto, travaux,
   # consommation — qu'aucun bien ne porte (voir PROPERTY_LINKABLE_TYPES). Les autres
-  # passifs, dette court terme et dépôt de garantie, n'ont pas d'échéancier : leur montant
+  # dettes, dette court terme et dépôt de garantie, n'ont pas d'échéancier : leur montant
   # se saisit bilan par bilan.
   AMORTIZABLE_TYPES = %w[real_estate_loan other_credit].freeze
 
-  # Les passifs adossés à une trésorerie du même montant, qu'aucun actif ne nomme : le dépôt
+  # Les dettes adossées à une trésorerie du même montant, qu'aucun actif ne nomme : le dépôt
   # de garantie d'un locataire est bien une dette — elle sera rendue — mais l'argent qui la
   # couvre dort sur un compte courant, mélangé au reste, sans ligne à lui. Cette dette pèse
   # donc sur le patrimoine global, où le compte courant qui la détient est compté lui aussi,
@@ -82,14 +82,14 @@ class Liability < ApplicationRecord
     PROPERTY_LINKABLE_TYPES.include?(liability_type)
   end
 
-  # Ce type de passif peut-il porter un tableau d'amortissement ? La question porte sur le
+  # Ce type de dette peut-il porter un tableau d'amortissement ? La question porte sur le
   # TYPE seul — le formulaire s'en sert pour montrer ou masquer le bloc de saisie — là où
   # #amortizable? répond sur les champs effectivement renseignés.
   def amortizable_type?
     AMORTIZABLE_TYPES.include?(liability_type)
   end
 
-  # Ce passif est-il couvert par une trésorerie de même montant ? Voir CASH_BACKED_TYPES.
+  # Cette dette est-elle couverte par une trésorerie de même montant ? Voir CASH_BACKED_TYPES.
   def cash_backed?
     CASH_BACKED_TYPES.include?(liability_type)
   end
@@ -104,7 +104,7 @@ class Liability < ApplicationRecord
     @amortization_schedule ||= AmortizationSchedule.new(self)
   end
 
-  # Le capital restant dû proposé quand ce passif entre dans un bilan clos à +date+,
+  # Le capital restant dû proposé quand cette dette entre dans un bilan clos à +date+,
   # nil quand le prêt ne porte pas de tableau d'amortissement. Ce n'est qu'une
   # suggestion — le bilan reste ce que l'utilisateur y écrit.
   def suggested_remaining_capital(date)
@@ -113,7 +113,7 @@ class Liability < ApplicationRecord
 
   private
 
-  # Voir Historizable : les lignes de bilan de ce passif, et le capital détenu qu'elles portent.
+  # Voir Historizable : les lignes de bilan de cette dette, et le capital détenu qu'elles portent.
   def historized_lines
     balance_sheet_liabilities
   end
@@ -135,7 +135,7 @@ class Liability < ApplicationRecord
     (AMORTIZATION_FIELDS - filled).each { |field| errors.add(field, :blank) }
   end
 
-  # Seul un crédit s'amortit par mensualités constantes : les autres types de passifs ne
+  # Seul un crédit s'amortit par mensualités constantes : les autres types de dettes ne
   # portent pas de tableau d'amortissement.
   def amortization_reserved_for_credits
     return unless any_amortization_field?

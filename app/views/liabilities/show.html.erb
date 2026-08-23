@@ -1,9 +1,9 @@
 <%#
-  La fiche d'un passif : elle EST son formulaire. Chaque fait s'y corrige au clic, comme les
+  La fiche d'une dette : elle EST son formulaire. Chaque fait s'y corrige au clic, comme les
   montants d'un bilan (voir balance_sheets#show), et il n'y a plus de page « Modifier »
   derrière — un bouton qui envoyait saisir ailleurs ce qu'on est en train de lire.
 
-  Trois facettes, trois onglets : ce que le passif est, ce qu'il a valu bilan après bilan, et
+  Trois facettes, trois onglets : ce que la dette est, ce qu'elle a valu bilan après bilan, et
   l'échéancier du crédit quand son type en porte un.
 %>
 <div class="page-header">
@@ -41,7 +41,7 @@
     [t("views.liabilities.show.tabs.history"), liability_path(@liability, tab: "history"), "history"]
   ]
   # L'échéancier n'a d'onglet que sur les types de crédits qui en portent un : les autres
-  # passifs se saisissent bilan par bilan (voir Liability::AMORTIZABLE_TYPES).
+  # dettes se saisissent bilan par bilan (voir Liability::AMORTIZABLE_TYPES).
   if @liability.amortizable_type?
     tabs << [t("views.liabilities.show.tabs.schedule"), liability_path(@liability, tab: "schedule"), "schedule"]
   end
