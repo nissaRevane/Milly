@@ -707,6 +707,20 @@ RSpec.describe "BalanceSheets", type: :request do
         post balance_sheets_path, params: { balance_sheet: { closing_date: "2025-12-31" } }
       }.to change(BalanceSheet, :count).by(1)
     end
+
+    # Une date déjà prise revient sur le formulaire avec la raison du refus en clair, et non
+    # avec le « Translation missing » que rendait la clé absente.
+    it "explains in French that a balance sheet already closes on that date" do
+      create(:balance_sheet, user: user, closing_date: Date.new(2025, 12, 31))
+
+      expect {
+        post balance_sheets_path, params: { balance_sheet: { closing_date: "2025-12-31" } }
+      }.not_to change(BalanceSheet, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(CGI.escapeHTML(I18n.t("activerecord.errors.models.balance_sheet.attributes.closing_date.taken")))
+      expect(response.body).not_to include("Translation missing")
+    end
   end
 
   describe "duplicating a balance sheet" do

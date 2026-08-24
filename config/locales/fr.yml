@@ -92,6 +92,10 @@ fr:
               amortization_reserved_for_credits: "doit être « Crédit immobilier » ou « Autres crédits » pour porter un tableau d'amortissement"
             property:
               not_linkable: "ne se rattache qu'à un crédit immobilier ou à un dépôt de garantie"
+        balance_sheet:
+          attributes:
+            closing_date:
+              taken: "correspond déjà à un bilan existant : il ne peut y en avoir qu'un seul par date."
         balance_sheet_asset:
           attributes:
             asset:
@@ -109,6 +113,7 @@ fr:
       inclusion: n'est pas inclus(e) dans la liste
       invalid: n'est pas valide
       required: doit exister
+      taken: est déjà utilisé(e)
       not_a_number: n'est pas un nombre
       not_an_integer: doit être un nombre entier
       greater_than: doit être supérieur à %{count}

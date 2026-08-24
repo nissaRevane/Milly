@@ -18,6 +18,19 @@ RSpec.describe BalanceSheet, type: :model do
       duplicate = build(:balance_sheet, user: user, closing_date: Date.today)
       expect(duplicate).not_to be_valid
     end
+
+    # Le message est traduit : sans sa clé, le formulaire affichait le « Translation missing »
+    # d'I18n à la place de la raison du refus.
+    it "says in French why a second balance sheet on the same date is refused" do
+      user = create(:user)
+      create(:balance_sheet, user: user, closing_date: Date.today)
+      duplicate = build(:balance_sheet, user: user, closing_date: Date.today)
+
+      duplicate.valid?
+
+      expect(duplicate.errors[:closing_date])
+        .to eq([I18n.t("activerecord.errors.models.balance_sheet.attributes.closing_date.taken")])
+    end
   end
 
   describe "#total_assets" do
