@@ -29,6 +29,12 @@ Rails.application.configure do
     authentication: :plain,
     enable_starttls_auto: true
   }
+  # Seul le domaine servi répond : un Host forgé ne peut donc pas se glisser dans un lien
+  # d'email ou dans une entrée de cache. /up en est exclu, la sonde de kamal-proxy
+  # interrogeant le conteneur sans passer par le nom de domaine.
+  config.hosts << ENV["APP_HOST"] if ENV["APP_HOST"].present?
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
   config.active_support.report_deprecations = false
   config.active_record.dump_schema_after_migration = false
 end

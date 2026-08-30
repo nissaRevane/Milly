@@ -243,6 +243,38 @@ none of the demo data lands in your real database. Sign up at `/users/sign_up`.
 
 ---
 
+## Hosting other people's data
+
+Once strangers can sign up, Milly holds other people's financial position — under the
+GDPR that makes you the data controller, and a few things stop being optional.
+
+**Already in the app**
+
+- Accounts are isolated at the model layer, not just in the controllers: a balance sheet
+  line refuses an `asset_id` or `liability_id` from another account, the way
+  `PropertyLinkable` already refused a foreign `property_id`. `spec/requests/account_isolation_spec.rb`
+  is the regression net — add an example to it whenever a new foreign key reaches a form.
+- Sign-in, sign-up and password reset are rate limited per IP (10/5 min, 5/h, 5/15 min).
+  The counters live in `Milly::RATE_LIMIT_STORE`, a per-process memory cache, so the limit
+  is per Puma worker. It is exact in single mode, which is how the container runs; setting
+  `WEB_CONCURRENCY` above 1 would multiply it and calls for a shared store.
+- `Devise.paranoid` is on, so the password-reset form no longer tells a stranger which
+  addresses have an account here.
+- Every user can export their whole account (`/export`) and delete it outright from
+  `/mon-compte`. Deletion cascades through every association.
+
+**Still on you**
+
+- A privacy notice: who you are, what you store, where it is hosted, how long you keep it,
+  and how to reach you. A page under `/confidentialite` is enough for a service this size.
+- Backups you have actually restored once. Losing your own data is annoying; losing
+  someone else's is a breach you have to report.
+- A way to be reached about data — an email address that works is the minimum.
+- Deciding whether you really want the registration open, or whether an invite code is a
+  better fit. Public sign-up is what makes all of the above obligatory.
+
+---
+
 ## Day-to-day deploys
 
 Push to `master`. The workflow runs RSpec first and only deploys if the suite is green.
