@@ -1,5 +1,14 @@
 require "json"
 
+# bin/docker-entrypoint lance `db:prepare` a chaque demarrage, et db:prepare
+# enchaine sur db:seed la premiere fois (base tout juste creee). En production
+# cela injecterait le jeu de demonstration dans la vraie base : on s'arrete la,
+# sauf demande explicite.
+if Rails.env.production? && ENV["ALLOW_PRODUCTION_SEED"] != "true"
+  puts "Seeds ignores en production (ALLOW_PRODUCTION_SEED=true pour forcer)."
+  return
+end
+
 puts "Seeding database..."
 
 seed_data = JSON.parse(File.read(Rails.root.join("db", "seed_data.json")))
