@@ -1,4 +1,8 @@
 Milly::Application.routes.draw do
+  # Sonde interrogee par kamal-proxy avant de basculer le trafic sur un nouveau
+  # conteneur : tant qu'elle ne repond pas 200, l'ancienne version reste en place.
+  get "up" => "rails/health#show", as: :rails_health_check
+
   devise_for :users, controllers: { registrations: "users/registrations" }
 
   # Devise's account page, under a name of its own: /mon-compte gathers the password

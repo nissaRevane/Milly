@@ -23,6 +23,8 @@ end
 
 group :development do
   gem "web-console"
+  # Deploiement du conteneur sur le VPS : voir DEPLOY.md.
+  gem "kamal", "~> 2.0", require: false
 end
 
 group :test do

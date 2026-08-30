@@ -23,7 +23,14 @@ test:
   database: milly_test
 <% end %>
 
+# En production la base tourne comme accessoire Kamal sur le meme VPS : elle est
+# joignable par son nom de conteneur sur le reseau docker `kamal`. On compose la
+# connexion a partir de variables plutot que d'un DATABASE_URL, pour n'avoir qu'un
+# seul secret a gerer (POSTGRES_PASSWORD, partage avec l'accessoire).
 production:
   <<: *default
-  url: <%= ENV["DATABASE_URL"] %>
-  database: milly_production
+  host: <%= ENV.fetch("DATABASE_HOST", "milly-db") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV.fetch("DATABASE_USER", "milly") %>
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
+  database: <%= ENV.fetch("DATABASE_NAME", "milly_production") %>
