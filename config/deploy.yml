@@ -1,0 +1,73 @@
+# Deploiement de Milly sur le VPS OVH. Mode d'emploi complet : DEPLOY.md
+#
+# Les trois valeurs a adapter avant le premier deploiement sont marquees << A ADAPTER >>.
+
+service: milly
+
+# Doit rester en minuscules : GHCR refuse les majuscules dans le chemin d'image.
+image: nissarevane/milly
+
+servers:
+  web:
+    - 203.0.113.10 # << A ADAPTER >> IP publique du VPS OVH
+
+proxy:
+  ssl: true # certificat Let's Encrypt obtenu et renouvele par kamal-proxy
+  host: milly.example.com # << A ADAPTER >> doit pointer sur l'IP ci-dessus
+  app_port: 3000
+  healthcheck:
+    path: /up
+    interval: 3
+    timeout: 30
+
+registry:
+  server: ghcr.io
+  username: nissaRevane
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64 # le VPS est x86_64, le Mac est arm64 : on force la cible
+
+env:
+  clear:
+    APP_HOST: milly.example.com # << A ADAPTER >> meme valeur que proxy.host
+    RAILS_LOG_LEVEL: info
+    RAILS_MAX_THREADS: 5
+    DATABASE_HOST: milly-db # nom du conteneur accessoire sur le reseau docker `kamal`
+    # SMTP : tant que ces valeurs ne sont pas renseignees, la reinitialisation de
+    # mot de passe (Devise :recoverable) leve une erreur. Voir DEPLOY.md.
+    SMTP_ADDRESS: smtp.example.com
+    SMTP_PORT: 587
+    SMTP_USERNAME: milly@example.com
+  secret:
+    - SECRET_KEY_BASE
+    - POSTGRES_PASSWORD
+    - SMTP_PASSWORD
+
+# Permet a l'ancienne version de continuer a servir ses assets pendant que la
+# nouvelle prend la main : pas de 404 sur un CSS en plein basculement.
+# /sprockets et non /assets : voir config/initializers/assets.rb.
+asset_path: /app/public/sprockets
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  migrate: app exec "bin/rails db:migrate"
+  dbc: accessory exec db --interactive --reuse "psql -U milly milly_production"
+
+accessories:
+  db:
+    image: postgres:16-alpine
+    host: 203.0.113.10 # << A ADAPTER >> meme IP que le serveur web
+    env:
+      clear:
+        POSTGRES_USER: milly
+        POSTGRES_DB: milly_production
+      secret:
+        - POSTGRES_PASSWORD
+    # Aucun port publie : la base n'est joignable que depuis le reseau docker
+    # interne. Les donnees vivent dans /root/milly-db/data sur le VPS.
+    directories:
+      - data:/var/lib/postgresql/data

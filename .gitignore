@@ -13,3 +13,6 @@ public/sprockets
 node_modules/
 .env
 .memorai
+
+# Secrets Kamal en local (le fichier .kamal/secrets, lui, est versionne)
+.kamal/env.local

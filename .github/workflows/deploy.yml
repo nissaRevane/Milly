@@ -1,0 +1,93 @@
+name: CI & Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+# Deux deploiements simultanes se marcheraient dessus sur le VPS.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: RSpec
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: milly
+          POSTGRES_PASSWORD: milly_password
+          POSTGRES_DB: milly_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U milly"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      RAILS_ENV: test
+      TEST_DATABASE_URL: postgres://milly:milly_password@localhost:5432/milly_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer libpq (gem pg)
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libpq-dev
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.6"
+          bundler-cache: true
+
+      - run: bin/rails db:test:prepare
+      - run: bundle exec rspec
+
+  deploy:
+    name: Kamal deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write # pousser l'image sur ghcr.io
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Kamal tague l'image avec le SHA du commit
+
+      - name: Installer libpq (gem pg)
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends libpq-dev
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.6"
+          bundler-cache: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Preparer la cle SSH du VPS
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: kamal deploy
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: bundle exec kamal deploy

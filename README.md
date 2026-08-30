@@ -37,6 +37,19 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - **Balance Sheets:** Create balance sheets with a closing date, add asset/liability lines with values
 - **Summary view:** Two-column view organized by type showing assets vs liabilities, subtotals, and equity
 
+## Deployment
+
+Milly is deployed to a single OVH VPS with [Kamal 2](https://kamal-deploy.org): GitHub
+Actions runs the suite, builds the image, pushes it to GHCR and deploys. Postgres runs on
+the same VPS as a Kamal accessory.
+
+See **[DEPLOY.md](DEPLOY.md)** for the full runbook (first-time setup, secrets, backups,
+rollbacks, troubleshooting).
+
+```bash
+git push origin master   # runs RSpec, then deploys if green
+```
+
 ## Running Tests
 
 ```bash
