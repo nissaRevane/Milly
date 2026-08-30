@@ -47,15 +47,107 @@ Three placeholders in [config/deploy.yml](config/deploy.yml) are marked `<< A AD
 Also set `registry.username` and `image` if you fork the repo under another account.
 `image` must be **lowercase** — GHCR rejects uppercase paths.
 
-### 2. Create a deploy SSH key
+### 2. Get SSH access to the VPS
 
-On your machine:
+Kamal drives the whole deployment over SSH as `root`, so root must accept a key. Two keys
+are used, so that revoking CI never locks you out of your own server:
+
+| Key | Lives on | Used by |
+|:---|:---|:---|
+| `~/.ssh/milly_vps` | your Mac | `ssh milly-vps`, `kamal` run by hand |
+| `~/.ssh/milly_ci` | GitHub secret | the deploy workflow |
+
+#### a. Find out how OVH let you in
+
+The IP is in the OVH manager under *Bare Metal Cloud → VPS*. Depending on what you chose
+when ordering, the first login is either a key OVH installed for you, or a root password
+OVH emailed you. Probe which account answers:
 
 ```bash
-ssh-keygen -t ed25519 -C "milly-deploy" -f ~/.ssh/milly_deploy -N ""
-ssh-copy-id -i ~/.ssh/milly_deploy.pub root@<VPS_IP>
-ssh -i ~/.ssh/milly_deploy root@<VPS_IP> "echo ok"
+for u in root ubuntu debian; do
+  printf '%-8s ' "$u"
+  ssh -o ConnectTimeout=5 -o BatchMode=yes "$u@<VPS_IP>" "echo works" 2>&1 | tail -1
+done
 ```
+
+`BatchMode=yes` makes it fail fast instead of prompting, so this only tells you about key
+access. If all three fail you are on the password path — that is fine, drop `BatchMode`
+and let it ask. If nothing answers at all, use the KVM console in the OVH manager.
+
+#### b. Generate the two keys
+
+```bash
+ssh-keygen -t ed25519 -C "milly-vps (macbook)" -f ~/.ssh/milly_vps
+ssh-keygen -t ed25519 -C "milly-ci (github actions)" -f ~/.ssh/milly_ci -N ""
+```
+
+The CI key **must** have an empty passphrase (`-N ""`) — no one is there to type it. Give
+the laptop key a passphrase if you want; macOS stores it in the keychain.
+
+#### c. Install both public keys for root
+
+If root already answers (OVH installed your order key):
+
+```bash
+ssh-copy-id -i ~/.ssh/milly_vps.pub root@<VPS_IP>
+ssh-copy-id -i ~/.ssh/milly_ci.pub  root@<VPS_IP>
+```
+
+If only `ubuntu` / `debian` answers, root has no key yet — push both through sudo:
+
+```bash
+cat ~/.ssh/milly_vps.pub ~/.ssh/milly_ci.pub | ssh ubuntu@<VPS_IP> \
+  "sudo install -d -m 700 /root/.ssh && sudo tee -a /root/.ssh/authorized_keys >/dev/null \
+   && sudo chmod 600 /root/.ssh/authorized_keys"
+```
+
+If you only have the root password, same idea without sudo (it will prompt):
+
+```bash
+cat ~/.ssh/milly_vps.pub ~/.ssh/milly_ci.pub | ssh root@<VPS_IP> \
+  "install -d -m 700 ~/.ssh && tee -a ~/.ssh/authorized_keys >/dev/null && chmod 600 ~/.ssh/authorized_keys"
+```
+
+#### d. Add a `~/.ssh/config` entry
+
+Listing the IP alongside the alias matters: `ssh milly-vps` is for you, and Kamal connects
+to the raw IP from `config/deploy.yml` but still reads this file, so both need to match.
+
+```sshconfig
+# Milly production VPS (OVH)
+Host milly-vps <VPS_IP>
+  HostName <VPS_IP>
+  User root
+  IdentityFile ~/.ssh/milly_vps
+  IdentitiesOnly yes
+  AddKeysToAgent yes
+  UseKeychain yes
+```
+
+Check it:
+
+```bash
+ssh milly-vps "hostname && head -2 /etc/os-release"
+```
+
+#### e. Close the door behind you
+
+**Keep your current session open** while you do this, and test the new one in another
+terminal — a bad sshd config otherwise locks you out and you are down to the KVM console.
+
+```bash
+ssh milly-vps
+sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
+sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Ubuntu cloud images override the above from a drop-in; neutralise it if present
+grep -rl PasswordAuthentication /etc/ssh/sshd_config.d/ 2>/dev/null \
+  | xargs -r sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/'
+sshd -t && systemctl reload ssh 2>/dev/null || systemctl reload sshd
+```
+
+`prohibit-password` keeps root reachable by key (which Kamal needs) while refusing
+passwords. `sshd -t` validates the config before the reload, so a typo fails loudly
+instead of taking SSH down.
 
 ### 3. Generate the secrets
 
@@ -79,7 +171,7 @@ In the repository, *Settings → Secrets and variables → Actions*:
 
 | Name | Value |
 |:---|:---|
-| `SSH_PRIVATE_KEY` | full contents of `~/.ssh/milly_deploy` (including the BEGIN/END lines) |
+| `SSH_PRIVATE_KEY` | full contents of `~/.ssh/milly_ci` (including the BEGIN/END lines) |
 | `SECRET_KEY_BASE` | from step 3 |
 | `POSTGRES_PASSWORD` | from step 3 |
 | `SMTP_PASSWORD` | your SMTP password (see *Email* below) |
@@ -89,6 +181,18 @@ In the repository, *Settings → Secrets and variables → Actions*:
 | Name | Value |
 |:---|:---|
 | `VPS_HOST` | the VPS public IP — used to pin the host key before deploying |
+
+With the `gh` CLI, from the repo (it needs admin rights on `nissaRevane/Milly`):
+
+```bash
+gh secret set SSH_PRIVATE_KEY < ~/.ssh/milly_ci
+gh secret set SECRET_KEY_BASE
+gh secret set POSTGRES_PASSWORD
+gh variable set VPS_HOST --body "<VPS_IP>"
+```
+
+Otherwise paste them in the web UI — `pbcopy < ~/.ssh/milly_ci` puts the private key on
+your clipboard, BEGIN/END lines included.
 
 `KAMAL_REGISTRY_PASSWORD` is not needed: the workflow uses the automatic `GITHUB_TOKEN`
 to push to GHCR.
