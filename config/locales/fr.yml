@@ -114,6 +114,9 @@ fr:
       invalid: n'est pas valide
       required: doit exister
       taken: est déjà utilisé(e)
+      too_short: est trop court (%{count} caractères minimum)
+      too_long: est trop long (%{count} caractères maximum)
+      confirmation: ne correspond pas au mot de passe
       not_a_number: n'est pas un nombre
       not_an_integer: doit être un nombre entier
       greater_than: doit être supérieur à %{count}
@@ -161,6 +164,10 @@ fr:
         data: Mes données
         export_hint: Téléchargez l'intégralité de votre compte (biens, actifs, dettes et bilans) dans un fichier JSON réutilisable pour ré-alimenter Milly.
         export: Exporter mes données
+        deletion: Supprimer mon compte
+        deletion_hint: "La suppression efface définitivement votre compte et tout ce qu'il contient : vos biens, vos actifs, vos dettes et vos bilans. Rien n'en est conservé, et l'opération est irréversible. Pensez à exporter vos données avant."
+        delete: Supprimer définitivement mon compte
+        delete_confirm: "Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible."
     properties:
       index:
         title: Mes Biens immobiliers
@@ -481,6 +488,7 @@ fr:
       destroyed: Ligne de dette supprimée avec succès.
     errors:
       not_found: La ressource demandée est introuvable.
+      rate_limited: Trop de tentatives. Patientez quelques minutes avant de réessayer.
   number:
     percentage:
       format:
