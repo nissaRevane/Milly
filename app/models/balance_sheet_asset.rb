@@ -20,6 +20,17 @@ class BalanceSheetAsset < ApplicationRecord
   # immodifiable.
   validate :asset_within_its_lifespan, on: :create
 
+  # Une ligne ne traverse jamais deux comptes. asset_id arrive d'un formulaire, et un id
+  # forgé désignant l'actif d'un autre utilisateur satisfait la clé étrangère : le bilan
+  # afficherait alors le nom, la catégorie et le bien de cet inconnu. Le contrôleur ne
+  # propose déjà que les actifs de l'utilisateur (#set_available_assets), mais il ne fait
+  # que remplir un select — ceci en est le filet côté modèle, exactement comme
+  # PropertyLinkable#property_belongs_to_owner pour le rattachement à un bien.
+  #
+  # Sur toutes les validations et pas seulement à la création : réaffecter une ligne
+  # existante passe par le même paramètre.
+  validate :asset_belongs_to_the_same_account
+
   def owned_value
     (value * asset.share_ratio).round(2)
   end
@@ -29,6 +40,13 @@ class BalanceSheetAsset < ApplicationRecord
   delegate :category_key, to: :asset
 
   private
+
+  def asset_belongs_to_the_same_account
+    return if asset.nil? || balance_sheet.nil?
+    return if asset.user_id == balance_sheet.user_id
+
+    errors.add(:asset, :invalid)
+  end
 
   def asset_within_its_lifespan
     return if asset.nil? || balance_sheet.nil?

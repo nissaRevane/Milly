@@ -14,6 +14,10 @@ class BalanceSheetLiability < ApplicationRecord
   # une dette éteinte ou pas encore née n'entre pas dans un bilan clos hors de sa période.
   validate :liability_within_its_lifespan, on: :create
 
+  # Le pendant de BalanceSheetAsset#asset_belongs_to_the_same_account, pour les mêmes
+  # raisons : une dette forgée appartenant à un autre compte fuirait son nom et son bien.
+  validate :liability_belongs_to_the_same_account
+
   def owned_remaining_capital
     (remaining_capital * liability.share_ratio).round(2)
   end
@@ -21,6 +25,13 @@ class BalanceSheetLiability < ApplicationRecord
   delegate :category_key, to: :liability
 
   private
+
+  def liability_belongs_to_the_same_account
+    return if liability.nil? || balance_sheet.nil?
+    return if liability.user_id == balance_sheet.user_id
+
+    errors.add(:liability, :invalid)
+  end
 
   def liability_within_its_lifespan
     return if liability.nil? || balance_sheet.nil?
