@@ -23,8 +23,8 @@ end
 
 group :development do
   gem "web-console"
-  # Deploiement du conteneur sur le VPS : voir DEPLOY.md.
-  gem "kamal", "~> 2.0", require: false
+  # Version figee : Prunay partage le kamal-proxy du VPS, bumper les deux ensemble.
+  gem "kamal", "2.12.0", require: false
 end
 
 group :test do

@@ -1,24 +1,29 @@
-# Deploiement de Milly sur le VPS OVH. Mode d'emploi complet : DEPLOY.md
+# Deploiement de Milly sur le VPS OVH, partage avec Prunay. Mode d'emploi : DEPLOY.md
 #
-# Les trois valeurs a adapter avant le premier deploiement sont marquees << A ADAPTER >>.
+# Les valeurs a renseigner avant le premier deploiement sont marquees REMPLACER_PAR_.
 
 service: milly
 
 # Doit rester en minuscules : GHCR refuse les majuscules dans le chemin d'image.
 image: nissarevane/milly
 
+# L'IP du VPS, a reporter aussi sur l'accessoire db : les deux tournent sur la meme machine.
 servers:
   web:
-    - 203.0.113.10 # << A ADAPTER >> IP publique du VPS OVH
+    - REMPLACER_PAR_L_IP
 
 proxy:
   ssl: true # certificat Let's Encrypt obtenu et renouvele par kamal-proxy
-  host: milly.example.com # << A ADAPTER >> doit pointer sur l'IP ci-dessus
+  host: REMPLACER_PAR_LE_HOSTNAME_OVH
   app_port: 3000
   healthcheck:
     path: /up
     interval: 3
     timeout: 30
+
+# OVH n'ouvre pas root : l'utilisateur est dans le groupe docker, Kamal n'a pas besoin de sudo.
+ssh:
+  user: debian
 
 registry:
   server: ghcr.io
@@ -26,12 +31,13 @@ registry:
   password:
     - KAMAL_REGISTRY_PASSWORD
 
+# Le VPS OVH est x86 : un build sur un Mac ARM passe par l'emulation.
 builder:
-  arch: amd64 # le VPS est x86_64, le Mac est arm64 : on force la cible
+  arch: amd64
 
 env:
   clear:
-    APP_HOST: milly.example.com # << A ADAPTER >> meme valeur que proxy.host
+    APP_HOST: REMPLACER_PAR_LE_HOSTNAME_OVH
     RAILS_LOG_LEVEL: info
     RAILS_MAX_THREADS: 5
     DATABASE_HOST: milly-db # nom du conteneur accessoire sur le reseau docker `kamal`
@@ -60,7 +66,7 @@ aliases:
 accessories:
   db:
     image: postgres:16-alpine
-    host: 203.0.113.10 # << A ADAPTER >> meme IP que le serveur web
+    host: REMPLACER_PAR_L_IP
     env:
       clear:
         POSTGRES_USER: milly
@@ -68,6 +74,6 @@ accessories:
       secret:
         - POSTGRES_PASSWORD
     # Aucun port publie : la base n'est joignable que depuis le reseau docker
-    # interne. Les donnees vivent dans /root/milly-db/data sur le VPS.
+    # interne. Les donnees vivent dans /home/debian/milly-db/data sur le VPS.
     directories:
       - data:/var/lib/postgresql/data

@@ -4,17 +4,28 @@ Milly is deployed with [Kamal 2](https://kamal-deploy.org), the Rails 8 deployme
 Everything runs on the single VPS as Docker containers; GitHub Actions builds the image
 and drives the deploy.
 
+**The VPS is shared with Prunay.** Both apps sit behind the same `kamal-proxy`, which routes
+on the `Host` header, so each one needs its own domain pointing at the same IP. Everything
+else — app container, database, image — is per-app and named after the service. The one
+thing that is genuinely shared is the proxy, which is why both repos pin the *same* Kamal
+version (**2.12.0**, pinned exactly in the `Gemfile` here and in Prunay's deploy workflow):
+each Kamal release requires a minimum `kamal-proxy` version, and the newer of two Kamals
+refuses to deploy against a proxy the older one booted. Bump one, bump the other. See
+*Troubleshooting* for what to do when they drift apart anyway.
+
 ## What ends up on the VPS
 
 ```
-                  :443 / :80
-                      |
-              [ kamal-proxy ]  <- terminates TLS, renews Let's Encrypt certs
-                      |
-              [ milly-web ]    <- Puma, RAILS_ENV=production, non-root
-                      |         (docker network "kamal", no published port)
-              [ milly-db  ]    <- postgres:16-alpine
-                                 data in /root/milly-db/data
+                       :443 / :80
+                            |
+                    [ kamal-proxy ]  <- terminates TLS, renews Let's Encrypt
+                            |           certs, routes on the Host header
+                  +---------+---------+
+                  |                   |
+           [ milly-web ]        [ prunay-web ]  <- Puma, RAILS_ENV=production,
+                  |                   |            non-root, no published port
+           [ milly-db  ]        [ prunay-db  ]  <- postgres:16-alpine
+        data in /home/debian/milly-db/data
 ```
 
 The database is **not** reachable from the internet: it has no published port and only
@@ -27,8 +38,10 @@ switches the proxy over, then stops the old one.
 
 ## Requirements
 
-- An OVH VPS with **at least 2 GB of RAM**, Debian 12 or Ubuntu 22.04+, root SSH access.
-- A domain name with an `A` record pointing at the VPS IP.
+- An OVH VPS, Debian 12, reachable over SSH as `debian`. **4 GB of RAM** rather than 2:
+  two apps, two Postgres, and a deploy briefly runs two app containers at once.
+- A domain name with an `A` record pointing at the VPS IP — a different one from Prunay's,
+  both pointing at the same address.
 - Ruby 3.3.6 locally (only for the one-time bootstrap commands).
 
 ---
@@ -37,34 +50,45 @@ switches the proxy over, then stops the old one.
 
 ### 1. Fill in your values
 
-Three placeholders in [config/deploy.yml](config/deploy.yml) are marked `<< A ADAPTER >>`:
+Two placeholders in [config/deploy.yml](config/deploy.yml) carry a `REMPLACER_PAR_` name,
+the same convention Prunay uses:
 
 | Key | Value |
 |:---|:---|
-| `servers.web[0]` and `accessories.db.host` | the VPS public IP |
-| `proxy.host` and `env.clear.APP_HOST` | your domain, e.g. `milly.mondomaine.fr` |
+| `REMPLACER_PAR_L_IP` — `servers.web[0]` and `accessories.db.host` | the VPS public IP, the same one Prunay uses |
+| `REMPLACER_PAR_LE_HOSTNAME_OVH` — `proxy.host` and `env.clear.APP_HOST` | your domain, e.g. `milly.mondomaine.fr` |
 
 Also set `registry.username` and `image` if you fork the repo under another account.
 `image` must be **lowercase** — GHCR rejects uppercase paths.
 
 ### 2. Get SSH access to the VPS
 
-Kamal drives the whole deployment over SSH as `root`, so root must accept a key. Two keys
-are used, so that revoking CI never locks you out of your own server:
+OVH's Debian images do not open `root`: you log in as `debian`, which has passwordless
+sudo. Kamal connects as that user (`ssh.user: debian` in `config/deploy.yml`) and never
+needs sudo itself — `kamal server bootstrap` puts `debian` in the `docker` group, and
+talking to the Docker socket is all Kamal ever does.
+
+Two keys are used, so that revoking CI never locks you out of your own server:
 
 | Key | Lives on | Used by |
 |:---|:---|:---|
-| `~/.ssh/milly_vps` | your Mac | `ssh milly-vps`, `kamal` run by hand |
-| `~/.ssh/milly_ci` | GitHub secret | the deploy workflow |
+| `~/.ssh/ovh_vps` | your Mac | `ssh ovh-vps`, `kamal` run by hand |
+| `~/.ssh/ovh_ci` | GitHub secret | the deploy workflows of **both** repos |
+
+The keys are named after the machine, not the app: Prunay deploys to the same VPS with the
+same pair, and a second set would only be two more things to rotate.
+
+> Already set this up for Prunay? Skip to step 3 — the VPS, the keys and the Docker
+> install are shared. Only the GitHub secrets (step 4) have to be added to this repo too.
 
 #### a. Find out how OVH let you in
 
 The IP is in the OVH manager under *Bare Metal Cloud → VPS*. Depending on what you chose
-when ordering, the first login is either a key OVH installed for you, or a root password
-OVH emailed you. Probe which account answers:
+when ordering, the first login is either a key OVH installed for you, or a password OVH
+emailed you. Probe which account answers:
 
 ```bash
-for u in root ubuntu debian; do
+for u in debian ubuntu root; do
   printf '%-8s ' "$u"
   ssh -o ConnectTimeout=5 -o BatchMode=yes "$u@<VPS_IP>" "echo works" 2>&1 | tail -1
 done
@@ -77,48 +101,46 @@ and let it ask. If nothing answers at all, use the KVM console in the OVH manage
 #### b. Generate the two keys
 
 ```bash
-ssh-keygen -t ed25519 -C "milly-vps (macbook)" -f ~/.ssh/milly_vps
-ssh-keygen -t ed25519 -C "milly-ci (github actions)" -f ~/.ssh/milly_ci -N ""
+ssh-keygen -t ed25519 -C "ovh-vps (macbook)" -f ~/.ssh/ovh_vps
+ssh-keygen -t ed25519 -C "ovh-ci (github actions)" -f ~/.ssh/ovh_ci -N ""
 ```
 
 The CI key **must** have an empty passphrase (`-N ""`) — no one is there to type it. Give
 the laptop key a passphrase if you want; macOS stores it in the keychain.
 
-#### c. Install both public keys for root
+#### c. Install both public keys for `debian`
 
-If root already answers (OVH installed your order key):
+If `debian` already answers with the key OVH installed:
 
 ```bash
-ssh-copy-id -i ~/.ssh/milly_vps.pub root@<VPS_IP>
-ssh-copy-id -i ~/.ssh/milly_ci.pub  root@<VPS_IP>
+ssh-copy-id -i ~/.ssh/ovh_vps.pub debian@<VPS_IP>
+ssh-copy-id -i ~/.ssh/ovh_ci.pub  debian@<VPS_IP>
 ```
 
-If only `ubuntu` / `debian` answers, root has no key yet — push both through sudo:
+If you only have a password, same idea — it will prompt:
 
 ```bash
-cat ~/.ssh/milly_vps.pub ~/.ssh/milly_ci.pub | ssh ubuntu@<VPS_IP> \
-  "sudo install -d -m 700 /root/.ssh && sudo tee -a /root/.ssh/authorized_keys >/dev/null \
-   && sudo chmod 600 /root/.ssh/authorized_keys"
-```
-
-If you only have the root password, same idea without sudo (it will prompt):
-
-```bash
-cat ~/.ssh/milly_vps.pub ~/.ssh/milly_ci.pub | ssh root@<VPS_IP> \
+cat ~/.ssh/ovh_vps.pub ~/.ssh/ovh_ci.pub | ssh debian@<VPS_IP> \
   "install -d -m 700 ~/.ssh && tee -a ~/.ssh/authorized_keys >/dev/null && chmod 600 ~/.ssh/authorized_keys"
+```
+
+Check that sudo does not ask for a password, since `kamal server bootstrap` relies on it:
+
+```bash
+ssh debian@<VPS_IP> "sudo -n true && echo 'sudo ok'"
 ```
 
 #### d. Add a `~/.ssh/config` entry
 
-Listing the IP alongside the alias matters: `ssh milly-vps` is for you, and Kamal connects
+Listing the IP alongside the alias matters: `ssh ovh-vps` is for you, and Kamal connects
 to the raw IP from `config/deploy.yml` but still reads this file, so both need to match.
 
 ```sshconfig
-# Milly production VPS (OVH)
-Host milly-vps <VPS_IP>
+# VPS OVH (Milly + Prunay)
+Host ovh-vps <VPS_IP>
   HostName <VPS_IP>
-  User root
-  IdentityFile ~/.ssh/milly_vps
+  User debian
+  IdentityFile ~/.ssh/ovh_vps
   IdentitiesOnly yes
   AddKeysToAgent yes
   UseKeychain yes
@@ -127,7 +149,7 @@ Host milly-vps <VPS_IP>
 Check it:
 
 ```bash
-ssh milly-vps "hostname && head -2 /etc/os-release"
+ssh ovh-vps "hostname && head -2 /etc/os-release"
 ```
 
 #### e. Close the door behind you
@@ -136,18 +158,19 @@ ssh milly-vps "hostname && head -2 /etc/os-release"
 terminal — a bad sshd config otherwise locks you out and you are down to the KVM console.
 
 ```bash
-ssh milly-vps
-sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
-sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-# Ubuntu cloud images override the above from a drop-in; neutralise it if present
-grep -rl PasswordAuthentication /etc/ssh/sshd_config.d/ 2>/dev/null \
-  | xargs -r sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/'
-sshd -t && systemctl reload ssh 2>/dev/null || systemctl reload sshd
+ssh ovh-vps
+sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Debian cloud images override the above from a drop-in; neutralise it if present
+sudo sh -c 'grep -rl PasswordAuthentication /etc/ssh/sshd_config.d/ 2>/dev/null \
+  | xargs -r sed -i "s/^PasswordAuthentication.*/PasswordAuthentication no/"'
+sudo sshd -t && sudo systemctl reload ssh 2>/dev/null || sudo systemctl reload sshd
 ```
 
-`prohibit-password` keeps root reachable by key (which Kamal needs) while refusing
-passwords. `sshd -t` validates the config before the reload, so a typo fails loudly
-instead of taking SSH down.
+Nothing needs root over SSH any more, so `PermitRootLogin no` is safe here — Kamal only
+ever connects as `debian`. `sshd -t` validates the config before the reload, so a typo
+fails loudly instead of taking SSH down.
+
 
 ### 3. Generate the secrets
 
@@ -171,28 +194,29 @@ In the repository, *Settings → Secrets and variables → Actions*:
 
 | Name | Value |
 |:---|:---|
-| `SSH_PRIVATE_KEY` | full contents of `~/.ssh/milly_ci` (including the BEGIN/END lines) |
+| `SSH_PRIVATE_KEY` | full contents of `~/.ssh/ovh_ci` (including the BEGIN/END lines) |
 | `SECRET_KEY_BASE` | from step 3 |
 | `POSTGRES_PASSWORD` | from step 3 |
 | `SMTP_PASSWORD` | your SMTP password (see *Email* below) |
 
-**Variables**
-
-| Name | Value |
-|:---|:---|
-| `VPS_HOST` | the VPS public IP — used to pin the host key before deploying |
+No repository *variable* is needed: the workflow accepts the host key on first contact
+(`StrictHostKeyChecking accept-new`) instead of pinning it from a `VPS_HOST` variable, so
+the IP lives in `config/deploy.yml` only. Prunay's workflow does the same.
 
 With the `gh` CLI, from the repo (it needs admin rights on `nissaRevane/Milly`):
 
 ```bash
-gh secret set SSH_PRIVATE_KEY < ~/.ssh/milly_ci
+gh secret set SSH_PRIVATE_KEY < ~/.ssh/ovh_ci
 gh secret set SECRET_KEY_BASE
 gh secret set POSTGRES_PASSWORD
-gh variable set VPS_HOST --body "<VPS_IP>"
+gh secret set SMTP_PASSWORD
 ```
 
-Otherwise paste them in the web UI — `pbcopy < ~/.ssh/milly_ci` puts the private key on
+Otherwise paste them in the web UI — `pbcopy < ~/.ssh/ovh_ci` puts the private key on
 your clipboard, BEGIN/END lines included.
+
+`SECRET_KEY_BASE` and `POSTGRES_PASSWORD` are **per app**: Milly and Prunay each have their
+own, even though the machine is the same. Sharing them would mean one leak costs both.
 
 `KAMAL_REGISTRY_PASSWORD` is not needed: the workflow uses the automatic `GITHUB_TOKEN`
 to push to GHCR.
@@ -206,24 +230,38 @@ run in seconds even from an Apple Silicon Mac.
 bundle install
 
 set -a; source .kamal/env.local; set +a   # see below
-bundle exec kamal server bootstrap        # installs Docker on the VPS
+bundle exec kamal server bootstrap        # installs Docker, adds `debian` to its group
 bundle exec kamal proxy boot              # starts kamal-proxy on :80/:443
 bundle exec kamal accessory boot db       # starts Postgres + creates its data dir
 ```
 
+`server bootstrap` adds `debian` to the `docker` group, and that only takes effect on the
+next login — if the very next command fails with a permission error on the Docker socket,
+run it again.
+
+If Prunay got there first, `server bootstrap` and `proxy boot` are both no-ops: Docker is
+already installed and the proxy is already running for the other app. Running them anyway
+is harmless — that is exactly why both repos pin the same Kamal version, so `proxy boot`
+never swaps the container out from under the app already being served.
+
 `.kamal/env.local` is git-ignored and holds the same values you put in GitHub:
 
 ```bash
-export KAMAL_REGISTRY_PASSWORD=<a GitHub PAT with write:packages>
 export SECRET_KEY_BASE=<from step 3>
 export POSTGRES_PASSWORD=<from step 3>
+export KAMAL_REGISTRY_PASSWORD=<a GitHub PAT with write:packages>
 export SMTP_PASSWORD=<your SMTP password>
 ```
 
+A file with `SECRET_KEY_BASE` and `POSTGRES_PASSWORD` already generated is in place; fill
+in the two empty ones when you need a hand-run deploy or a working password reset.
+
 ### 6. First deploy
 
-Push to `master`, or run the **CI & Deploy** workflow manually from the Actions tab.
-The runner builds the amd64 image, pushes it to `ghcr.io/nissarevane/milly`, and deploys.
+Push to `master`, or run the **CI & Deploy** workflow manually from the Actions tab — it
+takes a `command` input, `setup` for the very first run and `deploy` afterwards, the same
+two choices Prunay's workflow offers. The runner builds the amd64 image, pushes it to
+`ghcr.io/nissarevane/milly`, and deploys.
 
 Let's Encrypt issues the certificate on the first request, so give it a few seconds, then:
 
@@ -310,29 +348,32 @@ so Kamal leaves the old version serving traffic.
 
 ## Backups
 
-Postgres data lives in `/root/milly-db/data` on the VPS, but restore from a dump, not from
-those files. Set up a nightly dump on the VPS:
+Postgres data lives in `/home/debian/milly-db/data` on the VPS, but restore from a dump,
+not from those files. Set up a nightly dump on the VPS:
 
 ```bash
-ssh root@<VPS_IP>
-mkdir -p /root/backups
+ssh ovh-vps
+mkdir -p ~/backups
 crontab -e
 ```
 
 ```cron
-0 3 * * * docker exec milly-db pg_dump -U milly -Fc milly_production > /root/backups/milly-$(date +\%F).dump 2>/root/backups/last.log
-30 3 * * * find /root/backups -name 'milly-*.dump' -mtime +14 -delete
+0 3 * * * docker exec milly-db pg_dump -U milly -Fc milly_production > /home/debian/backups/milly-$(date +\%F).dump 2>/home/debian/backups/milly-last.log
+30 3 * * * find /home/debian/backups -name 'milly-*.dump' -mtime +14 -delete
 ```
 
 Pull a copy down and restore it:
 
 ```bash
-scp root@<VPS_IP>:/root/backups/milly-2026-08-30.dump .
+scp ovh-vps:backups/milly-2026-08-30.dump .
 
 # restore into production (destructive)
-cat milly-2026-08-30.dump | ssh root@<VPS_IP> \
+cat milly-2026-08-30.dump | ssh ovh-vps \
   "docker exec -i milly-db pg_restore -U milly -d milly_production --clean --if-exists"
 ```
+
+The dump file names are prefixed per app, so Prunay's nightly dump can land in the same
+`~/backups` without either one overwriting the other.
 
 A dump on the VPS alone is not a backup — copy it off the machine regularly.
 
@@ -373,7 +414,7 @@ Most common cause: the app cannot reach Postgres. Check that `DATABASE_HOST` in
 
 ```bash
 dig +short milly.mondomaine.fr
-ssh root@<VPS_IP> "docker logs kamal-proxy --tail 50"
+ssh ovh-vps "docker logs kamal-proxy --tail 50"
 ```
 
 **`denied` when the VPS pulls the image** — the GHCR package is private and the token
@@ -381,19 +422,46 @@ stored on the server has expired. `GITHUB_TOKEN` is only valid for the duration 
 workflow run; if the VPS needs to pull outside a deploy, log in with a longer-lived PAT:
 
 ```bash
-ssh root@<VPS_IP> "echo <PAT> | docker login ghcr.io -u nissaRevane --password-stdin"
+ssh ovh-vps "echo <PAT> | docker login ghcr.io -u nissaRevane --password-stdin"
 ```
 
-**The VPS runs out of memory during a deploy** — two app containers overlap briefly.
-On a 2 GB VPS, add swap:
+**The VPS runs out of memory during a deploy** — two app containers overlap briefly, and
+with Prunay on the same machine that is four Rails processes and two Postgres at the peak.
+Add swap:
 
 ```bash
-ssh root@<VPS_IP>
-fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
+ssh ovh-vps
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-**Old images filling the disk**
+**`kamal-proxy version vX is too old, run kamal proxy reboot`** — the deploy stopped before
+touching anything. There is one `kamal-proxy` container on the host, shared with Prunay, and
+each Kamal release demands a minimum proxy version (2.12.0 → `v0.9.2`, 2.5.3 → `v0.8.4`).
+Every `kamal deploy` checks the running container's tag first; a *newer* Kamal refuses an
+*older* proxy. The reverse is fine — an older Kamal accepts a newer proxy and leaves it
+alone. That is why both repos pin the same version, and why bumping Milly alone would make
+this appear here rather than on Prunay's side.
+
+Check both sides, then reboot the proxy once from the repo with the **highest** Kamal:
+
+```bash
+bundle exec kamal version                 # what this repo wants
+ssh ovh-vps "docker inspect kamal-proxy --format '{{.Config.Image}}'"   # what is running
+bundle exec kamal proxy reboot            # brief outage for *both* apps
+```
+
+The reboot stops, removes and re-runs the container. Routing survives it: the proxy keeps
+its state in the `kamal-proxy-config` Docker volume, so Prunay's host mapping comes back on
+its own — only the seconds between removal and restart are lost.
+
+Note that a plain `kamal proxy boot` never swaps the container: it is `docker start ||
+docker run`, so an already-running proxy is simply started, never replaced or downgraded.
+Only `proxy reboot`, `proxy remove` and `kamal remove` can move the version — run those
+from the older repo and you downgrade the proxy, which then blocks the newer one.
+
+**Old images filling the disk** — `prune` only touches this service's own images and
+containers, so it is safe to run with Prunay on the same host:
 
 ```bash
 bundle exec kamal prune all

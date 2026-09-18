@@ -5,10 +5,15 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
+    inputs:
+      command:
+        description: "setup pour le premier amorcage du serveur, deploy ensuite"
+        type: choice
+        options: [deploy, setup]
+        default: deploy
 
-# Deux deploiements simultanes se marcheraient dessus sur le VPS.
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -52,7 +57,8 @@ jobs:
   deploy:
     name: Kamal deploy
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Jamais sur un push : le deploiement se declenche a la main depuis l'onglet Actions.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     permissions:
@@ -74,20 +80,19 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Preparer la cle SSH du VPS
+      - name: Ouvrir l'acces SSH au serveur
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          VPS_HOST: ${{ vars.VPS_HOST }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          printf 'Host *\n  StrictHostKeyChecking accept-new\n' > ~/.ssh/config
 
-      - name: kamal deploy
+      - name: kamal ${{ inputs.command }}
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-        run: bundle exec kamal deploy
+        run: bundle exec kamal ${{ inputs.command }}
