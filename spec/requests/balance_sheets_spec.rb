@@ -761,6 +761,18 @@ RSpec.describe "BalanceSheets", type: :request do
       expect(source.reload.balance_sheet_assets.count).to eq(1)
     end
 
+    # Sans elle la copie repartirait d'une base inconnue, donc sans impôt latent, et le
+    # patrimoine net de fiscalité bondirait d'un bilan au suivant sans que rien n'ait bougé.
+    it "carries the base imposable of a placement across" do
+      pea = create(:asset, user: user, name: "PEA", asset_type: :financial_investment, tax_rate: 18.6)
+      create(:balance_sheet_asset, balance_sheet: source, asset: pea, value: 45_000, invested_value: 32_000)
+
+      post balance_sheets_path, params: { balance_sheet: { closing_date: "2026-06-30" }, source_id: source.id }
+
+      copy = BalanceSheet.order(:created_at).last
+      expect(copy.balance_sheet_assets.find_by(asset_id: pea.id).invested_value).to eq(32_000)
+    end
+
     it "projects the CRD of an amortizable loan to the new closing date instead of copying it" do
       loan = create(:liability, :amortizable, user: user, name: "Prêt amortissable")
       create(:balance_sheet_liability, balance_sheet: source, liability: loan, remaining_capital: 123_456)
@@ -1026,6 +1038,80 @@ RSpec.describe "BalanceSheets", type: :request do
       sign_out user
       get balance_sheets_path
       expect(response).to redirect_to(new_user_session_path)
+    end
+  end
+
+  describe "la fiscalité latente d'un placement" do
+    let(:balance_sheet) { create(:balance_sheet, user: user) }
+    let(:pea) { create(:asset, user: user, name: "PEA", asset_type: :financial_investment, tax_rate: 18.6) }
+
+    # Il n'y a qu'un total à l'écran, et il est déjà net : pas de seconde boîte à côté.
+    it "reads the line and every total net of tax, on the bilan and on its synthèse" do
+      create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pea,
+                                   value: 45_000, invested_value: 32_000)
+
+      [balance_sheet_path(balance_sheet), summary_balance_sheet_path(balance_sheet)].each do |path|
+        get path
+
+        expect(response.body).to include(currency(42_582))
+      end
+    end
+
+    # Le détail ne s'impose pas ligne après ligne : replié, il n'annonce que le brut, et
+    # c'est l'ouvrir qui donne le calcul.
+    it "keeps the calculation folded behind the brut" do
+      create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pea,
+                                   value: 45_000, invested_value: 32_000)
+
+      get balance_sheet_path(balance_sheet)
+      details = Nokogiri::HTML(response.body).at_css("details.latent-tax")
+
+      expect(details.at_css("summary").text.strip)
+        .to eq(I18n.t("views.shared.latent_tax.gross", gross: currency(45_000)))
+      expect(details.text).to include(I18n.t(
+        "views.shared.latent_tax.detail",
+        gross: currency(45_000), invested: currency(32_000),
+        gain: currency(13_000), tax: currency(2_418)
+      ))
+      expect(details["open"]).to be_nil
+    end
+
+    # Les montants de la note sont détenus, comme celui qu'ils commentent : la phrase doit
+    # s'additionner à l'écran même sur une quote-part.
+    it "reads the base imposable at the quote-part of the asset" do
+      pea.update!(ownership_share: 50)
+      create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pea,
+                                   value: 45_000, invested_value: 32_000)
+
+      get balance_sheet_path(balance_sheet)
+
+      expect(response.body).to include(CGI.escapeHTML(I18n.t(
+        "views.shared.latent_tax.detail",
+        gross: currency(22_500), invested: currency(16_000),
+        gain: currency(6_500), tax: currency(1_209)
+      )))
+    end
+
+    # Un PEE défiscalisé est un placement financier sans taux : lui réclamer une base
+    # imposable bilan après bilan serait réclamer un chiffre dont rien ne sortirait.
+    it "asks for no base imposable on a placement carrying no taux" do
+      pee = create(:asset, user: user, name: "PEE", asset_type: :financial_investment)
+      create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pee, value: 12_000)
+
+      get balance_sheet_path(balance_sheet)
+
+      expect(response.body).not_to include(CGI.escapeHTML(I18n.t("views.shared.latent_tax.unknown_basis")))
+    end
+
+    it "invites the base imposable, and takes nothing off, while it is unknown" do
+      create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pea, value: 45_000)
+
+      get balance_sheet_path(balance_sheet)
+
+      expect(response.body).to include(currency(45_000))
+      expect(Nokogiri::HTML(response.body).at_css("details.latent-tax > summary").text.strip)
+        .to eq(I18n.t("views.shared.latent_tax.pending"))
+      expect(response.body).to include(CGI.escapeHTML(I18n.t("views.shared.latent_tax.unknown_basis")))
     end
   end
 end

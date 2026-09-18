@@ -735,6 +735,39 @@ a.summary-nav-arrow:hover {
   font-weight: 700;
 }
 
+/*
+ * Le détail fiscal d'une ligne de bilan, replié sous son montant : le montant affiché est
+ * déjà net d'impôt, ce bloc dit seulement comment on y est arrivé. Discret par construction
+ * — la plupart des lignes n'en portent pas, et celles qui en portent ne s'ouvrent qu'à la
+ * demande (voir balance_sheets/show).
+ */
+.latent-tax {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.latent-tax > summary {
+  cursor: pointer;
+  list-style: none;
+  text-align: right;
+}
+
+.latent-tax > summary::-webkit-details-marker {
+  display: none;
+}
+
+.latent-tax > summary::before {
+  content: "▸ ";
+}
+
+.latent-tax[open] > summary::before {
+  content: "▾ ";
+}
+
+.latent-tax > summary:hover {
+  color: var(--color-text);
+}
+
 .equity-positive {
   background: #f0fdf4;
   border: 2px solid #86efac;

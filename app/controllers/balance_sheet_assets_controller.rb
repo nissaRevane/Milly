@@ -64,6 +64,6 @@ class BalanceSheetAssetsController < ApplicationController
   end
 
   def balance_sheet_asset_params
-    params.require(:balance_sheet_asset).permit(:asset_id, :value)
+    params.require(:balance_sheet_asset).permit(:asset_id, :value, :invested_value)
   end
 end

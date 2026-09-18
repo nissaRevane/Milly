@@ -47,6 +47,9 @@ assets = seed_data["assets"].map do |data|
   asset = Asset.find_or_initialize_by(user: user, name: data["name"])
   asset.asset_type = data["asset_type"]
   asset.ownership_share = data.fetch("ownership_share", 100)
+  # Comme le rattachement ci-dessous : un fichier écrit avant la fiscalité latente ne doit
+  # pas remettre à zéro un taux saisi depuis (voir Asset::TAXABLE_TYPES).
+  asset.tax_rate = data["tax_rate"] if data.key?("tax_rate")
   # Only touched when the seed file says something about it: seeding is re-runnable, and
   # a file written before properties existed must not unlink what the UI has linked since.
   asset.property = find_property.call(data) if data.key?("property")
@@ -88,10 +91,17 @@ seed_data["balance_sheets"].each do |bs_data|
   bs = BalanceSheet.find_or_create_by!(user: user, closing_date: closing_date)
   puts "Balance sheet created: #{bs.closing_date}"
 
+  # Les bases imposables viennent d'une table à part, absente des fichiers écrits avant
+  # elle : une ligne qui n'y figure pas garde simplement une base inconnue. Comme le montant
+  # juste à côté, elle n'est posée qu'à la CRÉATION de la ligne — re-semer ne réécrit jamais
+  # une ligne déjà en base.
+  invested = bs_data.fetch("invested", {})
+
   bs_data["assets"].each do |name, value|
     asset = assets.find { |a| a.name == name }
     BalanceSheetAsset.find_or_create_by!(balance_sheet: bs, asset: asset) do |bsa|
       bsa.value = value
+      bsa.invested_value = invested[name]
     end
   end
 

@@ -231,7 +231,8 @@ class BalanceSheet < ApplicationRecord
       source.balance_sheet_assets.includes(:asset).each do |line|
         next skipped += 1 unless line.asset.available_on?(closing_date)
 
-        balance_sheet_assets.create!(asset_id: line.asset_id, value: line.value)
+        balance_sheet_assets.create!(asset_id: line.asset_id, value: line.value,
+                                     invested_value: line.invested_value)
       end
       # Un prêt qui porte un tableau d'amortissement n'est pas recopié tel quel : son
       # capital restant dû est projeté à la date de clôture du nouveau bilan — recopier
@@ -254,6 +255,8 @@ class BalanceSheet < ApplicationRecord
     skipped
   end
 
+  # Déjà net de la fiscalité latente des placements : c'est ce que porte OWNED_VALUE_SQL, et
+  # donc ce que disent tous les totaux de Milly, #equity compris.
   def total_assets
     balance_sheet_assets.joins(:asset).sum(BalanceSheetAsset::OWNED_VALUE_SQL)
   end
@@ -266,6 +269,10 @@ class BalanceSheet < ApplicationRecord
     total_assets - total_liabilities
   end
 
+  # L'impôt qui serait dû si tous les placements imposés du bilan étaient liquidés à sa date
+  # de clôture (voir BalanceSheetAsset::LATENT_TAX_SQL). Zéro tant qu'aucune ligne ne porte
+  # de base imposable — c'est le cas de la plupart des bilans, et les écrans taisent alors
+  # cette lecture plutôt que d'annoncer un impôt nul.
   # Les lignes d'actif groupées par grande catégorie : les mêmes groupes, dans le même ordre et
   # avec les mêmes teintes que la légende du miroir (voir BreakdownCategory). Le bilan et le
   # tableau de bord découpent ainsi le patrimoine de la même façon — sinon un même poste

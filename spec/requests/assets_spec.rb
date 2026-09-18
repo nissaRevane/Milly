@@ -517,4 +517,26 @@ RSpec.describe "Assets", type: :request do
       expect(response.body).not_to include("Villa du voisin")
     end
   end
+
+  describe "le taux d'imposition de la plus-value" do
+    it "shows the field on the fiche of a placement alone" do
+      pea = create(:asset, user: user, asset_type: :financial_investment, tax_rate: 18.6)
+      livret = create(:asset, user: user, asset_type: :savings_account)
+
+      get asset_path(pea)
+      expect(response.body).to include(CGI.escapeHTML(I18n.t("views.assets.form.tax_rate")))
+
+      get asset_path(livret)
+      expect(response.body).not_to include(CGI.escapeHTML(I18n.t("views.assets.form.tax_rate")))
+    end
+
+    it "records a taux submitted from the fiche" do
+      pea = create(:asset, user: user, asset_type: :financial_investment)
+
+      patch asset_path(pea), params: { asset: { tax_rate: 18.6 } }
+
+      expect(pea.reload.tax_rate).to eq(18.6)
+    end
+  end
+
 end

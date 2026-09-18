@@ -31,9 +31,9 @@ RSpec.describe AccountExport do
       data = described_class.new(user).to_h
 
       expect(data["assets"]).to eq([
-        { "name" => "Liquidités", "asset_type" => "cash", "ownership_share" => 100,
+        { "name" => "Liquidités", "asset_type" => "cash", "ownership_share" => 100, "tax_rate" => 0,
           "property" => nil, "started_on" => nil, "ended_on" => nil },
-        { "name" => "Immobilier", "asset_type" => "real_estate", "ownership_share" => 50,
+        { "name" => "Immobilier", "asset_type" => "real_estate", "ownership_share" => 50, "tax_rate" => 0,
           "property" => nil, "started_on" => nil, "ended_on" => nil }
       ])
       expect(data["liabilities"]).to eq([
@@ -125,9 +125,30 @@ RSpec.describe AccountExport do
       data = described_class.new(user).to_h
 
       expect(data["balance_sheets"]).to eq([
-        { "closing_date" => "2021-03-18", "assets" => { "Liquidités" => 3140.23 }, "liabilities" => {} },
-        { "closing_date" => "2026-03-18", "assets" => {}, "liabilities" => { "Dettes LT" => 77000 } }
+        { "closing_date" => "2021-03-18", "assets" => { "Liquidités" => 3140.23 },
+          "invested" => {}, "liabilities" => {} },
+        { "closing_date" => "2026-03-18", "assets" => {},
+          "invested" => {}, "liabilities" => { "Dettes LT" => 77000 } }
       ])
+    end
+
+    it "exports the taux de sortie of a placement and the base imposable of its lines" do
+      asset = create(:asset, user: user, name: "PEA", asset_type: :financial_investment, tax_rate: 18.6)
+      sheet = create(:balance_sheet, user: user, closing_date: Date.new(2026, 3, 18))
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: asset, value: 45_000, invested_value: 32_000)
+
+      data = described_class.new(user).to_h
+
+      expect(data["assets"].sole["tax_rate"]).to eq(18.6)
+      expect(data["balance_sheets"].sole["invested"]).to eq("PEA" => 32_000)
+    end
+
+    it "leaves a line whose base imposable is unknown out of the invested table" do
+      asset = create(:asset, user: user, name: "Livret")
+      sheet = create(:balance_sheet, user: user, closing_date: Date.new(2026, 3, 18))
+      create(:balance_sheet_asset, balance_sheet: sheet, asset: asset, value: 1_000)
+
+      expect(described_class.new(user).to_h["balance_sheets"].sole["invested"]).to eq({})
     end
 
     it "leaves out other accounts" do

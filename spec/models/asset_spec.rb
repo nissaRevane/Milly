@@ -324,4 +324,38 @@ RSpec.describe Asset, type: :model do
       end
     end
   end
+
+  describe "le taux d'imposition de la plus-value" do
+    it "accepts a taux on a placement financier" do
+      asset = build(:asset, asset_type: :financial_investment, tax_rate: 18.6)
+
+      expect(asset).to be_valid
+      expect(asset.taxable_type?).to be true
+    end
+
+    it "refuses a taux above 100" do
+      expect(build(:asset, asset_type: :financial_investment, tax_rate: 101)).not_to be_valid
+    end
+
+    it "refuses a negative taux" do
+      expect(build(:asset, asset_type: :financial_investment, tax_rate: -1)).not_to be_valid
+    end
+
+    # Un type qui ne porte plus de fiscalité ne garde pas le taux du précédent : sinon un
+    # livret continuerait d'être amputé par un taux que son formulaire ne montre plus.
+    it "drops the taux when the type stops being taxable" do
+      asset = create(:asset, asset_type: :financial_investment, tax_rate: 18.6)
+
+      asset.update!(asset_type: :savings_account)
+
+      expect(asset.reload.tax_rate).to be_zero
+    end
+
+    it "leaves a non-taxable type at zero even when a taux is forced in" do
+      asset = create(:asset, asset_type: :savings_account, tax_rate: 30)
+
+      expect(asset.tax_rate).to be_zero
+      expect(asset.taxable_type?).to be false
+    end
+  end
 end

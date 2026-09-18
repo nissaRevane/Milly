@@ -21,8 +21,21 @@ class Asset < ApplicationRecord
   # every write it accepts, and the validation below freezes it afterwards.
   RESERVED_ASSET_TYPE = "real_estate".freeze
 
+  # Les types dont la plus-value sera imposée à la sortie. Un seul pour l'instant : le
+  # placement financier — PEA, assurance-vie, compte-titres — dont la valeur affichée est
+  # celle d'avant impôt. Un livret, un compte courant, une créance n'en portent aucun, et la
+  # plus-value immobilière obéit à un abattement pour durée de détention qui n'est pas un taux.
+  TAXABLE_TYPES = %w[financial_investment].freeze
+
   validates :name, presence: true
+  validates :tax_rate, presence: true,
+                       numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }
   validate :asset_type_stays_out_of_real_estate
+
+  # Un taux ne survit pas au type qui le portait : repasser un placement en livret le remet
+  # à zéro, plutôt que de refuser l'enregistrement pour un champ que le formulaire ne montre
+  # plus. Sans cela un taux oublié continuerait d'amputer l'actif en silence.
+  before_validation :drop_tax_rate_unless_taxable
 
   # The name of the bien's actif is the name of the bien: the two are the same thing on
   # the balance sheet, and AccountExport / db/seeds.rb resolve both by name.
@@ -39,6 +52,24 @@ class Asset < ApplicationRecord
 
   def asset_type_label
     self.class.asset_type_label_for(asset_type)
+  end
+
+  # Ce type porte-t-il une fiscalité à la sortie ? Le taux, lui, reste facultatif : un PEA
+  # imposable et un PEE défiscalisé sont deux placements financiers.
+  def taxable_type?
+    TAXABLE_TYPES.include?(asset_type)
+  end
+
+  # Ce placement-ci est-il réellement imposé ? Un PEE défiscalisé est un placement financier
+  # sans taux : les écrans ne lui réclament pas de base imposable, rien n'en serait retranché.
+  def taxed?
+    taxable_type? && tax_rate.positive?
+  end
+
+  # Part de la plus-value qui partira en impôt, e.g. 18.6 -> 0.186. Pendant de #share_ratio
+  # (voir Shareable), et arrondi comme lui par BalanceSheetAsset::LATENT_TAX_SQL.
+  def tax_ratio
+    tax_rate / 100
   end
 
   # La grande catégorie de l'actif — celle qui l'organise partout : sa liste, les groupes d'un
@@ -83,6 +114,10 @@ class Asset < ApplicationRecord
 
   def historized_amount(line)
     line.owned_value
+  end
+
+  def drop_tax_rate_unless_taxable
+    self.tax_rate = 0 unless taxable_type?
   end
 
   def adopt_property_name

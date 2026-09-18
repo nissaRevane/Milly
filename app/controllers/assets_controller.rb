@@ -112,7 +112,7 @@ class AssetsController < ApplicationController
   # qu'un défaut (voir Lifespanable).
   def permitted_asset_attributes
     lifespan = [:started_on, :ended_on]
-    return [:name, :asset_type, :ownership_share, *lifespan] unless @asset&.real_estate?
+    return [:name, :asset_type, :ownership_share, :tax_rate, *lifespan] unless @asset&.real_estate?
 
     editable_name = @asset.owned_by_property? ? [] : [:name]
     [*editable_name, :ownership_share, *lifespan]

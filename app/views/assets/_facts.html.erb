@@ -37,6 +37,18 @@
           class: "inline-edit-input", data: inline_edit_input_data %>
   <% end %>
 
+  <%# Le taux qui frappera la plus-value à la sortie, sur les placements seuls : c'est la
+      base imposable, elle, qui se saisit bilan par bilan sur la ligne du bilan. %>
+  <% if @asset.taxable_type? %>
+    <%= render layout: "shared/inline_fact",
+               locals: { record: @asset, tab: @tab,
+                         label: t("views.assets.form.tax_rate"),
+                         display: rate_label(@asset.tax_rate) } do |f| %>
+      <%= f.number_field :tax_rate, step: 0.01, min: 0, max: 100,
+            class: "inline-edit-input", data: inline_edit_input_data %>
+    <% end %>
+  <% end %>
+
   <%# Les deux bornes de la période d'existence, facultatives : sans elles, l'actif peut
       entrer dans n'importe quel bilan (voir Lifespanable). %>
   <%= render layout: "shared/inline_fact",

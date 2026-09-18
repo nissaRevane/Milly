@@ -48,6 +48,18 @@ module ApplicationHelper
     Liability::AMORTIZABLE_TYPES.join(" ")
   end
 
+  # Les types d'actifs qui portent une fiscalité de sortie, tels que le contrôleur Stimulus
+  # conditional-fields les lit : une liste séparée par des espaces.
+  def taxable_asset_types
+    Asset::TAXABLE_TYPES.join(" ")
+  end
+
+  # Les mêmes, mais désignés par l'id de l'actif : le select d'une ligne de bilan porte des
+  # ids, pas des types, et c'est à eux que conditional-fields compare sa valeur.
+  def taxable_asset_ids(assets)
+    assets.select(&:taxed?).map(&:id).join(" ")
+  end
+
   def property_usage_options
     Property.usages.keys.map { |key| [t("views.shared.property_usages.#{key}"), key] }
   end
@@ -98,9 +110,14 @@ module ApplicationHelper
     tag.span(variation_label(variation), class: "variation variation-#{variation_tone(variation, favorable)}")
   end
 
+  # Un taux, avec les décimales qu'il porte et pas davantage : « 50 % », « 18,60 % ».
+  def rate_label(rate)
+    precision = (rate.to_d % 1).zero? ? 0 : 2
+    number_to_percentage(rate, precision: precision)
+  end
+
   def ownership_share_label(share)
-    precision = (share.to_d % 1).zero? ? 0 : 2
-    number_to_percentage(share, precision: precision)
+    rate_label(share)
   end
 
   # La valeur suggérée telle qu'un <input type="number"> l'accepte, nil quand il n'y en a
@@ -124,6 +141,35 @@ module ApplicationHelper
     actions.unshift("change->inline-edit#submit") if on_change
 
     { inline_edit_target: "input", action: actions.join(" ") }
+  end
+
+  # Le repli du détail fiscal d'une ligne : ce qu'on lit sans l'ouvrir. Le brut, quand l'impôt
+  # en écarte le net — c'est la seule chose qui manque au montant affiché. Rien à soustraire
+  # encore, et il annonce simplement ce qu'on trouvera dedans : la base à saisir.
+  def latent_tax_summary(line)
+    return t("views.shared.latent_tax.pending") unless line.latent_tax.positive?
+
+    t("views.shared.latent_tax.gross", gross: number_to_currency(line.gross_owned_value))
+  end
+
+  # Ce que la fiscalité fait à une ligne de placement, en une phrase sous son montant : la
+  # base investie, la plus-value et l'impôt qu'elle porte. Tant que la base n'est pas saisie
+  # il n'y a rien à calculer, et la note invite à la donner plutôt que d'annoncer zéro.
+  #
+  # Les quatre montants sont DÉTENUS, comme celui qu'ils commentent : la phrase s'additionne
+  # alors sous les yeux du lecteur, même sur une quote-part. Le champ qui s'ouvre au clic,
+  # lui, porte la base totale — exactement comme le champ du montant au-dessus.
+  def latent_tax_detail(line)
+    return t("views.shared.latent_tax.unknown_basis") if line.invested_value.nil?
+
+    invested = number_to_currency(line.owned_invested_value)
+    return t("views.shared.latent_tax.no_gain", invested: invested) if line.capital_gain.zero?
+
+    t("views.shared.latent_tax.detail",
+      gross: number_to_currency(line.gross_owned_value),
+      invested: invested,
+      gain: number_to_currency(line.capital_gain),
+      tax: number_to_currency(line.latent_tax))
   end
 
   def owned_value_cell(total_value, owned_value, share)

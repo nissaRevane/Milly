@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000018) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_01_000019) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000018) do
     t.bigint "property_id"
     t.date "started_on"
     t.date "ended_on"
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0", null: false
     t.index ["property_id"], name: "index_assets_on_property_id"
     t.index ["user_id"], name: "index_assets_on_user_id"
   end
@@ -34,6 +35,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000018) do
     t.decimal "value", precision: 15, scale: 2, default: "0.0", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "invested_value", precision: 15, scale: 2
     t.index ["asset_id"], name: "index_balance_sheet_assets_on_asset_id"
     t.index ["balance_sheet_id", "asset_id"], name: "index_balance_sheet_assets_on_balance_sheet_id_and_asset_id", unique: true
     t.index ["balance_sheet_id"], name: "index_balance_sheet_assets_on_balance_sheet_id"

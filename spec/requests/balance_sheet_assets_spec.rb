@@ -149,4 +149,38 @@ RSpec.describe "BalanceSheetAssets", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
+
+  describe "la base imposable" do
+    let!(:pea) { create(:asset, user: user, name: "PEA Actions", asset_type: :financial_investment, tax_rate: 18.6) }
+
+    # Le select porte des ids, pas des types : conditional-fields compare sa valeur à cette
+    # liste pour décider de montrer le champ (voir ApplicationHelper#taxable_asset_ids).
+    it "offers the field for the placements alone" do
+      get new_balance_sheet_balance_sheet_asset_path(balance_sheet)
+
+      shown_for = Nokogiri::HTML(response.body)
+        .at_css("[data-conditional-fields-show-when]")["data-conditional-fields-show-when"]
+
+      expect(shown_for.split).to eq([pea.id.to_s])
+    end
+
+    it "records it with the line" do
+      post balance_sheet_balance_sheet_assets_path(balance_sheet),
+           params: { balance_sheet_asset: { asset_id: pea.id, value: 45_000, invested_value: 32_000 } }
+
+      expect(BalanceSheetAsset.find_by(asset: pea).invested_value).to eq(32_000)
+    end
+
+    # Vider le champ, c'est dire « je ne sais plus » : la ligne repasse hors fiscalité
+    # plutôt que de garder une base périmée.
+    it "goes back to unknown when the field is submitted empty" do
+      line = create(:balance_sheet_asset, balance_sheet: balance_sheet, asset: pea,
+                                          value: 45_000, invested_value: 32_000)
+
+      patch balance_sheet_balance_sheet_asset_path(balance_sheet, line),
+            params: { balance_sheet_asset: { invested_value: "" } }
+
+      expect(line.reload.invested_value).to be_nil
+    end
+  end
 end

@@ -59,6 +59,7 @@ class AccountExport
       "name" => asset.name,
       "asset_type" => asset.asset_type,
       "ownership_share" => number(asset.ownership_share),
+      "tax_rate" => number(asset.tax_rate),
       "property" => asset.property&.name,
       "started_on" => asset.started_on&.iso8601,
       "ended_on" => asset.ended_on&.iso8601
@@ -95,15 +96,25 @@ class AccountExport
 
   def balance_sheets_data
     @user.balance_sheets.order(:closing_date).map do |balance_sheet|
+      asset_lines = balance_sheet.balance_sheet_assets.includes(:asset).order(:asset_id).to_a
+
       {
         "closing_date" => balance_sheet.closing_date.iso8601,
-        "assets" => lines_for(balance_sheet.balance_sheet_assets.includes(:asset).order(:asset_id)) do |line|
-          [line.asset.name, number(line.value)]
-        end,
+        "assets" => lines_for(asset_lines) { |line| [line.asset.name, number(line.value)] },
+        "invested" => invested_values_for(asset_lines),
         "liabilities" => lines_for(balance_sheet.balance_sheet_liabilities.includes(:liability).order(:liability_id)) do |line|
           [line.liability.name, number(line.remaining_capital)]
         end
       }
+    end
+  end
+
+  # Les bases imposables, dans une table à part plutôt que dans "assets" : cette table-là
+  # associe un nom à UN montant, et c'est la forme que db/seeds.rb attend depuis toujours.
+  # Seules les lignes qui en portent une y figurent — une base absente veut dire inconnue.
+  def invested_values_for(asset_lines)
+    lines_for(asset_lines.reject { |line| line.invested_value.nil? }) do |line|
+      [line.asset.name, number(line.invested_value)]
     end
   end
 

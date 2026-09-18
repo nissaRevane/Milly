@@ -213,6 +213,8 @@ fr:
         property: Bien immobilier rattaché
         name_from_property: Le nom de cet actif est celui du bien immobilier ; renommez le bien pour le changer.
         asset_type_locked: Le type « Immobilier » est défini par le bien immobilier et ne peut pas être modifié.
+        tax_rate: "Taux d'imposition de la plus-value (%)"
+        tax_rate_hint: "Ce qui sera prélevé sur la plus-value à la sortie : 17,2 % de prélèvements sociaux sur un PEA de plus de cinq ans, 30 % de flat tax sur un compte-titres. Laisser à 0 pour un placement défiscalisé."
       show:
         back: Retour aux actifs
         click_to_edit_name: Cliquer pour modifier le nom
@@ -313,6 +315,7 @@ fr:
         confirm_delete: Êtes-vous sûr ?
         click_to_edit: Cliquer pour modifier
         click_to_edit_date: Cliquer pour modifier la date de clôture
+        click_to_edit_invested: Cliquer pour modifier le montant investi
         back: Retour aux bilans
       summary:
         title: "Synthèse du bilan au %{date}"
@@ -357,6 +360,8 @@ fr:
         asset: Actif
         value: Valeur
         value_hint: "Saisissez la valeur totale du bien. La quote-part définie sur l'actif sera appliquée automatiquement."
+        invested_value: Montant investi
+        invested_value_hint: "Les versements cumulés à cette date, base de la plus-value imposable. Laissez vide si vous ne la connaissez pas : aucun impôt ne sera alors retranché."
       new:
         title: Ajouter un actif au bilan
       edit:
@@ -403,6 +408,14 @@ fr:
         ended_on: Date de fin (facultative)
         hint: Laissées vides sur une ligne rattachée à un bien, ces dates reprennent celles d'achat et de vente du bien. Hors de cette période, la ligne n'est plus proposée aux bilans.
       owned_value_detail: "%{share} de %{total}"
+      # La fiscalité latente d'un placement : ce que la plus-value coûterait si on sortait
+      # aujourd'hui. Voir BalanceSheetAsset::LATENT_TAX_SQL.
+      latent_tax:
+        gross: "Brut %{gross}"
+        pending: Fiscalité
+        unknown_basis: "Montant investi inconnu — cliquer pour le saisir"
+        no_gain: "Investi %{invested} · aucune plus-value"
+        detail: "Brut %{gross} · investi %{invested} · plus-value %{gain} · impôt latent %{tax}"
       inline_edit:
         click_to_edit: Cliquer pour modifier
       # L'onglet Évolution d'une fiche d'actif ou de dette : les mêmes intitulés des deux

@@ -75,6 +75,31 @@
                                 data: inline_edit_input_data %>
                         <% end %>
                       </div>
+                      <%# Le montant affiché est déjà net de fiscalité. Le calcul qui l'explique
+                          — brut, base investie, plus-value, impôt — tient replié : c'est une
+                          vérification qu'on ouvre, pas une lecture qu'on subit ligne après
+                          ligne. La base se corrige à l'intérieur ; vidée, elle redevient
+                          inconnue et plus rien n'est retranché. %>
+                      <% if bsa.asset.taxed? %>
+                        <details class="latent-tax">
+                          <summary><%= latent_tax_summary(bsa) %></summary>
+                          <div data-controller="inline-edit">
+                            <button type="button" class="inline-edit-trigger" data-inline-edit-target="display"
+                                    data-action="inline-edit#edit"
+                                    title="<%= t("views.balance_sheets.show.click_to_edit_invested") %>">
+                              <%= latent_tax_detail(bsa) %>
+                            </button>
+                            <%= form_with model: [@balance_sheet, bsa], class: "inline-edit-form",
+                                          data: { inline_edit_target: "form", action: "submit->inline-edit#markSubmitting" },
+                                          html: { hidden: true } do |f| %>
+                              <%= f.number_field :invested_value, step: "0.01", min: "0",
+                                    value: suggested_value_attribute(bsa.invested_value),
+                                    class: "inline-edit-input",
+                                    data: inline_edit_input_data %>
+                            <% end %>
+                          </div>
+                        </details>
+                      <% end %>
                     </td>
                     <td class="table-actions">
                       <%= button_to "🗑️", balance_sheet_balance_sheet_asset_path(@balance_sheet, bsa), method: :delete, class: "btn btn-sm btn-danger",

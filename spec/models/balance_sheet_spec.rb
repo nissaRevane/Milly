@@ -183,6 +183,40 @@ RSpec.describe BalanceSheet, type: :model do
     end
   end
 
+  # Il n'y a pas de second total « net de fiscalité » : l'impôt latent entre dans la valeur
+  # des lignes (voir BalanceSheetAsset::OWNED_VALUE_SQL), donc dans le patrimoine net lui-même.
+  describe "la fiscalité latente dans les totaux" do
+    let(:bs) { create(:balance_sheet) }
+
+    it "takes the latent tax of every placement off the total and off the equity" do
+      pea = create(:asset, user: bs.user, asset_type: :financial_investment, tax_rate: 18.6)
+      cto = create(:asset, user: bs.user, asset_type: :financial_investment, tax_rate: 30)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: pea, value: 45_000, invested_value: 32_000)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: cto, value: 12_000, invested_value: 10_000)
+
+      expect(bs.total_assets).to eq(BigDecimal("53982"))
+      expect(bs.equity).to eq(BigDecimal("53982"))
+    end
+
+    it "leaves the total alone when no line carries a base imposable" do
+      asset = create(:asset, user: bs.user, asset_type: :financial_investment, tax_rate: 18.6)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: asset, value: 45_000)
+
+      expect(bs.total_assets).to eq(45_000)
+    end
+
+    # La courbe du tableau de bord et les ventilations lisent la même expression que le total
+    # d'un bilan : elles doivent donc être nettes elles aussi, sans quoi deux écrans diraient
+    # deux patrimoines.
+    it "reaches the dashboard timeline and the breakdowns too" do
+      pea = create(:asset, user: bs.user, asset_type: :financial_investment, tax_rate: 18.6)
+      create(:balance_sheet_asset, balance_sheet: bs, asset: pea, value: 45_000, invested_value: 32_000)
+
+      expect(described_class.timeline_for([bs]).sole.total_assets).to eq(BigDecimal("42582"))
+      expect(described_class.assets_breakdown_for([bs]).sole.values).to eq([BigDecimal("42582")])
+    end
+  end
+
   describe "#equity" do
     it "returns total_assets minus total_liabilities when everything is fully owned" do
       bs = create(:balance_sheet)

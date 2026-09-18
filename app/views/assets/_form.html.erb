@@ -1,4 +1,4 @@
-<%= form_with(model: asset, class: "form") do |f| %>
+<%= form_with(model: asset, class: "form", data: { controller: "conditional-fields" }) do |f| %>
   <% if asset.errors.any? %>
     <div class="alert alert-danger">
       <ul>
@@ -22,7 +22,17 @@
   %>
   <div class="form-group">
     <%= f.label :asset_type, t("views.assets.form.asset_type") %>
-    <%= f.select :asset_type, selectable_asset_type_options, {}, class: "form-control" %>
+    <%= f.select :asset_type, selectable_asset_type_options, {}, class: "form-control",
+          data: { conditional_fields_target: "select", action: "change->conditional-fields#toggle" } %>
+  </div>
+
+  <%# Le taux de sortie n'a de sens que sur un placement : voir Asset::TAXABLE_TYPES. Masqué,
+      son champ est désactivé, et le modèle remet le taux à zéro de toute façon. %>
+  <div class="form-group" data-conditional-fields-target="fields"
+       data-conditional-fields-show-when="<%= taxable_asset_types %>">
+    <%= f.label :tax_rate, t("views.assets.form.tax_rate") %>
+    <%= f.number_field :tax_rate, step: 0.01, min: 0, max: 100, class: "form-control" %>
+    <small class="form-hint"><%= t("views.assets.form.tax_rate_hint") %></small>
   </div>
 
   <div class="form-group">
