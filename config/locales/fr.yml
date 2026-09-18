@@ -133,6 +133,7 @@ fr:
         sign_up: Créer un compte
       signed_up: Inscription réussie.
       updated: Votre mot de passe a été mis à jour.
+      destroyed: Votre compte a été supprimé.
     failure:
       already_authenticated: Vous êtes déjà connecté(e).
       invalid: Email ou mot de passe invalide.
@@ -156,15 +157,10 @@ fr:
     account:
       show:
         title: Mon compte
-        identity: Identité
-        security: Sécurité
         new_password: Nouveau mot de passe
         password_hint: "%{count} caractères minimum"
         update_password: Changer mon mot de passe
-        data: Mes données
-        export_hint: Téléchargez l'intégralité de votre compte (biens, actifs, dettes et bilans) dans un fichier JSON réutilisable pour ré-alimenter Milly.
         export: Exporter mes données
-        deletion: Supprimer mon compte
         deletion_hint: "La suppression efface définitivement votre compte et tout ce qu'il contient : vos biens, vos actifs, vos dettes et vos bilans. Rien n'en est conservé, et l'opération est irréversible. Pensez à exporter vos données avant."
         delete: Supprimer définitivement mon compte
         delete_confirm: "Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible."

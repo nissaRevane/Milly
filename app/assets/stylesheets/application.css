@@ -1021,31 +1021,47 @@ a.summary-nav-arrow:hover {
 }
 
 /* Account */
-.account {
-  max-width: 640px;
+.account-page {
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-.account-panel {
+.account {
   background: var(--color-surface);
   padding: 1.5rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
-.account-identity {
-  display: grid;
-  gap: 1rem;
+.account .form {
+  max-width: none;
 }
 
-.account-identity dt {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+/* Les libellés vivent dans les champs : ils restent là pour les lecteurs d'écran. */
+.account .form-group label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.account-identity dd {
-  font-weight: 500;
+.account .form-actions {
+  justify-content: center;
+}
+
+.account-deletion {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.account-deletion .section-hint {
+  margin-bottom: 1rem;
+}
+
+.account-deletion form {
+  display: inline-block;
 }
 
 /* Auth */
