@@ -19,9 +19,7 @@ services:
     build:
       context: .
       target: development
-    command: bash -c "rm -f tmp/pids/server.pid && rails server -b 0.0.0.0"
-    # Seul le code est monte : les gems restent celles de l'image, sinon un volume
-    # de gems masque /usr/local/bundle et se desynchronise du Gemfile a chaque ajout.
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0"
     volumes:
       - .:/app
     ports:
