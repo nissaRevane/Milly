@@ -1,9 +1,9 @@
 {
   "user": {
-    "email": "seed@example.com",
+    "email": "girard.quentin359@gmail.com",
     "firstname": "Quentin",
     "lastname": "GIRARD",
-    "password": "p5iyxHxYGbyWXkPpZU9xdwvx"
+    "password": "FgqCuc8TusY8WBd9cHCs1P64"
   },
   "properties": [
     {
@@ -99,7 +99,7 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": null,
-      "started_on": null,
+      "started_on": "2026-04-01",
       "ended_on": null
     },
     {
@@ -126,25 +126,16 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": null,
-      "started_on": null,
+      "started_on": "2022-08-01",
       "ended_on": null
     },
     {
-      "name": "PEA Liquidité",
+      "name": "PEA",
       "asset_type": "financial_investment",
       "ownership_share": 100,
       "tax_rate": 18.6,
       "property": null,
-      "started_on": null,
-      "ended_on": null
-    },
-    {
-      "name": "PEA Actions",
-      "asset_type": "financial_investment",
-      "ownership_share": 100,
-      "tax_rate": 18.6,
-      "property": null,
-      "started_on": null,
+      "started_on": "2021-03-01",
       "ended_on": null
     },
     {
@@ -153,7 +144,7 @@
       "ownership_share": 50,
       "tax_rate": 0,
       "property": "Sapeg",
-      "started_on": null,
+      "started_on": "2024-12-26",
       "ended_on": null
     },
     {
@@ -162,7 +153,7 @@
       "ownership_share": 50,
       "tax_rate": 0,
       "property": "Beau Laurier",
-      "started_on": null,
+      "started_on": "2025-07-31",
       "ended_on": null
     },
     {
@@ -171,7 +162,7 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": "Epideme",
-      "started_on": null,
+      "started_on": "2026-07-16",
       "ended_on": null
     },
     {
@@ -180,14 +171,14 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": null,
-      "started_on": null,
+      "started_on": "2025-04-01",
       "ended_on": null
     },
     {
-      "name": "PEA-PME liquidité",
+      "name": "PEA-PME",
       "asset_type": "financial_investment",
       "ownership_share": 100,
-      "tax_rate": 18.6,
+      "tax_rate": 0,
       "property": null,
       "started_on": null,
       "ended_on": null
@@ -198,7 +189,7 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": "Fleury",
-      "started_on": null,
+      "started_on": "2021-02-01",
       "ended_on": null
     },
     {
@@ -207,7 +198,7 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": "Roubaix",
-      "started_on": null,
+      "started_on": "2025-06-30",
       "ended_on": null
     },
     {
@@ -216,8 +207,53 @@
       "ownership_share": 100,
       "tax_rate": 0,
       "property": null,
+      "started_on": "2024-04-01",
+      "ended_on": null
+    },
+    {
+      "name": "Crypto",
+      "asset_type": "financial_investment",
+      "ownership_share": 100,
+      "tax_rate": 0,
+      "property": null,
       "started_on": null,
       "ended_on": null
+    },
+    {
+      "name": "PEE Epsor",
+      "asset_type": "financial_investment",
+      "ownership_share": 100,
+      "tax_rate": 0,
+      "property": null,
+      "started_on": "2023-06-01",
+      "ended_on": "2024-06-30"
+    },
+    {
+      "name": "PEI AXA",
+      "asset_type": "financial_investment",
+      "ownership_share": 100,
+      "tax_rate": 0,
+      "property": null,
+      "started_on": "2024-03-01",
+      "ended_on": "2024-05-30"
+    },
+    {
+      "name": "Crédit Mutuel",
+      "asset_type": "checking_account",
+      "ownership_share": 100,
+      "tax_rate": 0,
+      "property": null,
+      "started_on": null,
+      "ended_on": "2023-03-31"
+    },
+    {
+      "name": "Livret Jeune",
+      "asset_type": "savings_account",
+      "ownership_share": 100,
+      "tax_rate": 0,
+      "property": null,
+      "started_on": null,
+      "ended_on": "2022-12-31"
     }
   ],
   "liabilities": [
@@ -226,7 +262,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Sapeg",
-      "started_on": null,
+      "started_on": "2024-12-26",
       "ended_on": null,
       "borrowed_capital": 100375,
       "annual_rate": 3.56,
@@ -241,7 +277,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Sapeg",
-      "started_on": null,
+      "started_on": "2024-12-26",
       "ended_on": null,
       "borrowed_capital": 11097,
       "annual_rate": 0,
@@ -264,7 +300,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Fleury",
-      "started_on": null,
+      "started_on": "2021-02-01",
       "ended_on": null,
       "borrowed_capital": 77895,
       "annual_rate": 1.2,
@@ -279,7 +315,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Roubaix",
-      "started_on": null,
+      "started_on": "2025-06-30",
       "ended_on": null,
       "borrowed_capital": 78619,
       "annual_rate": 3.1,
@@ -294,7 +330,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Beau Laurier",
-      "started_on": null,
+      "started_on": "2025-07-31",
       "ended_on": null,
       "borrowed_capital": 93000,
       "annual_rate": 3.1,
@@ -309,7 +345,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 50,
       "property": "Beau Laurier",
-      "started_on": null,
+      "started_on": "2025-07-31",
       "ended_on": null,
       "borrowed_capital": 2584,
       "annual_rate": 3.1,
@@ -324,7 +360,7 @@
       "liability_type": "real_estate_loan",
       "ownership_share": 100,
       "property": "Epideme",
-      "started_on": null,
+      "started_on": "2026-07-16",
       "ended_on": null,
       "borrowed_capital": 75725,
       "annual_rate": 3.35,
@@ -339,43 +375,576 @@
       "liability_type": "short_term_debt",
       "ownership_share": 100,
       "property": null,
-      "started_on": null,
+      "started_on": "2025-04-01",
       "ended_on": null
     },
     {
       "name": "Caution Fleury",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null,
-      "started_on": null,
+      "property": "Fleury",
+      "started_on": "2021-02-01",
       "ended_on": null
     },
     {
       "name": "Caution Roubaix",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null,
-      "started_on": null,
+      "property": "Roubaix",
+      "started_on": "2025-06-30",
       "ended_on": null
     },
     {
       "name": "Caution Beau Laurier",
       "liability_type": "security_deposit",
       "ownership_share": 50,
-      "property": null,
-      "started_on": null,
+      "property": "Beau Laurier",
+      "started_on": "2025-07-31",
       "ended_on": null
     },
     {
       "name": "Caution Epideme",
       "liability_type": "security_deposit",
       "ownership_share": 100,
-      "property": null,
-      "started_on": null,
+      "property": "Epideme",
+      "started_on": "2026-07-16",
       "ended_on": null
+    },
+    {
+      "name": "Crédit conso",
+      "liability_type": "other_credit",
+      "ownership_share": 100,
+      "property": null,
+      "started_on": "2023-03-01",
+      "ended_on": "2024-02-28",
+      "borrowed_capital": 10000,
+      "annual_rate": 1.884,
+      "duration_months": 12,
+      "monthly_payment": 841.86,
+      "first_payment_on": "2023-03-24",
+      "first_payment_principal": 826.16,
+      "first_payment_interest": 15.3
     }
   ],
   "balance_sheets": [
+    {
+      "closing_date": "2022-12-18",
+      "assets": {
+        "Cash": 30,
+        "Boursobank": 1538.71,
+        "Livret A": 5999.77,
+        "Splitwise Eunieu": 197.72,
+        "Enerfip": 500,
+        "PEA": 22455.54,
+        "Fleury": 77000,
+        "Crypto": 1452.55,
+        "Crédit Mutuel": 2709.55,
+        "Livret Jeune": 1620.7
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 71213.12,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2023-01-18",
+      "assets": {
+        "Cash": 30,
+        "Boursobank": 1566.92,
+        "Livret A": 7999.9,
+        "Splitwise Eunieu": 408.24,
+        "Enerfip": 1000,
+        "PEA": 25152.73,
+        "Fleury": 77000,
+        "Crypto": 1822.55,
+        "Crédit Mutuel": 1285.22
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 70919.1,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2023-02-18",
+      "assets": {
+        "Cash": 50,
+        "Boursobank": 1165.09,
+        "Livret A": 7000.9,
+        "Splitwise Eunieu": 112.93,
+        "Enerfip": 2025,
+        "PEA": 26755.17,
+        "Fleury": 77000,
+        "Crypto": 1991.21,
+        "Crédit Mutuel": 1021.71
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 70624.79,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2023-03-18",
+      "assets": {
+        "Cash": 50,
+        "Boursobank": 1618.8,
+        "Livret A": 14000,
+        "Splitwise Eunieu": 3.14,
+        "Enerfip": 4400,
+        "PEA": 27222,
+        "Fleury": 77000,
+        "Crypto": 2415.81,
+        "Crédit Mutuel": 576.83
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 70330.18,
+        "Caution Fleury": 1120,
+        "Crédit conso": 10000
+      }
+    },
+    {
+      "closing_date": "2023-04-18",
+      "assets": {
+        "Cash": 55,
+        "Boursobank": 2100.96,
+        "Livret A": 10000,
+        "Enerfip": 9500,
+        "PEA": 28999.49,
+        "Fleury": 77000,
+        "Crypto": 2605.7
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 7.27,
+        "Prêt Crédit Mutuel Fleury": 70035.28,
+        "Caution Fleury": 1120,
+        "Crédit conso": 9173.84
+      }
+    },
+    {
+      "closing_date": "2023-05-18",
+      "assets": {
+        "Cash": 0,
+        "Boursobank": 1379.57,
+        "Livret A": 9000,
+        "Enerfip": 10600,
+        "PEA": 30152.21,
+        "Fleury": 77000,
+        "Crypto": 2594.13
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 176.68,
+        "Prêt Crédit Mutuel Fleury": 69740.09,
+        "Caution Fleury": 1120,
+        "Crédit conso": 8346.38
+      }
+    },
+    {
+      "closing_date": "2023-06-18",
+      "assets": {
+        "Cash": 10,
+        "Boursobank": 1833.48,
+        "Livret A": 6000,
+        "Enerfip": 12800,
+        "PEA": 32179.71,
+        "Fleury": 77000,
+        "Crypto": 2527.67,
+        "PEE Epsor": 831
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 181.12,
+        "Prêt Crédit Mutuel Fleury": 69444.6,
+        "Caution Fleury": 1120,
+        "Crédit conso": 7517.62
+      }
+    },
+    {
+      "closing_date": "2023-07-18",
+      "assets": {
+        "Cash": 10,
+        "Boursobank": 3056.32,
+        "Livret A": 5500,
+        "Splitwise Eunieu": 101.09,
+        "Enerfip": 13700,
+        "PEA": 32260,
+        "Fleury": 77000,
+        "Crypto": 2449.38,
+        "PEE Epsor": 815
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 69148.81,
+        "Caution Fleury": 1120,
+        "Crédit conso": 6687.56
+      }
+    },
+    {
+      "closing_date": "2023-08-18",
+      "assets": {
+        "Cash": 10,
+        "Boursobank": 3056.32,
+        "Livret A": 5500,
+        "Splitwise Eunieu": 101.09,
+        "Enerfip": 13700,
+        "PEA": 32260,
+        "Fleury": 77000,
+        "Crypto": 2449.38,
+        "PEE Epsor": 815
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 68852.73,
+        "Caution Fleury": 1120,
+        "Crédit conso": 5856.2
+      }
+    },
+    {
+      "closing_date": "2023-09-18",
+      "assets": {
+        "Cash": 45,
+        "Boursobank": 2337.97,
+        "Livret A": 5500,
+        "Enerfip": 14300,
+        "PEA": 33258.26,
+        "Fleury": 77000,
+        "Crypto": 2472.02,
+        "PEE Epsor": 815
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 102.61,
+        "Prêt Crédit Mutuel Fleury": 68556.35,
+        "Caution Fleury": 1120,
+        "Crédit conso": 5023.53
+      }
+    },
+    {
+      "closing_date": "2023-10-18",
+      "assets": {
+        "Cash": 20,
+        "Boursobank": 3893.76,
+        "Livret A": 4000,
+        "Enerfip": 14850.35,
+        "PEA": 32683.02,
+        "Fleury": 77000,
+        "Crypto": 2543.6,
+        "PEE Epsor": 808
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 78.16,
+        "Prêt Crédit Mutuel Fleury": 68259.68,
+        "Caution Fleury": 1120,
+        "Crédit conso": 4189.56
+      }
+    },
+    {
+      "closing_date": "2023-11-18",
+      "assets": {
+        "Cash": 5,
+        "Boursobank": 4090.71,
+        "Livret A": 4000,
+        "Enerfip": 15174.48,
+        "PEA": 32661.3,
+        "Fleury": 77000,
+        "Crypto": 3125.36,
+        "PEE Epsor": 812
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 42.05,
+        "Prêt Crédit Mutuel Fleury": 67962.71,
+        "Caution Fleury": 1120,
+        "Crédit conso": 3354.28
+      }
+    },
+    {
+      "closing_date": "2023-12-18",
+      "assets": {
+        "Cash": 5,
+        "Boursobank": 2314.64,
+        "Livret A": 4000,
+        "Enerfip": 15548.39,
+        "PEA": 33451.77,
+        "Fleury": 77000,
+        "Crypto": 3542.93,
+        "PEE Epsor": 831
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 20.09,
+        "Prêt Crédit Mutuel Fleury": 67665.44,
+        "Caution Fleury": 1120,
+        "Crédit conso": 2517.69
+      }
+    },
+    {
+      "closing_date": "2024-01-18",
+      "assets": {
+        "Cash": 5,
+        "Boursobank": 2372.62,
+        "Livret A": 4211.56,
+        "Splitwise Eunieu": 10.6,
+        "Enerfip": 16379.15,
+        "PEA": 32832.8,
+        "Fleury": 77000,
+        "Crypto": 2290.62,
+        "PEE Epsor": 831
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 67367.88,
+        "Caution Fleury": 1120,
+        "Crédit conso": 1679.78
+      }
+    },
+    {
+      "closing_date": "2024-02-18",
+      "assets": {
+        "Cash": 50,
+        "Boursobank": 2337.45,
+        "Livret A": 5001,
+        "Splitwise Eunieu": 260.53,
+        "Enerfip": 16162.59,
+        "PEA": 34979.49,
+        "Fleury": 77000,
+        "Crypto": 1557.77,
+        "PEE Epsor": 844
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 67070.02,
+        "Caution Fleury": 1120,
+        "Crédit conso": 840.56
+      }
+    },
+    {
+      "closing_date": "2024-03-18",
+      "assets": {
+        "Cash": 80,
+        "Boursobank": 1621.31,
+        "Livret A": 9000,
+        "Splitwise Eunieu": 163,
+        "Enerfip": 15328.32,
+        "PEA": 35366.02,
+        "Fleury": 77000,
+        "Crypto": 503.39,
+        "PEE Epsor": 885,
+        "PEI AXA": 146.37
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 66771.86,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-04-18",
+      "assets": {
+        "Cash": 80,
+        "Boursobank": 1298.85,
+        "Livret A": 12000,
+        "Splitwise Eunieu": 363.13,
+        "Enerfip": 14830.63,
+        "PEA": 34877.52,
+        "Fleury": 77000,
+        "LDDS": 10,
+        "Crypto": 350.7,
+        "PEE Epsor": 890,
+        "PEI AXA": 520.6
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 66473.4,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-05-18",
+      "assets": {
+        "Cash": 80,
+        "Boursobank": 2094.77,
+        "Livret A": 14000,
+        "Splitwise Eunieu": 270.34,
+        "Enerfip": 14854.33,
+        "PEA": 37282.36,
+        "Fleury": 77000,
+        "LDDS": 10,
+        "Crypto": 374.43,
+        "PEE Epsor": 924,
+        "PEI AXA": 590.32
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 66174.64,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-06-18",
+      "assets": {
+        "Cash": 70,
+        "Boursobank": 1175.7,
+        "Livret A": 19500,
+        "Splitwise Eunieu": 4.68,
+        "Enerfip": 13803.44,
+        "PEA": 36922.92,
+        "Fleury": 77000,
+        "LDDS": 10,
+        "Crypto": 318.83,
+        "PEE Epsor": 2083
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt Crédit Mutuel Fleury": 65875.58,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-07-18",
+      "assets": {
+        "Cash": 70,
+        "Boursobank": 1507.43,
+        "Livret A": 22950,
+        "Enerfip": 13805.58,
+        "PEA": 37436.06,
+        "Fleury": 77000,
+        "LDDS": 1000,
+        "Crypto": 354.5
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 500,
+        "Prêt Crédit Mutuel Fleury": 65576.23,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-08-18",
+      "assets": {
+        "Cash": 65,
+        "Boursobank": 1306.63,
+        "Livret A": 22950,
+        "Enerfip": 14932.8,
+        "PEA": 37143.88,
+        "Fleury": 77000,
+        "LDDS": 2500,
+        "Crypto": 289.2
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 686.44,
+        "Prêt Crédit Mutuel Fleury": 65276.58,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-09-18",
+      "assets": {
+        "Cash": 65,
+        "Boursobank": 2393.81,
+        "Livret A": 22950,
+        "Enerfip": 14956.76,
+        "PEA": 37325.44,
+        "Fleury": 77000,
+        "LDDS": 4000,
+        "Crypto": 285.2
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 839.44,
+        "Prêt Crédit Mutuel Fleury": 64976.63,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-10-18",
+      "assets": {
+        "Cash": 60,
+        "Boursobank": 455.63,
+        "Livret A": 22950,
+        "Enerfip": 15036.5,
+        "PEA": 39925.64,
+        "Fleury": 77000,
+        "LDDS": 7000,
+        "Crypto": 292.98
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 1548.46,
+        "Prêt Crédit Mutuel Fleury": 64676.38,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-11-18",
+      "assets": {
+        "Cash": 30,
+        "Boursobank": 1850,
+        "Livret A": 22950,
+        "Enerfip": 15101.97,
+        "PEA": 39756.09,
+        "Fleury": 77000,
+        "LDDS": 8500
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Splitwise Eunieu": 2193.11,
+        "Prêt Crédit Mutuel Fleury": 64375.83,
+        "Caution Fleury": 1120
+      }
+    },
+    {
+      "closing_date": "2024-12-18",
+      "assets": {
+        "Cash": 35,
+        "Boursobank": 3064.82,
+        "Livret A": 1950,
+        "Splitwise Eunieu": 2005.5,
+        "Enerfip": 15180.2,
+        "PEA": 40782.3,
+        "Sapeg": 125250,
+        "Fleury": 77000,
+        "LDDS": 11000
+      },
+      "invested": {
+      },
+      "liabilities": {
+        "Prêt LCL 356": 100375,
+        "Prêt LCL Zéro": 11097,
+        "Prêt Crédit Mutuel Fleury": 64074.98,
+        "Caution Fleury": 1120
+      }
+    },
     {
       "closing_date": "2025-01-18",
       "assets": {
@@ -384,12 +953,13 @@
         "Livret A": 8000,
         "Splitwise Eunieu": 1366.86,
         "Enerfip": 14630.28,
-        "PEA Actions": 40946.25,
+        "PEA": 40946.25,
         "Sapeg": 125250,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 100375,
         "Prêt LCL Zéro": 11097,
@@ -405,12 +975,13 @@
         "Livret A": 10000,
         "Splitwise Eunieu": 574.65,
         "Enerfip": 14630.28,
-        "PEA Actions": 39561.23,
+        "PEA": 39561.23,
         "Sapeg": 125250,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 100167.04,
         "Prêt LCL Zéro": 11060.01,
@@ -425,13 +996,14 @@
         "Boursobank": 724.41,
         "Livret A": 8500,
         "Enerfip": 14609.37,
-        "PEA Actions": 37701.56,
+        "PEA": 37701.56,
         "Sapeg": 125250,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 99958.46,
         "Prêt LCL Zéro": 11023.02,
@@ -448,14 +1020,15 @@
         "Livret A": 10500,
         "Splitwise Eunieu": 16.19,
         "Enerfip": 14242.88,
-        "PEA Actions": 35119.28,
+        "PEA": 35119.28,
         "Sapeg": 125250,
         "Splitwise Famille": 100,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 99749.26,
         "Prêt LCL Zéro": 10986.03,
@@ -470,14 +1043,15 @@
         "Boursobank": 2229.7,
         "Livret A": 13000,
         "Enerfip": 13156.16,
-        "PEA Actions": 38238.57,
+        "PEA": 38238.57,
         "Sapeg": 125250,
         "Splitwise Famille": 100,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 99539.44,
         "Prêt LCL Zéro": 10949.04,
@@ -494,14 +1068,15 @@
         "CA IDF Perso": 3000,
         "Livret A": 13000,
         "Enerfip": 12269.29,
-        "PEA Actions": 37847.5,
+        "PEA": 37847.5,
         "Sapeg": 125250,
         "Splitwise Famille": 100,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 99329,
         "Prêt LCL Zéro": 10912.05,
@@ -518,15 +1093,16 @@
         "CA IDF Perso": 1091.23,
         "Livret A": 4000,
         "Enerfip": 11391.09,
-        "PEA Actions": 39012.02,
+        "PEA": 39012.02,
         "Sapeg": 125250,
         "Splitwise Famille": 56.65,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 12000
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 99117.94,
         "Prêt LCL Zéro": 10875.06,
@@ -546,15 +1122,16 @@
         "Livret A": 10,
         "Splitwise Eunieu": 234.99,
         "Enerfip": 11424.01,
-        "PEA Actions": 39399.81,
+        "PEA": 39399.81,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 3500
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 98906.25,
         "Prêt LCL Zéro": 10838.07,
@@ -576,15 +1153,16 @@
         "CA IDF Famille": 2296.14,
         "Livret A": 10,
         "Enerfip": 10750.65,
-        "PEA Actions": 40582.34,
+        "PEA": 40582.34,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 4500
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 98693.93,
         "Prêt LCL Zéro": 10801.08,
@@ -608,15 +1186,16 @@
         "CA IDF Famille": 2692.75,
         "Livret A": 10,
         "Enerfip": 10539.31,
-        "PEA Actions": 41562.87,
+        "PEA": 41562.87,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 8868.55
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 98480.98,
         "Prêt LCL Zéro": 10764.09,
@@ -640,15 +1219,16 @@
         "CA IDF Famille": 1989.36,
         "Livret A": 10,
         "Enerfip": 10451.1,
-        "PEA Actions": 41562.87,
+        "PEA": 41562.87,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 9826.56
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 98267.4,
         "Prêt LCL Zéro": 10727.1,
@@ -672,15 +1252,16 @@
         "CA IDF Famille": 2005.97,
         "Livret A": 10,
         "Enerfip": 10345.29,
-        "PEA Actions": 40972.78,
+        "PEA": 40972.78,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 11990
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 98053.19,
         "Prêt LCL Zéro": 10690.11,
@@ -705,15 +1286,16 @@
         "LCL Commun": 1281.42,
         "Livret A": 2000,
         "Enerfip": 10367.21,
-        "PEA Actions": 43469.63,
+        "PEA": 43469.63,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 12218.5
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 97838.34,
         "Prêt LCL Zéro": 10653.12,
@@ -739,15 +1321,16 @@
         "Livret A": 3000,
         "Splitwise Eunieu": 10.7,
         "Enerfip": 10351.97,
-        "PEA Actions": 43785.79,
+        "PEA": 43785.79,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 12218.5
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 97622.85,
         "Prêt LCL Zéro": 10616.13,
@@ -770,15 +1353,16 @@
         "LCL Commun": 1320.64,
         "Livret A": 4500,
         "Enerfip": 10351.97,
-        "PEA Actions": 45400.56,
+        "PEA": 45400.56,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 12218.5
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 97406.72,
         "Prêt LCL Zéro": 10579.14,
@@ -803,15 +1387,16 @@
         "CCF": 976.01,
         "Livret A": 6000,
         "Enerfip": 7659.45,
-        "PEA Liquidité": 45633.69,
+        "PEA": 45633.69,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300,
         "LDDS": 12218.5
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 97189.95,
         "Prêt LCL Zéro": 10542.15,
@@ -837,14 +1422,15 @@
         "Livret A": 10000,
         "Splitwise Eunieu": 722.65,
         "Enerfip": 6741.3,
-        "PEA Liquidité": 45633.69,
+        "PEA": 45633.69,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 96972.54,
         "Prêt LCL Zéro": 10505.16,
@@ -869,14 +1455,15 @@
         "Livret A": 10000,
         "Splitwise Eunieu": 719.32,
         "Enerfip": 6754.93,
-        "PEA Liquidité": 45633.69,
+        "PEA": 45633.69,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 96754.49,
         "Prêt LCL Zéro": 10468.17,
@@ -901,15 +1488,16 @@
         "CCF": 2573.85,
         "Livret A": 10000,
         "Enerfip": 6762.89,
-        "PEA Liquidité": 45633.69,
+        "PEA": 45633.69,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
         "Epideme": 75000,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 96535.79,
         "Prêt LCL Zéro": 10431.18,
@@ -936,16 +1524,16 @@
         "Livret A": 17000,
         "Splitwise Eunieu": 80.82,
         "Enerfip": 6812.22,
-        "PEA Liquidité": 30371.41,
-        "PEA Actions": 15503.44,
+        "PEA": 45874.85,
         "Sapeg": 125250,
         "Beau Laurier": 87300,
         "Epideme": 75000,
-        "PEA-PME liquidité": 10,
+        "PEA-PME": 10,
         "Fleury": 77000,
         "Roubaix": 80300
       },
-      "invested": {},
+      "invested": {
+      },
       "liabilities": {
         "Prêt LCL 356": 96316.44,
         "Prêt LCL Zéro": 10394.19,
@@ -954,6 +1542,82 @@
         "Prêt CA IDF Beau Laurier Appartement": 90183.39,
         "Prêt CA IDF Beau Laurier Travaux": 2505.81,
         "Prêt CCF Epideme": 75503.04,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850,
+        "Caution Epideme": 1420
+      }
+    },
+    {
+      "closing_date": "2026-09-18",
+      "assets": {
+        "Cash": 230,
+        "Boursobank": 280.22,
+        "CA IDF Perso": 495.59,
+        "CA IDF Famille": 597.21,
+        "LCL Commun": 753.85,
+        "CCF": 777.3,
+        "Livret A": 22000,
+        "Enerfip": 6861.1,
+        "PEA": 48306.44,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "Epideme": 75000,
+        "PEA-PME": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 10
+      },
+      "invested": {
+        "PEA": 32400
+      },
+      "liabilities": {
+        "Prêt LCL 356": 96096.44,
+        "Prêt LCL Zéro": 10357.2,
+        "Splitwise Eunieu": 116.73,
+        "Prêt Crédit Mutuel Fleury": 57687.07,
+        "Prêt CA IDF Roubaix": 76144.23,
+        "Prêt CA IDF Beau Laurier Appartement": 89944.71,
+        "Prêt CA IDF Beau Laurier Travaux": 2499.18,
+        "Prêt CCF Epideme": 75280.46,
+        "Caution Fleury": 1240,
+        "Caution Roubaix": 1300,
+        "Caution Beau Laurier": 850,
+        "Caution Epideme": 1420
+      }
+    },
+    {
+      "closing_date": "2026-10-18",
+      "assets": {
+        "Cash": 25,
+        "Boursobank": 970.22,
+        "CA IDF Perso": 118.67,
+        "CA IDF Famille": 993.36,
+        "LCL Commun": 1921.84,
+        "CCF": 1195.92,
+        "Livret A": 22950,
+        "Enerfip": 6836.85,
+        "PEA": 47846.8,
+        "Sapeg": 125250,
+        "Beau Laurier": 87300,
+        "Epideme": 75000,
+        "PEA-PME": 10,
+        "Fleury": 77000,
+        "Roubaix": 80300,
+        "LDDS": 1000
+      },
+      "invested": {
+        "PEA": 32400
+      },
+      "liabilities": {
+        "Prêt LCL 356": 95875.79,
+        "Prêt LCL Zéro": 10320.21,
+        "Splitwise Eunieu": 260.08,
+        "Prêt Crédit Mutuel Fleury": 57379.53,
+        "Prêt CA IDF Roubaix": 75964.02,
+        "Prêt CA IDF Beau Laurier Appartement": 89705.42,
+        "Prêt CA IDF Beau Laurier Travaux": 2492.54,
+        "Prêt CCF Epideme": 75057.26,
         "Caution Fleury": 1240,
         "Caution Roubaix": 1300,
         "Caution Beau Laurier": 850,
