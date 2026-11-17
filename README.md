@@ -23,7 +23,7 @@ docker-compose run --rm web rails db:create db:migrate db:seed
 docker-compose up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3002](http://localhost:3002) in your browser.
 
 ### Demo Account
 

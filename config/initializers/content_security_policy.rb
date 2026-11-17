@@ -6,7 +6,7 @@ Rails.application.config.content_security_policy do |policy|
   policy.script_src  :self, :https
   policy.style_src   :self, :https, :unsafe_inline
   if Rails.env.development?
-    policy.connect_src :self, :https, "http://localhost:3000", "ws://localhost:3000"
+    policy.connect_src :self, :https, "http://localhost:3002", "ws://localhost:3002"
   end
 end
 
